@@ -1,6 +1,6 @@
 # Client
 
-This is a web version of text alignment application. It consists of backend and frontend paths.
+This is a web version of text alignment application. It consists of backend and frontend parts.
 
 ## Backend
 
