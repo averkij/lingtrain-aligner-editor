@@ -1,0 +1,6 @@
+**/node_modules
+**/dist
+**/static
+
+# **/sentence_transformers.bin
+**/use_multilingual_models_saved

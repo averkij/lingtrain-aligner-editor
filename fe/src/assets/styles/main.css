@@ -1,0 +1,30 @@
+.ta-custom {
+    padding-top: 0px !important;
+    margin-top: 0px !important;
+}
+
+.ta-custom > .v-input__control > .v-input__slot:before {
+    border-style:none !important;
+}
+
+.ta-custom > .v-input__control > .v-input__slot {
+    margin-bottom: 0 !important;
+    padding: 0px 0px 0 0px !important;
+}
+
+.ta-custom > .v-input__control > .v-text-field__details {
+    display: none !important;
+} 
+
+.fill-width {
+    width: 100%;
+}
+
+.icon-avtive {
+    transform: rotate(180deg);
+    transition: ease;
+}
+
+.color-transition {
+    transition: all 0.1s linear;
+}
