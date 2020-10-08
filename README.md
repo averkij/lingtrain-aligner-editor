@@ -1,4 +1,4 @@
-# Lingtrain Aligner. Web application for extracting parallel corpora powered by machine learning. 
+# Lingtrain Aligner. ML powered application for extracting parallel corpora. 
 
 ## 1. Upload raw texts
 ![Upload](/img/1.png)
