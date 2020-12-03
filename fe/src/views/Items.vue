@@ -1,16 +1,15 @@
 <template>
   <div>
     <div class="d-flex">
-      <div class="text-h3 mt-5 align-self-start">
-        <v-img src="@/assets/logo.png" width="50px" height="50px" />
-      </div>
       <div class="text-h3 mt-5 ml-3">
-        Hello, <span class="text-capitalize">{{ username }}!</span>
-        <div class="text-subtitle-1 mt-2 pl-1">Let's make it parallel</div>
+        <span class="text-capitalize">Lexigraph</span>
+        <!-- ✒️ Hello, <span class="text-capitalize">{{ username }}!</span> -->
+        <div class="text-subtitle-1 mt-2 pl-1">Строим графы из текста</div>
         <!-- <div class="text-subtitle-2 text-right">— Somebody</div> -->
       </div>
     </div>
 
+    <!-- RAW panels -->
     <div class="text-h4 mt-15 font-weight-bold">💾 Documents</div>
     <v-alert type="info" class="mt-6" v-show="showAlert">
       There are no uploaded documents yet. Please upload some using the form
@@ -23,14 +22,11 @@
             :info="LANGUAGES[langCodeFrom]" :items=items :isLoading=isLoading>
           </RawPanel>
         </v-col>
-        <v-col cols="12" sm="6">
-          <RawPanel @uploadFile="uploadFile" @onFileChange="onFileChange" @selectAndLoadPreview="selectAndLoadPreview"
-            :info="LANGUAGES[langCodeTo]" :items=items :isLoading=isLoading>
-          </RawPanel>
-        </v-col>
       </v-row>
     </div>
 
+    <!-- SPLITTED panels -->
+    <div v-show="false">
     <div class="text-h4 mt-10 font-weight-bold">🔍 Preview</div>
     <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2">
       Documents are splitted by sentences using language specific rules.
@@ -47,28 +43,39 @@
         </SplittedPanel>
       </v-col>
     </v-row>
+    </div>
 
-    <div class="text-h4 mt-10 font-weight-bold">⚖️ Alignment</div>
-    <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2">
+    <!-- ALIGN panels -->
+    <div class="text-h4 mt-10 font-weight-bold">⚖️ Calculate</div>
+    <v-alert v-show="false" type="info" border="left" colored-border color="blue" class="mt-6" elevation="2">
       This is a test version. Only {{TEST_LIMIT}} lines will be aligned.
     </v-alert>
     <v-row class="mt-6">
       <v-col cols="12" sm="6">
         <InfoPanel :info="LANGUAGES[langCodeFrom]" :splitted=splitted :selected=selected></InfoPanel>
       </v-col>
-      <v-col cols="12" sm="6">
+      <!-- <v-col cols="12" sm="6" >
         <InfoPanel :info="LANGUAGES[langCodeTo]" :splitted=splitted :selected=selected></InfoPanel>
-      </v-col>
+      </v-col> -->
     </v-row>
-    <v-btn v-if="!userAlignInProgress" v-show="selected[langCodeFrom] && selected[langCodeTo]" class="success mt-6"
+    <!-- <v-btn v-if="!userAlignInProgress" v-show="selected[langCodeFrom] && selected[langCodeTo]" class="success mt-6"
       :loading="isLoading.align || isLoading.alignStopping" :disabled="isLoading.align || isLoading.alignStopping"
       @click="align()">
       Align documents
     </v-btn>
     <v-btn v-else v-show="selected[langCodeFrom] && selected[langCodeTo]" class="error mt-6" @click="stopAlignment()">
       Stop alignment
+    </v-btn>  -->
+    <v-btn v-if="!userAlignInProgress" v-show="selected[langCodeFrom]" class="success mt-6"
+      :loading="isLoading.align || isLoading.alignStopping" :disabled="isLoading.align || isLoading.alignStopping"
+      @click="calculateGraphs()">
+      Calculate
     </v-btn>
+    <v-btn v-else v-show="selected[langCodeFrom]" class="error mt-6" @click="stopAlignment()">
+      Stop alignment
+    </v-btn> 
 
+    <!-- PROCESSING panels -->
     <div class="text-h4 mt-10 font-weight-bold">✒️ Result</div>
 
     <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2"
@@ -103,6 +110,7 @@
           </v-list-item-group>
         </v-list>
       </v-card>
+
 
       <div class="text-h5 mt-10 font-weight-bold">Visualization</div>
 
@@ -428,6 +436,37 @@
             });
 
             this.fetchItemsProvessingTimer();
+          });
+      },
+      calculateGraphs() {
+        // alert(this.selected[this.langCodeFrom])
+
+        this.isLoading.align = true;
+        this.currentlyProcessing = this.selected[this.langCodeFrom]
+        this.$store
+          .dispatch(ALIGN_SPLITTED, {
+            username: this.$route.params.username,
+            fileIds: this.selectedIds,
+            langCodeFrom: this.langCodeFrom,
+            langCodeTo: this.langCodeTo
+          })
+          .then(() => {
+            this.userAlignInProgress = true;
+            this.isLoading.align = false;
+            
+            this.userAlignInProgress = false;
+            this.isLoading.alignStopping = false;
+
+
+            // this.$store.dispatch(FETCH_ITEMS_PROCESSING, {
+            //   username: this.$route.params.username,
+            //   langCodeFrom: this.langCodeFrom,
+            //   langCodeTo: this.langCodeTo
+            // }).then(() => {
+            //   this.selectCurrentlyProcessingDocument();
+            // });
+
+            // this.fetchItemsProvessingTimer();
           });
       },
       stopAlignment() {

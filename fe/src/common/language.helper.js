@@ -2,7 +2,7 @@ export const LANGUAGES = {
     'ru': {
         langCode: "ru",
         name: "Russian",
-        icon: "⚽️"
+        icon: "📏"
     },
     'zh': {
         langCode: "zh",

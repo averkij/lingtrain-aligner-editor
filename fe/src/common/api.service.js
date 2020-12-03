@@ -119,7 +119,7 @@ export const ItemsService = {
   alignSplitted(params) {
     return ApiService.get(
       "items",
-      `${params.username}/align/${params.langCodeFrom}/${params.langCodeTo}/${params.fileIds[params.langCodeFrom]}/${params.fileIds[params.langCodeTo]}`
+      `${params.username}/align/${params.langCodeFrom}/${params.langCodeTo}/${params.fileIds[params.langCodeFrom]}`
     );
   },
   editProcessing(params) {

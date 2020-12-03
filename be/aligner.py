@@ -19,6 +19,44 @@ import model_dispatcher
 import sim_helper
 import state_manager as state
 
+import pdgraphs as pg
+import pandas as pd
+import re
+
+
+def calculate_graphs(lines_from, processing_from_to, res_img, res_img_best, lang_name_from, lang_name_to, threshold=config.DEFAULT_TRESHOLD, batch_size=config.DEFAULT_BATCHSIZE, window_size=config.DEFAULT_WINDOW):
+    
+    print("calculating...")
+    # print(lines_from)
+
+    foo = txtfile2pgr(lines_from)
+
+    print(foo)
+
+    return
+
+def txtfile2pgr(text):
+    lWords = text2words(text)
+    dfAdj = lol2adj(lWords)
+    return pg.pdGraph(dfAdj)
+
+def lol2adj(lol): # list of lists (tuples, sets, words) of elements to adj matrix
+    # slow
+    dfEls, dfElsNorm = pd.DataFrame(), pd.DataFrame()
+    for i, els in enumerate(lol):
+        for el in els: # prepare for sum
+            dfEls.at[i, el] = 0
+            dfElsNorm.at[i, el] = 0
+    for i, els in enumerate(lol):
+        weight = 1/len(els)
+        for el in els:
+            dfEls.at[i, el] += 1
+            dfElsNorm.at[i, el] += weight
+    return (dfElsNorm.fillna(0).T @ dfEls.fillna(0)).sort_index(axis=0).sort_index(axis=1)
+
+def text2words(txt):
+    lWords = re.split('[^а-яё]+', txt.lower(), flags=re.IGNORECASE) #'[^a-zа-яё]+'
+    return [word for word in lWords if len(word) > 1]
 
 
 def serialize_docs(lines_from, lines_to, processing_from_to, res_img, res_img_best, lang_name_from, lang_name_to, threshold=config.DEFAULT_TRESHOLD, batch_size=config.DEFAULT_BATCHSIZE, window_size=config.DEFAULT_WINDOW):
