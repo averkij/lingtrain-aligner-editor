@@ -32,6 +32,8 @@
     <v-divider></v-divider>
     <v-card-actions>
       <v-btn @click="downloadSplitted(info.langCode)">Download</v-btn>
+      <v-spacer />
+      <v-btn @click="updloadSplittedTranslation(info.langCode)">Upload translation</v-btn>
     </v-card-actions>
   </v-card>
 </template>
