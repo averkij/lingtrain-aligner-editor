@@ -52,8 +52,13 @@ export const actions = {
     const {
       data
     } = await ItemsService.fetchItemsProcessing(params);
+
+    console.log("FETCH_ITEMS_PROCESSING params", params)
+
+    console.log(">>>data:", data.items)
+
     context.commit(SET_ITEMS_PROCESSING, {
-      items: data.items[params.langCodeFrom],
+      items: data.items,
       langCode: params.langCodeFrom
     });
     return data;
@@ -115,6 +120,10 @@ export const mutations = {
     state.items[params.langCode] = params.items[params.langCode];
   },
   [SET_ITEMS_PROCESSING](state, params) {
+    console.log("params.items", params.items)
+    console.log("params.langCode", params.langCode)
+    console.log("state.itemsProcessing", state.itemsProcessing)
+
     state.itemsProcessing[params.langCode] = params.items;
   },
   [SET_SPLITTED](state, params) {

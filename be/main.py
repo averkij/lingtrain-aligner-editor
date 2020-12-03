@@ -115,7 +115,7 @@ def align(username, lang_from, lang_to, id_from):
     processing_from_to = os.path.join(processing_folder_from_to, files_from[id_from])
     
     res_img = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{files_from[id_from]}.png")
-    res_img_best = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{files_from[id_from]}.best.png")
+    res_path = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{files_from[id_from]}.html.bin")
     splitted_from = os.path.join(con.UPLOAD_FOLDER, username, con.RAW_FOLDER, lang_from, files_from[id_from])
     # splitted_to = os.path.join(con.UPLOAD_FOLDER, username, con.RAW_FOLDER, lang_to, files_to[id_to])
     
@@ -135,45 +135,48 @@ def align(username, lang_from, lang_to, id_from):
     # alignment = Process(target=aligner.serialize_docs, args=(lines_from, lines_to, processing_from_to, res_img, res_img_best, lang_from, lang_to), daemon=True)
     # alignment.start()
 
-    aligner.calculate_graphs(lines_from, processing_from_to, res_img, res_img_best, lang_from, lang_to)
+    aligner.calculate_graphs(lines_from, processing_from_to, res_img, res_path, lang_from, lang_to)
     return con.EMPTY_LINES
 
 @app.route("/items/<username>/processing/<lang_from>/<lang_to>/<int:file_id>/<int:count>/<int:page>", methods=["GET"])
 def get_processing(username, lang_from, lang_to, file_id, count, page):
-    processing_folder = os.path.join(con.UPLOAD_FOLDER, username, con.PROCESSING_FOLDER, lang_from, lang_to)
-    files = helper.get_files_list(processing_folder)
+    raw_folder = os.path.join(con.UPLOAD_FOLDER, username, con.RAW_FOLDER, lang_from)
+    files = helper.get_files_list(raw_folder)
     
-    print("processsing files:", files)
-    return {"items": [], "meta": {"page": 1, "total_pages": 10}}
-    
-    processing_file = os.path.join(processing_folder, files[file_id])
-    if not helper.check_file(processing_folder, files, file_id):
-        abort(404)
+    # processing_file = os.path.join(processing_folder, files[file_id])
+    # if not helper.check_file(processing_folder, files, file_id):
+    #     abort(404)
         
-    res = []
-    lines_count = 0    
-    shift = (page-1)*count
-    for line_from_orig, line_from, line_to, candidates in helper.read_processing(processing_file):
-        lines_count += 1
-        if count>0 and (lines_count<=shift or lines_count>shift+count):
-            continue
-        res.append({
-            "text": line_from[0].text.strip(),
-            "line_id": line_from[0].line_id,
-            "text_orig": line_from_orig.text.strip(),
-            "trans": [{
-                "text": t[0].text.strip(), 
-                "line_id":t[0].line_id, 
-                "sim": t[1]
-                } for t in candidates],
-            "selected": {
-                "text": line_to[0].text.strip(),
-                "line_id": line_to[0].line_id,
-                "sim": line_to[1]
-                }})
-    total_pages = (lines_count//count) + (1 if lines_count%count != 0 else 0)
-    meta = {"page": page, "total_pages": total_pages}
-    return {"items": res, "meta": meta}
+    res_path = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{files[file_id]}.html.bin")
+    
+    print(res_path)
+
+    # res = []
+    # lines_count = 0    
+    # shift = (page-1)*count
+    # for line_from_orig, line_from, line_to, candidates in helper.read_processing(processing_file):
+    #     lines_count += 1
+    #     if count>0 and (lines_count<=shift or lines_count>shift+count):
+    #         continue
+    #     res.append({
+    #         "text": line_from[0].text.strip(),
+    #         "line_id": line_from[0].line_id,
+    #         "text_orig": line_from_orig.text.strip(),
+    #         "trans": [{
+    #             "text": t[0].text.strip(), 
+    #             "line_id":t[0].line_id, 
+    #             "sim": t[1]
+    #             } for t in candidates],
+    #         "selected": {
+    #             "text": line_to[0].text.strip(),
+    #             "line_id": line_to[0].line_id,
+    #             "sim": line_to[1]
+    #             }})
+    # total_pages = (lines_count//count) + (1 if lines_count%count != 0 else 0)
+    # meta = {"page": page, "total_pages": total_pages}
+    # return {"items": res, "meta": meta}
+
+    return ('', 200)
 
 @app.route("/items/<username>/processing/<lang_from>/<lang_to>/<int:file_id>/edit", methods=["POST"])
 def edit_processing(username, lang_from, lang_to, file_id):
@@ -219,23 +222,35 @@ def download_processsing(username, lang_from, lang_to, file_id, lang, file_forma
     logging.debug(f"[{username}]. File {download_file} prepared. Sent to user.")
     return send_file(download_file, as_attachment=True)  
 
-@app.route("/items/<username>/processing/list/<lang_from>/<lang_to>", methods=["GET"])
-def list_processing(username, lang_from, lang_to):
+@app.route("/items/<username>/processing/list/<int:file_id>/<lang_from>/<lang_to>", methods=["GET"])
+def list_processing(username, file_id, lang_from, lang_to):
     
+    print("fetching")
+
+    raw_folder = os.path.join(con.UPLOAD_FOLDER, username, con.RAW_FOLDER, lang_from)
+    files = helper.get_files_list(raw_folder)        
+    res_path = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{files[file_id]}.html.bin")
+    
+    print(res_path)
+
     #TODO add language validation
 
-    logging.debug(f"[{username}]. Processing list. Language code lang_from: {lang_from}. Language code lang_to: {lang_to}.")
-    if not lang_from or not lang_to:
-        logging.debug(f"[{username}]. Wrong language code: {lang_from}-{lang_to}.")
-        return con.EMPTY_FILES
-    processing_folder = os.path.join(con.UPLOAD_FOLDER, username, con.PROCESSING_FOLDER, lang_from, lang_to)
-    helper.check_folder(processing_folder)    
-    files = {
-        "items": {
-            lang_from: helper.get_processing_list_with_state(os.path.join(con.UPLOAD_FOLDER, username, con.PROCESSING_FOLDER, lang_from, lang_to), username)
-        }
-    }
-    return files
+    res = pickle.load(open(res_path, "rb"))
+
+    print("res:", res)
+
+    # logging.debug(f"[{username}]. Processing list. Language code lang_from: {lang_from}. Language code lang_to: {lang_to}.")
+    # if not lang_from or not lang_to:
+    #     logging.debug(f"[{username}]. Wrong language code: {lang_from}-{lang_to}.")
+    #     return con.EMPTY_FILES
+    # processing_folder = os.path.join(con.UPLOAD_FOLDER, username, con.PROCESSING_FOLDER, lang_from, lang_to)
+    # helper.check_folder(processing_folder)    
+    # files = {
+    #     "items": {
+    #         lang_from: helper.get_processing_list_with_state(os.path.join(con.UPLOAD_FOLDER, username, con.PROCESSING_FOLDER, lang_from, lang_to), username)
+    #     }
+    # }
+    return res
 
 @app.route("/items/<username>/align/stop/<lang_from>/<lang_to>/<int:file_id>", methods=["POST"])
 def stop_alignment(username, lang_from, lang_to, file_id):

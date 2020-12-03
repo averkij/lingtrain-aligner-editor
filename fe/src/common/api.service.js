@@ -53,7 +53,7 @@ export const ItemsService = {
   fetchItemsProcessing(params) {
     return ApiService.get(
       "items",
-      `${params.username}/processing/list/${params.langCodeFrom}/${params.langCodeTo}`
+      `${params.username}/processing/list/${params.fileId}/${params.langCodeFrom}/${params.langCodeTo}`
     );
   },
   upload(params) {

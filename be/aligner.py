@@ -24,14 +24,22 @@ import pandas as pd
 import re
 
 
-def calculate_graphs(lines_from, processing_from_to, res_img, res_img_best, lang_name_from, lang_name_to, threshold=config.DEFAULT_TRESHOLD, batch_size=config.DEFAULT_BATCHSIZE, window_size=config.DEFAULT_WINDOW):
+def calculate_graphs(lines_from, processing_from_to, res_img, res_path, lang_name_from, lang_name_to, threshold=config.DEFAULT_TRESHOLD, batch_size=config.DEFAULT_BATCHSIZE, window_size=config.DEFAULT_WINDOW):
     
     print("calculating...")
     # print(lines_from)
 
-    foo = txtfile2pgr(lines_from)
+    graph = txtfile2pgr(lines_from)
+    df_edges = graph.edges()
+    conn_html = df_edges[df_edges['from'] != df_edges['to']].sort_values(by = 'weight', ascending=False).iloc[:10].to_html()
 
-    print(foo)
+    # print("html:")
+    # print(html)
+
+    res = {"items": {"conn_html": conn_html}}
+
+    print("saving result to", res_path)
+    pickle.dump(res, open(res_path, "wb"))
 
     return
 
