@@ -46,7 +46,7 @@
     </div>
 
     <!-- ALIGN panels -->
-    <div class="text-h4 mt-10 font-weight-bold">⚖️ Calculate</div>
+    <div class="text-h4 mt-10 font-weight-bold">💡 Расчеты</div>
     <v-alert v-show="false" type="info" border="left" colored-border color="blue" class="mt-6" elevation="2">
       This is a test version. Only {{TEST_LIMIT}} lines will be aligned.
     </v-alert>
@@ -69,28 +69,46 @@
     <v-btn v-if="!userAlignInProgress" v-show="selected[langCodeFrom]" class="success mt-6"
       :loading="isLoading.align || isLoading.alignStopping" :disabled="isLoading.align || isLoading.alignStopping"
       @click="calculateGraphs()">
-      Calculate
+      Посчитать
     </v-btn>
     <v-btn v-else v-show="selected[langCodeFrom]" class="error mt-6" @click="stopAlignment()">
       Stop alignment
     </v-btn> 
 
     <!-- PROCESSING panels -->
-    <div class="text-h4 mt-10 font-weight-bold">✒️ Result</div>
+    <div class="text-h4 mt-10 font-weight-bold">✒️ Результат</div>
 
-    <div class="mt-10">
+    <div class="text-h5 mt-10 font-weight-bold">Наибольшие связи между буквами</div>
+    <div class="mt-6">
       <!-- {{itemsProcessing}} -->
       <p v-html="itemsProcessing['ru'].conn_html"></p>
     </div>
 
+    <div class="text-h5 mt-10 font-weight-bold">Степени букв</div>
+    <div class="mt-6">
+      <p v-html="itemsProcessing['ru'].deg_html"></p>
+    </div>
 
+    <div class="text-h5 mt-10 font-weight-bold">Центральности букв</div>
+    <div class="mt-6">
+      <p v-html="itemsProcessing['ru'].centr_html"></p>
+    </div>
+
+    <div class="text-h5 mt-10 font-weight-bold">Плотность связей букв</div>
+    <div class="mt-6">
+      {{itemsProcessing['ru'].density}}
+    </div>
+
+    <div class="text-h5 mt-10 font-weight-bold">Спектр графа (собственные векторы)</div>
+    <div class="mt-6">
+      <p v-html="itemsProcessing['ru'].spectr_html"></p>
+    </div>
 
     <!-- <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2"
       v-if="!itemsProcessing || !itemsProcessing[langCodeFrom] || (itemsProcessing[langCodeFrom].length == 0)">
       There are no previously aligned documents yet.
     </v-alert> -->
 
-    
   </div>
 </template>
 

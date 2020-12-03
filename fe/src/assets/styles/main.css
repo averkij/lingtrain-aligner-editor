@@ -28,3 +28,32 @@
 .color-transition {
     transition: all 0.1s linear;
 }
+
+table {
+        border-collapse: collapse;
+        font-size: 0.9em;
+        min-width: 400px;
+}
+
+table thead tr {
+    background-color: #fafafa;
+    color: #000;
+    text-align: center;
+}
+
+table th,
+table td {
+    padding: 5px 5px;
+}
+
+table  {
+    border: 1px solid #dddddd;
+}
+
+table tbody tr:nth-of-type(even) {
+    background-color: #f3f3f3;
+}
+/* 
+table tbody tr:last-of-type {
+    border-bottom: 1px solid #000;
+} */

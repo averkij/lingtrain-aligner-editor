@@ -25,23 +25,44 @@ import re
 
 
 def calculate_graphs(lines_from, processing_from_to, res_img, res_path, lang_name_from, lang_name_to, threshold=config.DEFAULT_TRESHOLD, batch_size=config.DEFAULT_BATCHSIZE, window_size=config.DEFAULT_WINDOW):
-    
     print("calculating...")
     # print(lines_from)
+    pd.set_option('display.float_format', lambda x: '%.0f' % x)
 
     graph = txtfile2pgr(lines_from)
+
+    #1
     df_edges = graph.edges()
     conn_html = df_edges[df_edges['from'] != df_edges['to']].sort_values(by = 'weight', ascending=False).iloc[:10].to_html()
 
-    # print("html:")
-    # print(html)
+    #2
+    df_deg = pd.DataFrame({'Федот': graph.degrees})
+    deg_html = df_deg.sort_values(by='Федот', ascending=False).T.to_html()
 
-    res = {"items": {"conn_html": conn_html}}
+    #3
+    df_centr = pd.DataFrame({'Федот': graph.cn})
+    centr_html = df_centr.sort_values(by='Федот', ascending=False).T.to_html()
+
+    #4
+    density = graph.density
+
+    pd.set_option('display.float_format', lambda x: '%.2f' % x)
+    spectr = graph.lapSpectr()
+    spectr_html = spectr.dfSpectr().to_html()
+
+    res = {
+        "items": 
+            {
+                "conn_html": conn_html,
+                "deg_html": deg_html,
+                "centr_html": centr_html,
+                "density": density,
+                "spectr_html": spectr_html
+            }
+    }
 
     print("saving result to", res_path)
     pickle.dump(res, open(res_path, "wb"))
-
-    return
 
 def txtfile2pgr(text):
     lWords = text2words(text)

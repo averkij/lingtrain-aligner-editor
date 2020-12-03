@@ -231,13 +231,13 @@ def list_processing(username, file_id, lang_from, lang_to):
     files = helper.get_files_list(raw_folder)        
     res_path = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{files[file_id]}.html.bin")
     
-    print(res_path)
+    # print(res_path)
 
     #TODO add language validation
 
     res = pickle.load(open(res_path, "rb"))
 
-    print("res:", res)
+    # print("res:", res)
 
     # logging.debug(f"[{username}]. Processing list. Language code lang_from: {lang_from}. Language code lang_to: {lang_to}.")
     # if not lang_from or not lang_to:
