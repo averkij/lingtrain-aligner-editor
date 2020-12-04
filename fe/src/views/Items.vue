@@ -37,13 +37,15 @@
     </v-alert>
     <v-row>
       <v-col cols="12" sm="6">
-        <SplittedPanel @onPreviewPageChange="onPreviewPageChange" @downloadSplitted="downloadSplitted"
-          :info="LANGUAGES[langCodeFrom]" :splitted=splitted :selected=selected>
+        <SplittedPanel @onPreviewPageChange="onPreviewPageChange" @onProxyFileChange="onProxyFileChange"
+          @downloadSplitted="downloadSplitted" @uploadProxyFile="uploadProxyFile"
+          :info="LANGUAGES[langCodeFrom]" :splitted=splitted :selected=selected :isLoading=isLoading>
         </SplittedPanel>
       </v-col>
       <v-col cols="12" sm="6">
-        <SplittedPanel @onPreviewPageChange="onPreviewPageChange" @downloadSplitted="downloadSplitted"
-          :info="LANGUAGES[langCodeTo]" :splitted=splitted :selected=selected>
+        <SplittedPanel @onPreviewPageChange="onPreviewPageChange" @onProxyFileChange="onProxyFileChange"
+          @downloadSplitted="downloadSplitted" @uploadProxyFile="uploadProxyFile"
+          :info="LANGUAGES[langCodeTo]" :splitted=splitted :selected=selected :isLoading=isLoading>
         </SplittedPanel>
       </v-col>
     </v-row>
@@ -275,6 +277,7 @@
         PROC_ERROR,
         PROC_DONE,
         files: LanguageHelper.initGeneralVars(),
+        proxyFiles: LanguageHelper.initGeneralVars(),
         selected: LanguageHelper.initGeneralVars(),
         selectedProcessing: null,
         selectedProcessingId: null,
@@ -283,6 +286,7 @@
         selectedIds: LanguageHelper.initGeneralVars(),
         isLoading: {
           upload: LanguageHelper.initGeneralBools(),
+          uploadProxy: LanguageHelper.initGeneralBools(),
           download: LanguageHelper.initGeneralBools(),
           align: false,
           processing: false
@@ -296,6 +300,9 @@
     methods: {
       onFileChange(file, langCode) {
         this.files[langCode] = file;
+      },
+      onProxyFileChange(file, langCode) {
+        this.proxyFiles[langCode] = file;
       },
       onPreviewPageChange(page, langCode) {
         this.$store.dispatch(GET_SPLITTED, {
@@ -328,6 +335,21 @@
           .then(() => {
             this.isLoading.upload[langCode] = false;
             this.selectFirstDocument(langCode);
+          });
+      },      
+      uploadProxyFile(langCode) {
+        this.isLoading.uploadProxy[langCode] = true;
+        this.$store
+          .dispatch(UPLOAD_FILES, {
+            file: this.proxyFiles[langCode],
+            username: this.$route.params.username,
+            langCode,
+            isProxy: true,
+            rawFileName: this.selected[langCode]
+          })
+          .then(() => {
+            this.isLoading.uploadProxy[langCode] = false;
+            // this.selectFirstDocument(langCode);
           });
       },
       downloadSplitted(langCode) {

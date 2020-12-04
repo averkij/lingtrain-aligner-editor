@@ -40,11 +40,19 @@ def items(username, lang):
     if request.method == "POST":
         if lang in request.files:
             file = request.files[lang]
+            upload_folder = con.RAW_FOLDER
+            filename = file.filename
+
+            if request.form["type"] == "proxy":
+                upload_folder = con.PROXY_FOLDER
+                filename = request.form["rawFileName"]
+            
             logging.debug(f"[{username}]. Loading lang document {file.filename}.")
-            raw_path = os.path.join(con.UPLOAD_FOLDER, username, con.RAW_FOLDER, lang, file.filename)
-            file.save(raw_path)
-            splitter.split_by_sentences(file.filename, lang, username)
-            logging.debug(f"[{username}]. Success. {file.filename} is loaded.")
+            upload_path = os.path.join(con.UPLOAD_FOLDER, username, upload_folder, lang, filename)
+            file.save(upload_path)
+            if request.form["type"] == "raw":
+                splitter.split_by_sentences(filename, lang, username)
+            logging.debug(f"[{username}]. Success. {filename} is loaded.")
         return ('', 200)
     #return documents list
     files = {

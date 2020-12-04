@@ -61,7 +61,9 @@ export const actions = {
   // params {file, username, langCode}
   async [UPLOAD_FILES](context, params) {
     await ItemsService.upload(params);
-    await context.dispatch(FETCH_ITEMS, params);
+    if (!params.isProxy) {
+      await context.dispatch(FETCH_ITEMS, params);
+    }
     return;
   },
   // params {fileId, username, langCode, fileName}
