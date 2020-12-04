@@ -349,7 +349,6 @@
           })
           .then(() => {
             this.isLoading.uploadProxy[langCode] = false;
-            // this.selectFirstDocument(langCode);
           });
       },
       downloadSplitted(langCode) {
@@ -502,7 +501,7 @@
       },
       selectFirstDocument(langCode) {
         if (this.itemsNotEmpty(langCode) & !this.selected[langCode]) {
-          this.selectAndLoadPreview(langCode, this.items[langCode][0], 0);
+          this.selectAndLoadPreview(langCode, this.items[langCode][0].name, 0);
         }
       },
       selectFirstProcessingDocument() {

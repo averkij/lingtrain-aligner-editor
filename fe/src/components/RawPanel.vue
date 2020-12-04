@@ -11,13 +11,14 @@
     <v-list class="pa-0">
       <v-list-item-group mandatory color="gray">
         <v-list-item v-for="(item, i) in items[info.langCode]" :key="i"
-          @change="selectAndLoadPreview(info.langCode, item, i)">
+          @change="selectAndLoadPreview(info.langCode, item.name, i)">
           <v-list-item-icon>
             <v-icon>mdi-arrow-right</v-icon>
           </v-list-item-icon>
           <v-list-item-content>
-            <v-list-item-title v-text="item"></v-list-item-title>
+            <v-list-item-title v-text="item.name"></v-list-item-title>
           </v-list-item-content>
+          <v-icon v-if="item.has_proxy">mdi-translate</v-icon>          
         </v-list-item>
       </v-list-item-group>
     </v-list>

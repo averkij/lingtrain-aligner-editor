@@ -27,6 +27,16 @@ def get_processing_list_with_state(folder, username):
             })
     return res
 
+def get_raw_files(folder, username, lang_code):
+    res = []
+    for file in get_files_list(folder):
+        print(os.path.join(con.UPLOAD_FOLDER, username, con.PROXY_FOLDER, lang_code, file))
+        res.append({
+            "name": file,
+            "has_proxy": os.path.isfile(os.path.join(con.UPLOAD_FOLDER, username, con.PROXY_FOLDER, lang_code, file))
+        })
+    return res
+
 def get_sim_grades(processing_file):
     docs = pickle.load(open(processing_file, "rb"))
     return docs["sim_grades"]

@@ -46,6 +46,7 @@ def items(username, lang):
             if request.form["type"] == "proxy":
                 upload_folder = con.PROXY_FOLDER
                 filename = request.form["rawFileName"]
+                # print("rawFileName", request.form)
             
             logging.debug(f"[{username}]. Loading lang document {file.filename}.")
             upload_path = os.path.join(con.UPLOAD_FOLDER, username, upload_folder, lang, filename)
@@ -57,7 +58,7 @@ def items(username, lang):
     #return documents list
     files = {
         "items": {
-            lang: helper.get_files_list(os.path.join(con.UPLOAD_FOLDER,username, con.RAW_FOLDER, lang))
+            lang: helper.get_raw_files(os.path.join(con.UPLOAD_FOLDER,username, con.RAW_FOLDER, lang), username, lang)
         }
     }
     return files
