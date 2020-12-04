@@ -21,7 +21,7 @@ import state_manager as state
 
 
 
-def serialize_docs(lines_from, lines_to, processing_from_to, res_img, res_img_best, lang_name_from, lang_name_to, threshold=config.DEFAULT_TRESHOLD, batch_size=config.DEFAULT_BATCHSIZE, window_size=config.DEFAULT_WINDOW):
+def serialize_docs(lines_from, lines_to, lines_proxy_to, processing_from_to, res_img, res_img_best, lang_name_from, lang_name_to, threshold=config.DEFAULT_TRESHOLD, batch_size=config.DEFAULT_BATCHSIZE, window_size=config.DEFAULT_WINDOW):
     batch_number = 0
     docs = {
         "items":[],
@@ -29,6 +29,9 @@ def serialize_docs(lines_from, lines_to, processing_from_to, res_img, res_img_be
         }   
     zero_treshold = 0
     sims = []
+
+    use_proxy_to = lines_proxy_to != None and len(lines_proxy_to)>=len(lines_to)
+    print("use_proxy_to", use_proxy_to, len(lines_proxy_to), len(lines_to)) 
 
     logging.debug(f"Aligning started.")
     try:
@@ -77,9 +80,14 @@ def serialize_docs(lines_from, lines_to, processing_from_to, res_img, res_img_be
             best_sim_ind = sim_matrix_best.argmax(1)
             sims.extend(sim_matrix_best[range(best_sim_ind.shape[0]), best_sim_ind])            
 
+            lines_proxy_to_batch = [''] * len(lines_to_batch)
+            print(">> len(lines_to)", len(lines_to_batch))
+            if use_proxy_to:
+                lines_proxy_to_batch = lines_proxy_to[line_ids_to[0]:line_ids_to[-1]+1]
+
             # Actual work
-            logging.debug(f"Processing lines.")            
-            doc = get_processed(lines_from_batch, lines_to_batch, line_ids_from, line_ids_to, sim_matrix, sim_matrix_best, best_sim_ind, zero_treshold, batch_number, batch_size)
+            logging.debug(f"Processing lines.")
+            doc = get_processed(lines_from_batch, lines_to_batch, lines_proxy_to_batch, line_ids_from, line_ids_to, sim_matrix, sim_matrix_best, best_sim_ind, zero_treshold, batch_number, batch_size)
             docs["items"].append(doc)
 
         sim_grades = calc_sim_grades(sims)
@@ -108,7 +116,7 @@ def calc_sim_grades(sims):
 def get_line_vectors(lines):
     return model_dispatcher.models[config.MODEL].embed(lines)
 
-def get_processed(lines_from, lines_to, line_ids_from, line_ids_to, sim_matrix, sim_matrix_best, best_sim_ind, threshold, batch_number, batch_size, candidates_count=50):
+def get_processed(lines_from, lines_to, lines_proxy_to, line_ids_from, line_ids_to, sim_matrix, sim_matrix_best, best_sim_ind, threshold, batch_number, batch_size, candidates_count=50):
     doc = {}
     for line_from_id in range(sim_matrix.shape[0]):
         line_id_from_abs = line_ids_from[line_from_id]
@@ -117,12 +125,21 @@ def get_processed(lines_from, lines_to, line_ids_from, line_ids_to, sim_matrix, 
 
         candidates = [(line_to_id, sim_matrix[line_from_id, line_to_id]) for line_to_id in range(sim_matrix.shape[1]) if sim_matrix[line_from_id, line_to_id] > threshold]
         doc[line]["from"] = (line, False) #("line", "isEdited")
-        doc[line]["to"] = (DocLine(line_ids_to[best_sim_ind[line_from_id]], lines_to[best_sim_ind[line_from_id]]), sim_matrix[line_from_id, best_sim_ind[line_from_id]], False)
+        doc[line]["to"] = (DocLine(
+                                line_id = line_ids_to[best_sim_ind[line_from_id]],
+                                text = lines_to[best_sim_ind[line_from_id]],
+                                proxy = lines_proxy_to[best_sim_ind[line_from_id]] #proxy text (translation)
+                                ),
+                            sim_matrix[line_from_id,
+                            best_sim_ind[line_from_id]],
+                            False                                
+                            )
         doc[line]["cnd"] = [
                     #text with line_id
                     (DocLine(
                         line_id = line_ids_to[c[0]],
-                        text = lines_to[c[0]]),
+                        text = lines_to[c[0]],
+                        proxy = lines_proxy_to[c[0]]),
                     #text similarity
                     sim_matrix[line_from_id, c[0]])
                     for c in candidates]
@@ -154,9 +171,10 @@ def get_sim_matrix(vec1, vec2, window=config.DEFAULT_WINDOW):
     return sim_matrix
 
 class DocLine:
-    def __init__(self, line_id:int, text=None):
+    def __init__(self, line_id:int, text=None, proxy=None):
         self.line_id:int = line_id
         self.text = text
+        self.proxy = proxy
     def __hash__(self):
         return hash(self.line_id)
     def __eq__(self, other):

@@ -122,6 +122,7 @@ def align(username, lang_from, lang_to, id_from, id_to):
     res_img_best = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{files_from[id_from]}.best.png")
     splitted_from = os.path.join(con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_from, files_from[id_from])
     splitted_to = os.path.join(con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_to, files_to[id_to])
+    proxy_to = os.path.join(con.UPLOAD_FOLDER, username, con.PROXY_FOLDER, lang_to, files_to[id_to])
     
     logging.info(f"[{username}]. Cleaning images.")
     helper.clean_img_user_foler(username, files_from[id_from])
@@ -133,10 +134,16 @@ def align(username, lang_from, lang_to, id_from, id_to):
         lines_from = input_from.readlines()
         lines_to = input_to.readlines()
         #lines_ru_proxy = input_proxy.readlines()
+    
+    lines_proxy_to = []
+    if os.path.isfile(proxy_to):
+        logging.info(f"[{username}]. Proxy file detected (to). Path: {proxy_to}")
+        with open(proxy_to, mode="r", encoding="utf-8") as input_proxy_to:
+            lines_proxy_to = input_proxy_to.readlines()
 
     #TODO refactor to queues (!)
     state.init_processing(processing_from_to, (con.PROC_INIT, config.TEST_RESTRICTION_MAX_BATCHES, 0))   
-    alignment = Process(target=aligner.serialize_docs, args=(lines_from, lines_to, processing_from_to, res_img, res_img_best, lang_from, lang_to), daemon=True)
+    alignment = Process(target=aligner.serialize_docs, args=(lines_from, lines_to, lines_proxy_to, processing_from_to, res_img, res_img_best, lang_from, lang_to), daemon=True)
     alignment.start()
 
     #aligner.serialize_docs(lines_from, lines_to, processing_from_to, res_img, res_img_best, lang_from, lang_to)
@@ -163,12 +170,14 @@ def get_processing(username, lang_from, lang_to, file_id, count, page):
             "text_orig": line_from_orig.text.strip(),
             "trans": [{
                 "text": t[0].text.strip(), 
-                "line_id":t[0].line_id, 
+                "line_id": t[0].line_id,
+                "proxy": t[0].proxy,
                 "sim": t[1]
                 } for t in candidates],
             "selected": {
                 "text": line_to[0].text.strip(),
                 "line_id": line_to[0].line_id,
+                "proxy": line_to[0].proxy,
                 "sim": line_to[1]
                 }})
     total_pages = (lines_count//count) + (1 if lines_count%count != 0 else 0)

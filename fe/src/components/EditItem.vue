@@ -50,6 +50,9 @@
                     @blur="editProcessing($event, item.line_id, 'to')" @input="onTextChange('to')"
                     :value="item.selected.text">
                   </v-textarea>
+                  <div v-if="item.selected.proxy" class="mt-3" style="border-top:1px solid #ddd; font-size:14px;">  
+                    {{item.selected.proxy}}
+                  </div>
                 </div>
                 <div class="d-table-cell" style="width:15px">
                   <i class="v-icon mdi mdi-chevron-down theme--light"
@@ -78,6 +81,9 @@
                 <div class="d-table-cell yellow pa-2 fill-width"
                   :class="[{'lighten-4': t.line_id==item.selected.line_id}, {'lighten-5': t.line_id!=item.selected.line_id}]">
                   {{ t.text }}
+                  <div v-if="t.proxy" class="mt-4" style="border-top:1px solid #eee; font-size:14px;">  
+                    {{t.proxy}}
+                  </div>
                 </div>
               </div>
             </div>
