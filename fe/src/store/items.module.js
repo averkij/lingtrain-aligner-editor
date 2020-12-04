@@ -49,19 +49,21 @@ export const actions = {
     return data;
   },
   async [FETCH_ITEMS_PROCESSING](context, params) {
-    const {
-      data
-    } = await ItemsService.fetchItemsProcessing(params);
-
-    console.log("FETCH_ITEMS_PROCESSING params", params)
-
-    console.log(">>>data:", data.items)
-
-    context.commit(SET_ITEMS_PROCESSING, {
-      items: data.items,
-      langCode: params.langCodeFrom
-    });
-    return data;
+    await ItemsService.fetchItemsProcessing(params).then(
+      function (response) {
+        console.log(response)
+        context.commit(SET_ITEMS_PROCESSING, {
+          items: response.data.items,
+          langCode: params.langCodeFrom
+        });
+      },
+      function () {
+        console.log('No graph file was found.')
+        context.commit(SET_ITEMS_PROCESSING, {
+          items: null,
+          langCode: params.langCodeFrom
+        });
+      });
   },
   // params {file, username, langCode}
   async [UPLOAD_FILES](context, params) {

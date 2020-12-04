@@ -3,9 +3,7 @@
     <div class="d-flex">
       <div class="text-h3 mt-5 ml-3">
         <span class="text-capitalize">Lexigraph</span>
-        <!-- ✒️ Hello, <span class="text-capitalize">{{ username }}!</span> -->
         <div class="text-subtitle-1 mt-2 pl-1">Строим графы из текста</div>
-        <!-- <div class="text-subtitle-2 text-right">— Somebody</div> -->
       </div>
     </div>
 
@@ -17,7 +15,7 @@
     </v-alert>
     <div class="mt-6">
       <v-row>
-        <v-col cols="12" sm="12">
+        <v-col cols="12" sm="6">
           <RawPanel @uploadFile="uploadFile" @onFileChange="onFileChange" @selectAndLoadPreview="selectAndLoadPreview"
             :info="LANGUAGES[langCodeFrom]" :items=items :isLoading=isLoading>
           </RawPanel>
@@ -25,98 +23,94 @@
       </v-row>
     </div>
 
-    <!-- SPLITTED panels -->
-    <div v-show="false">
-    <div class="text-h4 mt-10 font-weight-bold">🔍 Preview</div>
-    <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2">
-      Documents are splitted by sentences using language specific rules.
-    </v-alert>
-    <v-row>
-      <v-col cols="12" sm="6">
-        <SplittedPanel @onPreviewPageChange="onPreviewPageChange" @downloadSplitted="downloadSplitted"
-          :info="LANGUAGES[langCodeFrom]" :splitted=splitted :selected=selected>
-        </SplittedPanel>
-      </v-col>
-      <v-col cols="12" sm="6">
-        <SplittedPanel @onPreviewPageChange="onPreviewPageChange" @downloadSplitted="downloadSplitted"
-          :info="LANGUAGES[langCodeTo]" :splitted=splitted :selected=selected>
-        </SplittedPanel>
-      </v-col>
-    </v-row>
-    </div>
+    <!-- PROCESSING panels -->
+    <div class="text-h4 mt-10 font-weight-bold">✒️ Результат</div>
 
-    <!-- ALIGN panels -->
-    <div class="text-h4 mt-10 font-weight-bold">💡 Расчеты</div>
-    <v-alert v-show="false" type="info" border="left" colored-border color="blue" class="mt-6" elevation="2">
-      This is a test version. Only {{TEST_LIMIT}} lines will be aligned.
-    </v-alert>
-    <v-row class="mt-6">
-      <v-col cols="12" sm="12">
-        <InfoPanel :info="LANGUAGES[langCodeFrom]" :splitted=splitted :selected=selected></InfoPanel>
-      </v-col>
-      <!-- <v-col cols="12" sm="6" >
-        <InfoPanel :info="LANGUAGES[langCodeTo]" :splitted=splitted :selected=selected></InfoPanel>
-      </v-col> -->
-    </v-row>
-    <!-- <v-btn v-if="!userAlignInProgress" v-show="selected[langCodeFrom] && selected[langCodeTo]" class="success mt-6"
-      :loading="isLoading.align || isLoading.alignStopping" :disabled="isLoading.align || isLoading.alignStopping"
-      @click="align()">
-      Align documents
-    </v-btn>
-    <v-btn v-else v-show="selected[langCodeFrom] && selected[langCodeTo]" class="error mt-6" @click="stopAlignment()">
-      Stop alignment
-    </v-btn>  -->
-    <v-btn v-if="!userAlignInProgress" v-show="selected[langCodeFrom]" class="success mt-6"
+    <v-btn v-if="!userAlignInProgress && !itemsProcessing[langCodeFrom]" v-show="selected[langCodeFrom]" class="success mt-6"
       :loading="isLoading.align || isLoading.alignStopping" :disabled="isLoading.align || isLoading.alignStopping"
       @click="calculateGraphs()">
       Посчитать
     </v-btn>
-    <v-btn v-else v-show="selected[langCodeFrom]" class="error mt-6" @click="stopAlignment()">
-      Stop alignment
-    </v-btn> 
 
-    <!-- PROCESSING panels -->
-    <div class="text-h4 mt-10 font-weight-bold">✒️ Результат</div>
+    <div v-else>
 
-    <div class="text-h5 mt-10 font-weight-bold">Наибольшие связи между буквами</div>
-    <div class="mt-6">
-      <!-- {{itemsProcessing}} -->
-      <p v-html="itemsProcessing['ru'].conn_html"></p>
+      <div class="text-h5 mt-10 font-weight-bold">Наибольшие связи между буквами</div>
+      <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+      </v-alert>
+      <div class="mt-6 rendered-table">
+        <!-- {{itemsProcessing}} -->
+        <p v-html="itemsProcessing['ru'].conn_html"></p>
+      </div>
+
+      <div class="text-h5 mt-10 font-weight-bold">Степени букв</div>
+      <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+      </v-alert>
+      <div class="mt-6 rendered-table">
+        <p v-html="itemsProcessing['ru'].deg_html"></p>
+      </div>
+
+      <div class="text-h5 mt-10 font-weight-bold">Центральности букв</div>
+      <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+      </v-alert>
+      <div class="mt-6 rendered-table">
+        <p v-html="itemsProcessing['ru'].centr_html"></p>
+      </div>
+
+      <div class="text-h5 mt-10 font-weight-bold">Плотность связей букв</div>
+      <div class="mt-6 rendered-table">
+        {{itemsProcessing['ru'].density}}
+      </div>
+
+      <div class="text-h5 mt-10 font-weight-bold">Спектр графа (собственные векторы)</div>
+      <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+      </v-alert>
+      <div class="mt-6 rendered-table">
+        <p v-html="itemsProcessing['ru'].spectr_html"></p>
+      </div>
+
+      <div class="text-h5 mt-10 font-weight-bold">Визуализация спектра</div>
+      <div class="mt-6" style="width:800px;">
+        <v-img :src="`${API_URL}/static/img/${username}/${itemsProcessing['ru'].spectr_img}`" :lazy-src="`${API_URL}/static/proc_img_stub.jpg`">
+              <template v-slot:placeholder>
+                <v-row class="fill-height ma-0" align="center" justify="center">
+                  <v-progress-circular indeterminate color="green"></v-progress-circular>
+                </v-row>
+              </template>
+            </v-img>
+      </div>
+
+      <div class="text-h5 mt-10 font-weight-bold">Кластеры</div>
+      <div class="mt-6 rendered-table">
+        <table class="cluster-table" v-if="itemsProcessing['ru'].clusters">
+          <tr>
+            <td><span class="cluster-symbol" v-for="(s,i) in itemsProcessing['ru'].clusters[3]" :key="i">{{s}}</span></td>
+            <td><span class="cluster-symbol" v-for="(s,i) in itemsProcessing['ru'].clusters[0]" :key="i">{{s}}</span></td>
+          </tr>
+          <tr>
+            <td><span class="cluster-symbol" v-for="(s,i) in itemsProcessing['ru'].clusters[2]" :key="i">{{s}}</span></td>
+            <td><span class="cluster-symbol" v-for="(s,i) in itemsProcessing['ru'].clusters[1]" :key="i">{{s}}</span></td>
+          </tr>
+        </table>
+      </div>
+
+
+      <!-- <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2"
+        v-if="!itemsProcessing || !itemsProcessing[langCodeFrom] || (itemsProcessing[langCodeFrom].length == 0)">
+        There are no previously aligned documents yet.
+      </v-alert> -->
     </div>
-
-    <div class="text-h5 mt-10 font-weight-bold">Степени букв</div>
-    <div class="mt-6">
-      <p v-html="itemsProcessing['ru'].deg_html"></p>
-    </div>
-
-    <div class="text-h5 mt-10 font-weight-bold">Центральности букв</div>
-    <div class="mt-6">
-      <p v-html="itemsProcessing['ru'].centr_html"></p>
-    </div>
-
-    <div class="text-h5 mt-10 font-weight-bold">Плотность связей букв</div>
-    <div class="mt-6">
-      {{itemsProcessing['ru'].density}}
-    </div>
-
-    <div class="text-h5 mt-10 font-weight-bold">Спектр графа (собственные векторы)</div>
-    <div class="mt-6">
-      <p v-html="itemsProcessing['ru'].spectr_html"></p>
-    </div>
-
-    <!-- <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2"
-      v-if="!itemsProcessing || !itemsProcessing[langCodeFrom] || (itemsProcessing[langCodeFrom].length == 0)">
-      There are no previously aligned documents yet.
-    </v-alert> -->
-
   </div>
 </template>
 
 <script>
   import RawPanel from "@/components/RawPanel";
   // import DownloadPanel from "@/components/DownloadPanel";
-  import SplittedPanel from "@/components/SplittedPanel";
-  import InfoPanel from "@/components/InfoPanel";
+  // import SplittedPanel from "@/components/SplittedPanel";
+  // import InfoPanel from "@/components/InfoPanel";
   // import EditItem from "@/components/EditItem";
   import {
     mapGetters
@@ -540,8 +534,8 @@
       // EditItem,
       RawPanel,
       // DownloadPanel,
-      SplittedPanel,
-      InfoPanel
+      // SplittedPanel,
+      // InfoPanel
     }
   };
 </script>

@@ -114,7 +114,8 @@ def align(username, lang_from, lang_to, id_from):
     helper.check_folder(processing_folder_from_to)
     processing_from_to = os.path.join(processing_folder_from_to, files_from[id_from])
     
-    res_img = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{files_from[id_from]}.png")
+    res_img = f"{files_from[id_from]}.png"
+    res_img_path = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username, res_img)
     res_path = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{files_from[id_from]}.html.bin")
     splitted_from = os.path.join(con.UPLOAD_FOLDER, username, con.RAW_FOLDER, lang_from, files_from[id_from])
     # splitted_to = os.path.join(con.UPLOAD_FOLDER, username, con.RAW_FOLDER, lang_to, files_to[id_to])
@@ -135,7 +136,7 @@ def align(username, lang_from, lang_to, id_from):
     # alignment = Process(target=aligner.serialize_docs, args=(lines_from, lines_to, processing_from_to, res_img, res_img_best, lang_from, lang_to), daemon=True)
     # alignment.start()
 
-    aligner.calculate_graphs(lines_from, processing_from_to, res_img, res_path, lang_from, lang_to)
+    aligner.calculate_graphs(lines_from, processing_from_to, res_img, res_img_path, res_path, lang_from, lang_to)
     return con.EMPTY_LINES
 
 @app.route("/items/<username>/processing/<lang_from>/<lang_to>/<int:file_id>/<int:count>/<int:page>", methods=["GET"])
@@ -231,6 +232,9 @@ def list_processing(username, file_id, lang_from, lang_to):
     files = helper.get_files_list(raw_folder)        
     res_path = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{files[file_id]}.html.bin")
     
+    if not os.path.isfile(res_path):
+        abort(404)
+
     # print(res_path)
 
     #TODO add language validation

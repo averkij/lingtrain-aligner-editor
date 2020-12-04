@@ -3,18 +3,18 @@
     margin-top: 0px !important;
 }
 
-.ta-custom > .v-input__control > .v-input__slot:before {
-    border-style:none !important;
+.ta-custom>.v-input__control>.v-input__slot:before {
+    border-style: none !important;
 }
 
-.ta-custom > .v-input__control > .v-input__slot {
+.ta-custom>.v-input__control>.v-input__slot {
     margin-bottom: 0 !important;
     padding: 0px 0px 0 0px !important;
 }
 
-.ta-custom > .v-input__control > .v-text-field__details {
+.ta-custom>.v-input__control>.v-text-field__details {
     display: none !important;
-} 
+}
 
 .fill-width {
     width: 100%;
@@ -29,31 +29,76 @@
     transition: all 0.1s linear;
 }
 
+.rendered-table {
+    overflow: auto;
+}
+
 table {
-        border-collapse: collapse;
-        font-size: 0.9em;
-        min-width: 400px;
+    border-collapse: collapse;
+    min-width: 400px;
+    width:100%;
 }
 
 table thead tr {
-    background-color: #fafafa;
+    background-color: #fff;
     color: #000;
-    text-align: center;
+    text-align: center !important;
+    border: 0px #fff solid !important;
+    border-bottom: 1px #aaa solid !important;
+}
+
+thead {
+    border: 0px #fff solid !important;
 }
 
 table th,
 table td {
     padding: 5px 5px;
+    text-align: center;
+    /* font-family: 'Roboto Mono', monospace; */
+    font-size: 14px;
+    /* min-width: 38px; */
+    border: 0px #fff solid !important;
 }
 
-table  {
+table#spectr td,
+table#spectr th {
+    text-align: right;
+}
+
+table#edges {
+    width: 300px !important;
+}
+
+table {
     border: 1px solid #dddddd;
+    border: 0px #fff solid !important;
 }
 
 table tbody tr:nth-of-type(even) {
     background-color: #f3f3f3;
 }
+
 /* 
 table tbody tr:last-of-type {
     border-bottom: 1px solid #000;
 } */
+
+.cluster-symbol {
+    padding:5px;
+}
+
+.cluster-table {
+    border: 1px solid grey !important;
+    width: 100px !important;
+}
+
+.cluster-table td {
+    height: 200px;
+    word-break: break-all;
+    width: 50% !important;
+    padding: 10px !important;
+    line-height: 3em;
+    font-size: 20px;
+    border: 1px solid grey !important;
+}
