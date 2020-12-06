@@ -1,6 +1,7 @@
 <template>
   <div>
     <v-row justify="center" no-gutters>
+      <!-- left side -->
       <v-col class="text-left" cols="6">
         <div class="d-table fill-height">
           <div class="d-table-cell grey lighten-5 pa-2 text-center font-weight-medium" style="min-width:45px">
@@ -22,6 +23,7 @@
           </div>
         </div>
       </v-col>
+      <!-- right side -->
       <v-col class="text-left" cols="6">
         <div class="d-table fill-height fill-width">
           <v-divider class="d-table-cell" vertical></v-divider>
@@ -50,7 +52,8 @@
                     @blur="editProcessing($event, item.line_id, 'to')" @input="onTextChange('to')"
                     :value="item.selected.text">
                   </v-textarea>
-                  <div v-if="item.selected.proxy" class="mt-3" style="border-top:1px solid #ddd; font-size:14px;">  
+                  <!-- PROXY TRANSLATION TEXT -->
+                  <div v-if="showProxyTo == 'true' && item.selected.proxy" class="mt-3" style="border-top:1px solid #ddd; font-size:14px;">  
                     {{item.selected.proxy}}
                   </div>
                 </div>
@@ -81,7 +84,7 @@
                 <div class="d-table-cell yellow pa-2 fill-width"
                   :class="[{'lighten-4': t.line_id==item.selected.line_id}, {'lighten-5': t.line_id!=item.selected.line_id}]">
                   {{ t.text }}
-                  <div v-if="t.proxy" class="mt-4" style="border-top:1px solid #eee; font-size:14px;">  
+                  <div v-if="showProxyTo == 'true' && t.proxy" class="mt-4" style="border-top:1px solid #eee; font-size:14px;">  
                     {{t.proxy}}
                   </div>
                 </div>
@@ -108,7 +111,7 @@
   } from "@/common/constants"
   export default {
     name: "EditItem",
-    props: ["item", "collapse"],
+    props: ["item", "collapse", "showProxyTo"],
     data() {
       return {
         state: STATE_SAVED,

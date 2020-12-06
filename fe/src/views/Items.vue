@@ -10,7 +10,7 @@
         <!-- <div class="text-subtitle-2 text-right">— Somebody</div> -->
       </div>
     </div>
-
+    
     <div class="text-h4 mt-15 font-weight-bold">💾 Documents</div>
     <v-alert type="info" class="mt-6" v-show="showAlert">
       There are no uploaded documents yet. Please upload some using the form
@@ -149,11 +149,20 @@
         colored-border color="info" class="mt-6" elevation="2">
         Please, wait. Alignment is in progress.
       </v-alert>
+
+      <!-- EDIT ITEMS block-->
       <v-card v-else class="mt-6">
         <div class="green lighten-5" dark>
+
+          <!-- title -->
           <v-card-title class="pr-3">
             {{selectedProcessing.name}}
             <v-spacer></v-spacer>
+
+            <v-icon>mdi-translate</v-icon>  
+            <v-switch value="true" v-model="showProxyTo" class="mx-2"></v-switch>
+            <!-- <div>showTranslation: {{clientSettings}}</div> -->
+
             <v-btn icon @click="collapseEditItems">
               <v-icon>mdi-collapse-all</v-icon>
             </v-btn>
@@ -161,10 +170,14 @@
           <v-card-text>Review and edit automatically aligned document</v-card-text>
         </div>
         <v-divider></v-divider>
+
+        <!-- items -->
         <div v-for="(line, i) in processing.items" :key="i">
-          <EditItem @editProcessing="editProcessing" :item="line" :collapse="triggerCollapseEditItem"></EditItem>
+          <EditItem @editProcessing="editProcessing" :item="line" :collapse="triggerCollapseEditItem" :showProxyTo="showProxyTo"></EditItem>
           <v-divider></v-divider>
         </div>
+
+        <!-- pagination -->
         <div class="text-center pa-3">
           <v-pagination v-model="processing.meta.page" :length="processing.meta.total_pages" total-visible="10"
             @input="onProcessingPageChange(processing.meta.page)">
@@ -237,8 +250,11 @@
     LANGUAGES,
     DEFAULT_FROM,
     DEFAULT_TO,
-    LanguageHelper
+    LanguageHelper,
   } from "@/common/language.helper";
+  import {
+    SettingsHelper
+  } from "@/common/settings.helper";
   import {
     RESULT_OK,
     RESULT_ERROR,
@@ -294,7 +310,8 @@
         triggerCollapseEditItem: false,
         userAlignInProgress: false,
         satisfactionEmojis: ['😍', '😄', '😁', '😊', '🙂', '😐', '🙁', '☹️', '😢', '😭'],
-        downloadThreshold: 9
+        downloadThreshold: 9,
+        showProxyTo: SettingsHelper.getShowProxyTo()
       };
     },
     methods: {
@@ -568,6 +585,14 @@
         }
         this.selectFirstProcessingDocument();
       });
+      if (localStorage.showProxyTo) {
+        this.showProxyTo = localStorage.showProxyTo;
+      }
+    },
+    watch: {
+      showProxyTo(value) {
+        localStorage.showProxyTo = value
+      }
     },
     computed: {
       ...mapGetters(["items", "itemsProcessing", "splitted", "processing"]),
