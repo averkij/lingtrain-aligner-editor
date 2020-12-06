@@ -4,7 +4,6 @@ import constants as con
 import pathlib
 import pickle
 import glob
-import state_manager as state
 import logging
 from warnings import simplefilter
 
@@ -15,21 +14,6 @@ def get_files_list_with_path(folder, mask="*.txt"):
     if not os.path.isdir(folder):
         return []
     return glob.glob("{0}/{1}".format(folder,mask))
-
-def get_processing_list_with_state(folder, username):
-    res = []
-    for file in get_files_list_with_path(folder):
-        res.append({
-            "name": os.path.basename(file),
-            "state": state.get_processing_state(file, (con.PROC_DONE,0,0)),
-            "imgs": get_files_list(os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username), mask=f"{os.path.basename(file)}.best_*.png"),
-            "sim_grades": get_sim_grades(file)
-            })
-    return res
-
-def get_sim_grades(processing_file):
-    docs = pickle.load(open(processing_file, "rb"))
-    return docs["sim_grades"]
     
 def clean_img_user_foler(username, file):
     imgs = get_files_list_with_path(os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username), mask=f"{os.path.basename(file)}.best_*.png")
