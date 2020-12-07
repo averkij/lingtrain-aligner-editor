@@ -7,6 +7,7 @@ import glob
 import state_manager as state
 import logging
 from warnings import simplefilter
+import sqlite3
 
 def get_files_list(folder, mask="*.txt"):
     return [os.path.basename(x) for x in get_files_list_with_path(folder, mask)]
@@ -56,6 +57,11 @@ def create_folders(username, lang):
         pathlib.Path(os.path.join(con.UPLOAD_FOLDER, username, con.NGRAM_FOLDER, lang)).mkdir(parents=True, exist_ok=True)
         pathlib.Path(os.path.join(con.UPLOAD_FOLDER, username, con.PROCESSING_FOLDER, lang)).mkdir(parents=True, exist_ok=True)
         pathlib.Path(os.path.join(con.UPLOAD_FOLDER, username, con.DONE_FOLDER, lang)).mkdir(parents=True, exist_ok=True)
+
+def init_db(username, db_path):
+    with sqlite3.connect(db_path) as db:
+        db.execute('create table splitted_from(id integer primary key, text nvarchar)')
+        db.execute('create table splitted_to(id integer primary key, text nvarchar)')
 
 def check_folder(folder):
     pathlib.Path(folder).mkdir(parents=True, exist_ok=True) 

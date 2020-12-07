@@ -51,8 +51,17 @@ def items(username, lang):
             logging.debug(f"[{username}]. Loading lang document {file.filename}.")
             upload_path = os.path.join(con.UPLOAD_FOLDER, username, upload_folder, lang, filename)
             file.save(upload_path)
+
+            lang_form = request.form["lang_from"]
+            lang_to = request.form["lang_to"]
+            direction = "from" if lang_form == lang else "to"
+
             if request.form["type"] == "raw":
-                splitter.split_by_sentences(filename, lang, username)
+                db_folder = os.path.join(con.UPLOAD_FOLDER, username, con.DB_FOLDER, lang_form, lang_to)
+                db_path = os.path.join(db_folder, f'{filename}.db')
+                helper.check_folder(db_folder)
+                helper.init_db(username, db_path)
+                splitter.split_by_sentences(filename, lang, username, db_path, direction)
             logging.debug(f"[{username}]. Success. {filename} is loaded.")
         return ('', 200)
     #return documents list

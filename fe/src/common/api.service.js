@@ -69,6 +69,8 @@ export const ItemsService = {
     let form = new FormData();
     form.append(params.langCode, params.file);
     form.append("type", params.isProxy ? "proxy" : "raw");
+    form.append("lang_from", params.langCodeFrom);
+    form.append("lang_to", params.langCodeTo);
     form.append("rawFileName", params.rawFileName);
     return ApiService.post("items",
       `${params.username}/raw/${params.langCode}`,

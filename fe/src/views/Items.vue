@@ -352,7 +352,9 @@
           .dispatch(UPLOAD_FILES, {
             file: this.files[langCode],
             username: this.$route.params.username,
-            langCode
+            langCode,
+            langCodeFrom: this.langCodeFrom,
+            langCodeTo: this.langCodeTo
           })
           .then(() => {
             this.isLoading.upload[langCode] = false;
@@ -367,7 +369,9 @@
             username: this.$route.params.username,
             langCode,
             isProxy: true,
-            rawFileName: this.selected[langCode]
+            rawFileName: this.selected[langCode],
+            langCodeFrom: this.langCodeFrom,
+            langCodeTo: this.langCodeTo
           })
           .then(() => {
             this.isLoading.uploadProxy[langCode] = false;
