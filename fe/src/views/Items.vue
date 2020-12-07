@@ -173,7 +173,12 @@
 
         <!-- items -->
         <div v-for="(line, i) in processing.items" :key="i">
-          <EditItem @editProcessing="editProcessing" :item="line" :collapse="triggerCollapseEditItem" :showProxyTo="showProxyTo"></EditItem>
+          <EditItem @editProcessing="editProcessing"
+                    :item="line"
+                    :prevItem="i == 0 ? processing.items[0] : processing.items[i-1]"
+                    :collapse="triggerCollapseEditItem"
+                    :showProxyTo="showProxyTo">
+          </EditItem>
           <v-divider></v-divider>
         </div>
 

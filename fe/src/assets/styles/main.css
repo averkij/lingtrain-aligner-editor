@@ -28,3 +28,17 @@
 .color-transition {
     transition: all 0.1s linear;
 }
+
+.proxy-to-subtitles {
+    border-top: 0px solid #ddd;
+    font-size :14px;
+    border-radius: 5px;
+    padding: 0px 10px;
+}
+
+.proxy-to-cand-subtitles {
+    border-top: 0px solid #ddd;
+    font-size: 14px;
+    padding: 0px 5px;
+    background: rgba(100, 100, 100, 0.1);
+}
