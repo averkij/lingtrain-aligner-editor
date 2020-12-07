@@ -8,6 +8,7 @@ import state_manager as state
 import logging
 from warnings import simplefilter
 import sqlite3
+import json
 
 def get_files_list(folder, mask="*.txt"):
     return [os.path.basename(x) for x in get_files_list_with_path(folder, mask)]
@@ -59,9 +60,50 @@ def create_folders(username, lang):
         pathlib.Path(os.path.join(con.UPLOAD_FOLDER, username, con.DONE_FOLDER, lang)).mkdir(parents=True, exist_ok=True)
 
 def init_db(username, db_path):
+    print("init database:", db_path)
+    if os.path.isfile(db_path):
+        os.remove(db_path)
     with sqlite3.connect(db_path) as db:
         db.execute('create table splitted_from(id integer primary key, text nvarchar)')
         db.execute('create table splitted_to(id integer primary key, text nvarchar)')
+        db.execute('create table proxy_from(id integer primary key, text nvarchar)')
+        db.execute('create table proxy_to(id integer primary key, text nvarchar)')
+        db.execute('create table processing_from(id integer primary key, text_ids varchar, text nvarchar)')
+        db.execute('create table processing_to(id integer primary key, text_ids varchar, text nvarchar)')
+        db.execute('create table doc_index(id integer primary key, contents varchar)')
+
+def fill_db(db_path, splitted_from, splitted_to, proxy_from, proxy_to):
+    lines = []
+    if os.path.isfile(splitted_from):
+        with open(splitted_from, mode="r", encoding="utf-8") as input_path:
+            lines = input_path.readlines()
+        with sqlite3.connect(db_path) as db:
+            db.executemany(f"insert into splitted_from(text) values (?)", [(x.strip(),) for x in lines])
+
+    if os.path.isfile(splitted_to):
+        with open(splitted_to, mode="r", encoding="utf-8") as input_path:
+            lines = input_path.readlines()
+        with sqlite3.connect(db_path) as db:
+            db.executemany(f"insert into splitted_to(text) values (?)", [(x.strip(),) for x in lines])
+
+    if os.path.isfile(proxy_from):
+        with open(proxy_from, mode="r", encoding="utf-8") as input_path:
+            lines = input_path.readlines()
+        with sqlite3.connect(db_path) as db:
+            db.executemany(f"insert into proxy_from(text) values (?)", [(x.strip(),) for x in lines])
+
+    if os.path.isfile(proxy_to):
+        with open(proxy_to, mode="r", encoding="utf-8") as input_path:
+            lines = input_path.readlines()
+        with sqlite3.connect(db_path) as db:
+            db.executemany(f"insert into proxy_to(text) values (?)", [(x.strip(),) for x in lines])
+
+def create_doc_index(db_path):
+    doc_index = []
+    with sqlite3.connect(db_path) as db:
+        for x in db.execute('SELECT f.id, f.text_ids, t.id, t.text_ids FROM processing_from f join processing_to t on f.id=t.id order by f.id'):
+            doc_index.append(x)
+        db.execute('insert into doc_index(contents) values (?)', [json.dumps(doc_index)])
 
 def check_folder(folder):
     pathlib.Path(folder).mkdir(parents=True, exist_ok=True) 

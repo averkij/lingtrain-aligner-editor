@@ -46,22 +46,12 @@ def items(username, lang):
             if request.form["type"] == "proxy":
                 upload_folder = con.PROXY_FOLDER
                 filename = request.form["rawFileName"]
-                # print("rawFileName", request.form)
             
             logging.debug(f"[{username}]. Loading lang document {file.filename}.")
             upload_path = os.path.join(con.UPLOAD_FOLDER, username, upload_folder, lang, filename)
             file.save(upload_path)
-
-            lang_form = request.form["lang_from"]
-            lang_to = request.form["lang_to"]
-            direction = "from" if lang_form == lang else "to"
-
             if request.form["type"] == "raw":
-                db_folder = os.path.join(con.UPLOAD_FOLDER, username, con.DB_FOLDER, lang_form, lang_to)
-                db_path = os.path.join(db_folder, f'{filename}.db')
-                helper.check_folder(db_folder)
-                helper.init_db(username, db_path)
-                splitter.split_by_sentences(filename, lang, username, db_path, direction)
+                splitter.split_by_sentences(filename, lang, username)
             logging.debug(f"[{username}]. Success. {filename} is loaded.")
         return ('', 200)
     #return documents list
@@ -132,6 +122,7 @@ def align(username, lang_from, lang_to, id_from, id_to):
     splitted_from = os.path.join(con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_from, files_from[id_from])
     splitted_to = os.path.join(con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_to, files_to[id_to])
     proxy_to = os.path.join(con.UPLOAD_FOLDER, username, con.PROXY_FOLDER, lang_to, files_to[id_to])
+    proxy_from = os.path.join(con.UPLOAD_FOLDER, username, con.PROXY_FOLDER, lang_to, files_to[id_to])
     
     logging.info(f"[{username}]. Cleaning images.")
     helper.clean_img_user_foler(username, files_from[id_from])
@@ -151,8 +142,18 @@ def align(username, lang_from, lang_to, id_from, id_to):
             lines_proxy_to = input_proxy_to.readlines()
 
     #TODO refactor to queues (!)
-    state.init_processing(processing_from_to, (con.PROC_INIT, config.TEST_RESTRICTION_MAX_BATCHES, 0))   
-    alignment = Process(target=aligner.serialize_docs, args=(lines_from, lines_to, lines_proxy_to, processing_from_to, res_img, res_img_best, lang_from, lang_to), daemon=True)
+    #init
+    
+    print("adding splitted and proxy texts to database")
+    db_folder = os.path.join(con.UPLOAD_FOLDER, username, con.DB_FOLDER, lang_from, lang_to)
+    db_path = os.path.join(db_folder, f'{files_from[id_from]}.db')
+    helper.check_folder(db_folder)
+    helper.init_db(username, db_path)
+    helper.fill_db(db_path, splitted_from, splitted_to, proxy_from, proxy_to)
+    
+    print("aligning...")
+    state.init_processing(processing_from_to, (con.PROC_INIT, config.TEST_RESTRICTION_MAX_BATCHES, 0))    
+    alignment = Process(target=aligner.serialize_docs, args=(lines_from, lines_to, lines_proxy_to, processing_from_to, res_img, res_img_best, lang_from, lang_to, db_path), daemon=True)
     alignment.start()
 
     #aligner.serialize_docs(lines_from, lines_to, processing_from_to, res_img, res_img_best, lang_from, lang_to)

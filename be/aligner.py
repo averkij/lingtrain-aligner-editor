@@ -19,9 +19,12 @@ import model_dispatcher
 import sim_helper
 import state_manager as state
 
+import sqlite3
 
 
-def serialize_docs(lines_from, lines_to, lines_proxy_to, processing_from_to, res_img, res_img_best, lang_name_from, lang_name_to, threshold=config.DEFAULT_TRESHOLD, batch_size=config.DEFAULT_BATCHSIZE, window_size=config.DEFAULT_WINDOW):
+
+def serialize_docs(lines_from, lines_to, lines_proxy_to, processing_from_to, res_img, res_img_best, lang_name_from, lang_name_to, db_path, \
+                    threshold=config.DEFAULT_TRESHOLD, batch_size=config.DEFAULT_BATCHSIZE, window_size=config.DEFAULT_WINDOW):
     batch_number = 0
     docs = {
         "items":[],
@@ -81,14 +84,17 @@ def serialize_docs(lines_from, lines_to, lines_proxy_to, processing_from_to, res
             sims.extend(sim_matrix_best[range(best_sim_ind.shape[0]), best_sim_ind])            
 
             lines_proxy_to_batch = [''] * len(lines_to_batch)
-            print(">> len(lines_to)", len(lines_to_batch))
+            # print(">> len(lines_to)", len(lines_to_batch))
             if use_proxy_to:
                 lines_proxy_to_batch = lines_proxy_to[line_ids_to[0]:line_ids_to[-1]+1]
 
             # Actual work
             logging.debug(f"Processing lines.")
-            doc = get_processed(lines_from_batch, lines_to_batch, lines_proxy_to_batch, line_ids_from, line_ids_to, sim_matrix, sim_matrix_best, best_sim_ind, zero_treshold, batch_number, batch_size)
+            doc = get_processed(lines_from_batch, lines_to_batch, lines_proxy_to_batch, line_ids_from, line_ids_to, \
+                sim_matrix, sim_matrix_best, best_sim_ind, zero_treshold, batch_number, batch_size, db_path)
             docs["items"].append(doc)
+
+        helper.create_doc_index(db_path)
 
         sim_grades = calc_sim_grades(sims)
         docs["sim_grades"] = sim_grades
@@ -116,7 +122,26 @@ def calc_sim_grades(sims):
 def get_line_vectors(lines):
     return model_dispatcher.models[config.MODEL].embed(lines)
 
-def get_processed(lines_from, lines_to, lines_proxy_to, line_ids_from, line_ids_to, sim_matrix, sim_matrix_best, best_sim_ind, threshold, batch_number, batch_size, candidates_count=50):
+def get_processed(lines_from, lines_to, lines_proxy_to, line_ids_from, line_ids_to, sim_matrix, sim_matrix_best, best_sim_ind, \
+                    threshold, batch_number, batch_size, db_path, candidates_count=50):
+    #saving to db
+    texts_from = []
+    texts_to = []
+
+    for line_from_id in range(sim_matrix.shape[0]):
+        id_from = line_ids_from[line_from_id]
+        text_from = lines_from[line_from_id]
+        id_to = line_ids_to[best_sim_ind[line_from_id]]
+        text_to = lines_to[best_sim_ind[line_from_id]]
+
+        texts_from.append((f'[{id_from}]', text_from))
+        texts_to.append((f'[{id_to}]', text_to))
+    
+    with sqlite3.connect(db_path) as db:
+        db.executemany(f"insert into processing_from(text_ids, text) values (?,?)", texts_from)
+        db.executemany(f"insert into processing_to(text_ids, text) values (?,?)", texts_to)
+
+    #saving to object        
     doc = {}
     for line_from_id in range(sim_matrix.shape[0]):
         line_id_from_abs = line_ids_from[line_from_id]
