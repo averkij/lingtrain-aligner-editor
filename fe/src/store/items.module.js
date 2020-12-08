@@ -13,6 +13,7 @@ import {
   DOWNLOAD_SPLITTED,
   DOWNLOAD_PROCESSING,
   GET_SPLITTED,
+  GET_DOC_INDEX,
   GET_PROCESSING,
   EDIT_PROCESSING,
   STOP_ALIGNMENT,
@@ -24,6 +25,7 @@ import {
   SET_ITEMS_PROCESSING,
   SET_SPLITTED,
   SET_PROCESSING,
+  SET_DOC_INDEX
 } from "./mutations.type";
 
 const initialState = {
@@ -87,7 +89,17 @@ export const actions = {
     });
     return;
   },
-  // params {fileId, username}
+  async [GET_DOC_INDEX](context, params) {
+    await ItemsService.getDocIndex(params).then(
+      function (response) {
+        context.commit(SET_DOC_INDEX, response.data);
+      },
+      function () {
+        console.log(`Didn't find database.`);
+      }
+    );
+    return;
+  },
   async [GET_PROCESSING](context, params) {
     await ItemsService.getProcessing(params).then(
       function (response) {
@@ -129,6 +141,9 @@ export const mutations = {
   },
   [SET_PROCESSING](state, data) {
     state.processing = data;
+  },
+  [SET_DOC_INDEX](state, data) {
+    state.docIndex = data.items;
   }
 };
 
@@ -144,7 +159,10 @@ const getters = {
   },
   processing(state) {
     return state.processing;
-  }
+  },
+  docIndex(state) {
+    return state.docIndex;
+  },
 };
 
 export default {

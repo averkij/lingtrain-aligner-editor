@@ -112,6 +112,12 @@ export const ItemsService = {
       `${params.username}/processing/${params.langCodeFrom}/${params.langCodeTo}/${params.fileId}/${params.linesCount}/${params.page}`
     );
   },
+  getDocIndex(params) {
+    return ApiService.get(
+      "items",
+      `${params.username}/processing/${params.langCodeFrom}/${params.langCodeTo}/${params.fileId}/index`
+    );
+  },
   stopAlignment(params) {
     return ApiService.post(
       "items",

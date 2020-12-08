@@ -68,8 +68,8 @@ def init_db(username, db_path):
         db.execute('create table splitted_to(id integer primary key, text nvarchar)')
         db.execute('create table proxy_from(id integer primary key, text nvarchar)')
         db.execute('create table proxy_to(id integer primary key, text nvarchar)')
-        db.execute('create table processing_from(id integer primary key, text_ids varchar, text nvarchar)')
-        db.execute('create table processing_to(id integer primary key, text_ids varchar, text nvarchar)')
+        db.execute('create table processing_from(id integer primary key, text_ids varchar, initial_id integer, text nvarchar)')
+        db.execute('create table processing_to(id integer primary key, text_ids varchar, initial_id integer, text nvarchar)')
         db.execute('create table doc_index(id integer primary key, contents varchar)')
 
 def fill_db(db_path, splitted_from, splitted_to, proxy_from, proxy_to):
@@ -100,10 +100,87 @@ def fill_db(db_path, splitted_from, splitted_to, proxy_from, proxy_to):
 
 def create_doc_index(db_path):
     doc_index = []
+    logging.info(f"creating index for {db_path}")
+
     with sqlite3.connect(db_path) as db:
         for x in db.execute('SELECT f.id, f.text_ids, t.id, t.text_ids FROM processing_from f join processing_to t on f.id=t.id order by f.id'):
             doc_index.append(x)
         db.execute('insert into doc_index(contents) values (?)', [json.dumps(doc_index)])
+        
+    logging.info(f"index successfully created for {db_path}")
+
+def get_doc_index(db_path):
+    res = []
+    try:
+        with sqlite3.connect(db_path) as db:
+            cur = db.execute('SELECT contents FROM doc_index')
+            res = json.loads(cur.fetchone()[0])
+    except:
+        logging.error("can not fetch index")
+    return res
+
+def get_doc_page(db_path, page):
+    res = []
+
+    with sqlite3.connect(db_path) as db:
+        db.execute('DROP TABLE If EXISTS temp.text_ids')
+        db.execute('CREATE TEMP TABLE text_ids(rank integer primary key, id integer)')
+        db.executemany('insert into temp.text_ids(id) values(?)', [(x[0],) for x in page])
+        for text_from, text_to, proxy_from, proxy_to in db.execute(
+        '''SELECT
+                f.text, t.text, pf.text, pt.text
+            FROM
+                processing_from f
+                join
+                    processing_to t
+                        on t.id=f.id
+                left join
+                    proxy_from pf
+                        on pf.id=f.initial_id
+                left join
+                    proxy_to pt
+                        on pt.id=t.initial_id
+                join
+                    temp.text_ids ti
+                        on ti.id = f.id
+            '''
+            ):
+            res.append((text_from, text_to, proxy_from, proxy_to))
+
+    return res
+
+def get_candidates_page(db_path, start_id, end_id):
+    res = []
+
+    with sqlite3.connect(db_path) as db:
+        for id, splitted_to, proxy_to in db.execute(
+        '''SELECT
+                t.id, t.text, pt.text
+            FROM
+                splitted_to t
+                left join
+                    proxy_to pt
+                        on pt.id=t.id
+            WHERE
+                t.id > :start_id and t.id < :end_id
+            ''', { "start_id": start_id, "end_id": end_id }
+            ):
+            res.append((id, splitted_to, proxy_to))
+
+    return res
+
+def get_texts_length(db_path):
+    res = []
+
+    with sqlite3.connect(db_path) as db:
+        cur = db.execute(
+            '''SELECT
+                (select count(*) as len1 from splitted_from),
+                (select count(*) as len2 from splitted_to)
+            '''
+            )
+        res = (cur.fetchone())
+    return res
 
 def check_folder(folder):
     pathlib.Path(folder).mkdir(parents=True, exist_ok=True) 

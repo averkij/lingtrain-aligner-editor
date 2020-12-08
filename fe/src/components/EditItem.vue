@@ -5,7 +5,7 @@
       <v-col class="text-left" cols="6">
         <div class="d-table fill-height">
           <div class="d-table-cell grey lighten-5 pa-2 text-center font-weight-medium" style="min-width:45px">
-            {{ parseInt(item.line_id) + 1 }}
+            {{ lineIdFrom }}
           </div>
           <v-divider class="d-table-cell" vertical></v-divider>
           <div class="d-table-cell fill-width color-transition" :class="[{blue: changed_from},{'lighten-5': changed_from}]">
@@ -14,8 +14,8 @@
                 <div class="d-table-cell">
                   <v-textarea class="ta-custom" auto-grow rows=1 text-wrap @click.native.stop @keyup.space.prevent
                     @keydown.ctrl.83.prevent="$event.target.blur()"
-                    @blur="editProcessing($event, item.line_id, 'from')" @input="onTextChange('from')"
-                    :value="item.text">
+                    @blur="editProcessing($event, item.processing_from_id, 'from')" @input="onTextChange('from')"
+                    :value="item.text_from">
                   </v-textarea>
                 </div>
               </div>
@@ -27,18 +27,19 @@
       <v-col class="text-left" cols="6">
         <div class="d-table fill-height fill-width">
           <v-divider class="d-table-cell" vertical></v-divider>
-          <div class="d-table-cell lighten-5 text-center" style="min-width:45px" :class="{
+          <!-- <div class="d-table-cell lighten-5 text-center" style="min-width:45px" :class="{
                 grey: item.selected.sim <= 0.3,
                 green: item.selected.sim > 0.5,
                 yellow: (item.selected.sim <= 0.5) && (item.selected.sim > 0.3)
-              }">
+              }"> -->
+          <div class="d-table-cell green lighten-5 text-center" style="min-width:45px">
             <div class="fill-height lighten-5 d-flex flex-column justify-space-between">
               <div class="pa-2 font-weight-medium">
-                {{ selectedLineId }}
+                {{ lineIdTo }}
               </div>
-              <div class="text-caption pa-1">
+              <!-- <div class="text-caption pa-1">
                 {{ item.selected.sim | numeral("0.00") }}
-              </div>
+              </div> -->
             </div>
           </div>
           <v-divider class="d-table-cell" vertical></v-divider>
@@ -50,13 +51,13 @@
                   <v-textarea class="ta-custom" auto-grow rows=1 text-wrap @click.native.stop @keyup.space.prevent
                     @keydown.ctrl.83.prevent="$event.target.blur()"
                     @focus="setUneditedText($event)"
-                    @blur="editProcessing($event, item.line_id, 'to')" @input="onTextChange('to')"
-                    :value="item.selected.text">
+                    @blur="editProcessing($event, item.processing_to_id, 'to')" @input="onTextChange('to')"
+                    :value="item.text_to">
                   </v-textarea>
                   <!-- prevItemLineId {{prevSelectedLineId}} -->
                   <!-- PROXY TRANSLATION TEXT -->
-                  <div v-if="showProxyTo == 'true' && item.selected.proxy" class="mt-3 proxy-to-subtitles grey lighten-3 font-weight-medium">  
-                    {{item.selected.proxy}}
+                  <div v-if="showProxyTo == 'true' && item.proxy_to" class="mt-3 proxy-to-subtitles grey lighten-3 font-weight-medium">  
+                    {{item.proxy_to}}
                   </div>
                 </div>
                 <div class="d-table-cell" style="width:15px">
@@ -80,7 +81,7 @@
                 <div class="d-table-cell lighten-5 grey text-center font-weight-medium" style="min-width:45px">
                   <div class="fill-height lighten-5 d-flex flex-column justify-space-between">
                     <div class="pa-2 font-weight-medium">
-                      {{ t.line_id + 1 }}
+                      {{ t.line_id_to }}
                     </div>
 
                     <!-- candidates similarity -->
@@ -91,7 +92,7 @@
                 </div>
                 <v-divider class="d-table-cell" vertical></v-divider>
                 <div class="d-table-cell yellow pa-2 fill-width"
-                  :class="[{'lighten-4': t.line_id==item.selected.line_id}, {'lighten-5': t.line_id!=item.selected.line_id}]">
+                  :class="[{'lighten-4': t.line_id_to==lineIdTo}, {'lighten-5': t.line_id_to!=lineIdTo}]">
                   {{ t.text }}
                   <!-- PROXY TRANSLATION CANDIDATES TEXT -->
                   <div v-if="showProxyTo == 'true' && t.proxy" class="mt-4 proxy-to-cand-subtitles font-weight-medium">  
@@ -171,11 +172,14 @@
       }
     },
     computed: {
-      selectedLineId() {
-        return parseInt(this.item.selected.line_id) + 1;
+      lineIdFrom() {
+        return JSON.parse(this.item.line_id_from)[0]+1;
       },
-      prevSelectedLineId() {
-        return parseInt(this.prevItem.selected.line_id);
+      lineIdTo() {
+        return JSON.parse(this.item.line_id_to)[0]+1;
+      },
+      prevLineIdTo() {
+        return JSON.parse(this.prevItem.line_id_to)[0]+1;
       },
       linesTo() {
         // let sid = this.item.selected.line_id;
@@ -183,13 +187,13 @@
         // let wnd = 5;
         // not working with loadash _ (v-for is hiding)
 
-        let prevLineId = this.prevSelectedLineId;
+        let prevLineId = this.prevLineIdTo;
         // console.log("line_id:", this.selectedLineId, "prev_line_id:", prevLineId, DEFAULT_VARIANTS_WINDOW_TO)
 
         if (this.showLines) {
           return this.item.trans.filter(function (tr) {
 
-            return tr.line_id >= prevLineId;
+            return tr.line_id_to >= prevLineId;
             // return tr.line_id < sid + wnd && tr.line_id > sid - wnd;
           })
           
@@ -198,6 +202,10 @@
 
           //get top values
           .slice(0, 5);
+
+
+
+          // return this.item.trans
         }
         return [];
       }

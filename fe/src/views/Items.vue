@@ -78,6 +78,7 @@
       There are no previously aligned documents yet.
     </v-alert>
 
+    <!-- PROCESSING DOCUMENTS LIST BLOCK -->
     <div v-else class="mt-6">
       <v-card>
         <div class="green lighten-5" dark>
@@ -273,6 +274,7 @@
     FETCH_ITEMS_PROCESSING,
     UPLOAD_FILES,
     GET_SPLITTED,
+    GET_DOC_INDEX,
     GET_PROCESSING,
     STOP_ALIGNMENT,
     EDIT_PROCESSING,
@@ -420,15 +422,26 @@
         this.isLoading.processing = true;
         this.selectedProcessing = item;
         this.selectedProcessingId = fileId;
-        this.$store.dispatch(GET_PROCESSING, {
+
+        this.$store.dispatch(GET_DOC_INDEX, {
           username: this.$route.params.username,
           langCodeFrom: this.langCodeFrom,
           langCodeTo: this.langCodeTo,
-          fileId,
-          linesCount: 10,
-          page: 1
+          fileId
         }).then(() => {
-          this.isLoading.processing = false;
+          console.log("document index", this.docIndex)
+
+          this.$store.dispatch(GET_PROCESSING, {
+            username: this.$route.params.username,
+            langCodeFrom: this.langCodeFrom,
+            langCodeTo: this.langCodeTo,
+            fileId,
+            linesCount: 10,
+            page: 1
+          }).then(() => {
+            console.log("processing", this.processing)
+            this.isLoading.processing = false;
+          });
         });
       },
       editProcessing(line_id, text, text_type, callback) {
@@ -600,7 +613,7 @@
       }
     },
     computed: {
-      ...mapGetters(["items", "itemsProcessing", "splitted", "processing"]),
+      ...mapGetters(["items", "itemsProcessing", "splitted", "processing", "docIndex"]),
       username() {
         return this.$route.params.username;
       },
