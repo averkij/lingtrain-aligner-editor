@@ -175,6 +175,7 @@
         <!-- items -->
         <div v-for="(line, i) in processing.items" :key="i">
           <EditItem @editProcessing="editProcessing"
+                    @editToMoveUpEnd="editToMoveUpEnd"
                     :item="line"
                     :prevItem="i == 0 ? processing.items[0] : processing.items[i-1]"
                     :collapse="triggerCollapseEditItem"
@@ -268,6 +269,7 @@
     PROC_IN_PROGRESS,
     PROC_DONE,
     PROC_ERROR,
+    EDIT_TO_ADD_PREV_END
   } from "@/common/constants"
   import {
     FETCH_ITEMS,
@@ -443,6 +445,28 @@
             this.isLoading.processing = false;
           });
         });
+      },
+      editToMoveUpEnd(processingToId, editItemToText, editItemToIds, textType) {
+        this.$store.dispatch(EDIT_PROCESSING, {
+            username: this.$route.params.username,
+            fileId: this.selectedProcessingId,
+            langCodeFrom: this.langCodeFrom,
+            langCodeTo: this.langCodeTo,
+            processing_id: processingToId,
+            line_id: editItemToIds,
+            text: editItemToText,
+            text_type: textType,
+            operation: EDIT_TO_ADD_PREV_END
+          }).then(() => {
+            this.$store.dispatch(GET_PROCESSING, {
+              username: this.$route.params.username,
+              langCodeFrom: this.langCodeFrom,
+              langCodeTo: this.langCodeTo,
+              fileId: this.selectedProcessingId,
+              linesCount: 10,
+              page: this.processing.meta.page
+            });
+          });
       },
       editProcessing(line_id, text, text_type, callback) {
         this.$store

@@ -119,6 +119,26 @@ def get_doc_index(db_path):
         logging.error("can not fetch index")
     return res
 
+def update_doc_index(db, db_path, index):
+    index = json.dumps(index)
+    db.execute('update doc_index set contents = ?', [index])
+
+def get_processing_text(db_path, text_type, processing_id):
+    res = ("",)
+    with sqlite3.connect(db_path) as db:
+        if text_type == con.TYPE_FROM:
+            cur = db.execute('select text from processing_from where id = :id', {"id": processing_id})
+        else:
+            cur = db.execute('select text from processing_to where id = :id', {"id": processing_id})
+        res = (cur.fetchone())
+    return res
+
+def update_processing(db, db_path, text_type, processing_id, text_ids, text_to_update):
+    if text_type == con.TYPE_FROM:
+        db.execute('update processing_from set text_ids = :text_ids, text = :text where id = :id', {"text_ids":text_ids, "text":text_to_update, "id":processing_id})
+    else:            
+        db.execute('update processing_to set text_ids = :text_ids, text = :text where id = :id', {"text_ids":text_ids, "text":text_to_update, "id":processing_id})
+
 def get_doc_page(db_path, page):
     res = []
 
@@ -245,6 +265,13 @@ def tryParseInt(value):
         return int(value), True
     except ValueError:
         return value, False
+
+def parseJsonArray(str):
+    if not str: return []
+    try:
+        return json.loads(str)
+    except:
+        return []
 
 def configure_logging(level=logging.INFO):
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'

@@ -122,7 +122,7 @@ def align(username, lang_from, lang_to, id_from, id_to):
     splitted_from = os.path.join(con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_from, files_from[id_from])
     splitted_to = os.path.join(con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_to, files_to[id_to])
     proxy_to = os.path.join(con.UPLOAD_FOLDER, username, con.PROXY_FOLDER, lang_to, files_to[id_to])
-    proxy_from = os.path.join(con.UPLOAD_FOLDER, username, con.PROXY_FOLDER, lang_to, files_to[id_to])
+    proxy_from = os.path.join(con.UPLOAD_FOLDER, username, con.PROXY_FOLDER, lang_from, files_to[id_to])
     
     logging.info(f"[{username}]. Cleaning images.")
     helper.clean_img_user_foler(username, files_from[id_from])
@@ -208,18 +208,18 @@ def get_processing(username, lang_from, lang_to, file_id, count, page):
         res.append({
             #from
             "text_from": items[i][0],
-            "line_id_from": pages_wnd[i][1],
-            "processing_from_id": pages_wnd[i][0],
+            "line_id_from": pages_wnd[i][1],        #array with ids
+            "processing_from_id": pages_wnd[i][0],  #primary key in DB (processing_from)
             "proxy_from": items[i][2],
             #to
             "text_to": items[i][1],
-            "line_id_to": pages_wnd[i][3],
-            "processing_to_id": pages_wnd[i][2],
+            "line_id_to": pages_wnd[i][3],          #array with ids
+            "processing_to_id": pages_wnd[i][2],    #primary key in DB (processing_to)
             "proxy_to": items[i][3],
             #candidates
             "trans": [{
                 "text": texts[1], 
-                "line_id_to": texts[0],
+                "processing_to_id": texts[0],       #primary key in DB (proxy_to)
                 "proxy": texts[2],
                 "sim": 1
                 } for texts in candidates[max(0,round(i*k)-wnd) : round(i*k)+wnd]]
@@ -291,20 +291,22 @@ def get_processing(username, lang_from, lang_to, file_id, count, page):
 
 @app.route("/items/<username>/processing/<lang_from>/<lang_to>/<int:file_id>/edit", methods=["POST"])
 def edit_processing(username, lang_from, lang_to, file_id):
-    processing_folder = os.path.join(con.UPLOAD_FOLDER, username, con.PROCESSING_FOLDER, lang_from, lang_to)
-    files = helper.get_files_list(processing_folder)
-    processing_file = os.path.join(processing_folder, files[file_id])
-    if not helper.check_file(processing_folder, files, file_id):
-        abort(404)
-    logging.debug(f"[{username}]. Editing file. {processing_file}.")
-    if not os.path.isfile(processing_file):
+    db_folder = os.path.join(con.UPLOAD_FOLDER, username, con.DB_FOLDER, lang_from, lang_to)
+    files = helper.get_files_list(db_folder, mask="*.db")
+    db_path = os.path.join(db_folder, f'{files[file_id]}')
+    if not os.path.isfile(db_path):
         abort(404)
 
-    line_id, line_id_is_int = helper.tryParseInt(request.form.get("line_id", -1))
+    line_ids = request.form.get("line_id", "[]")
+    processing_id, processing_id_is_int = helper.tryParseInt(request.form.get("processing_id", -1))
     text = request.form.get("text", '')
     text_type = request.form.get("text_type", con.TYPE_TO)
-    if line_id_is_int and line_id >= 0:
-        editor.edit_doc(processing_file, line_id, text, text_type)
+    operation = request.form.get("operation", "")
+
+    print("operation", operation)
+
+    if processing_id_is_int and processing_id >= 0:
+        editor.edit_doc(db_path, processing_id, line_ids, text, operation, text_type)
     else:
         abort(400)
     return ('', 200)

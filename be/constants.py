@@ -22,3 +22,6 @@ PROC_ERROR = 3
 EMPTY_LINES = {"items": {"ru":[], "zh":[]}}
 EMPTY_SIMS = {"items": {"ru":[], "zh":[], "sim":[]}}
 EMPTY_FILES = {"items": {"ru":[]}}
+
+#edit operations
+EDIT_TO_ADD_PREV_END = "edit_to_add_prev_end"

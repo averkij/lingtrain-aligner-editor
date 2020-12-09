@@ -116,8 +116,16 @@ export const actions = {
     return;
   },
   // params {fileId, username}
-  [EDIT_PROCESSING](context, params) {
-    return ItemsService.editProcessing(params);
+  async [EDIT_PROCESSING](context, params) {
+    await ItemsService.editProcessing(params).then(
+      function () {
+        console.log(`EDIT_PROCESSING OK`);
+      },
+      function () {
+        console.log(`Didn't find processing document.`);
+      }
+    );
+    return;
   },
   async [ALIGN_SPLITTED](context, params) {
     await ItemsService.alignSplitted(params);

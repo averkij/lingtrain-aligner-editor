@@ -4,7 +4,7 @@
       <!-- left side -->
       <v-col class="text-left" cols="6">
         <div class="d-table fill-height">
-          <div class="d-table-cell grey lighten-5 pa-2 text-center font-weight-medium" style="min-width:45px">
+          <div class="d-table-cell grey lighten-5 pa-2 text-center font-weight-medium cell-edit-to-index">
             {{ lineIdFrom }}
           </div>
           <v-divider class="d-table-cell" vertical></v-divider>
@@ -25,23 +25,30 @@
       </v-col>
       <!-- right side -->
       <v-col class="text-left" cols="6">
-        <div class="d-table fill-height fill-width">
+        <div class="d-table fill-height fill-width cell-edit-to">
           <v-divider class="d-table-cell" vertical></v-divider>
           <!-- <div class="d-table-cell lighten-5 text-center" style="min-width:45px" :class="{
                 grey: item.selected.sim <= 0.3,
                 green: item.selected.sim > 0.5,
                 yellow: (item.selected.sim <= 0.5) && (item.selected.sim > 0.3)
               }"> -->
-          <div class="d-table-cell green lighten-5 text-center" style="min-width:45px">
-            <div class="fill-height lighten-5 d-flex flex-column justify-space-between">
+          <div class="d-table-cell green lighten-5 cell-edit-to-index text-center">
+            <div class="fill-height lighten-5 d-flex cell-edit-to-index-cont flex-column justify-space-between">
               <div class="pa-2 font-weight-medium">
                 {{ lineIdTo }}
+              </div>
+              <div class="cell-edit-to-action-panel">
+                <div class="cell-edit-button" @click="editToMoveUpEnd()"></div>
+                <div class="cell-edit-button"></div>
+                <!-- <div class="cell-edit-button"></div> -->
+                <!-- <div class="cell-edit-button"></div> -->
               </div>
               <!-- <div class="text-caption pa-1">
                 {{ item.selected.sim | numeral("0.00") }}
               </div> -->
             </div>
           </div>
+          
           <v-divider class="d-table-cell" vertical></v-divider>
           <div class="d-table-cell fill-width color-transition"
             :class="[{blue: changed_to},{'lighten-5': changed_to}]">
@@ -81,7 +88,7 @@
                 <div class="d-table-cell lighten-5 grey text-center font-weight-medium" style="min-width:45px">
                   <div class="fill-height lighten-5 d-flex flex-column justify-space-between">
                     <div class="pa-2 font-weight-medium">
-                      {{ t.line_id_to }}
+                      {{ t.processing_to_id }}
                     </div>
 
                     <!-- candidates similarity -->
@@ -92,7 +99,7 @@
                 </div>
                 <v-divider class="d-table-cell" vertical></v-divider>
                 <div class="d-table-cell yellow pa-2 fill-width"
-                  :class="[{'lighten-4': t.line_id_to==lineIdTo}, {'lighten-5': t.line_id_to!=lineIdTo}]">
+                  :class="[{'lighten-4': t.processing_to_id==lineIdTo}, {'lighten-5': t.processing_to_id!=lineIdTo}]">
                   {{ t.text }}
                   <!-- PROXY TRANSLATION CANDIDATES TEXT -->
                   <div v-if="showProxyTo == 'true' && t.proxy" class="mt-4 proxy-to-cand-subtitles font-weight-medium">  
@@ -137,11 +144,21 @@
       }
     },
     methods: {
+      editToMoveUpEnd() {
+        this.$emit('editToMoveUpEnd', this.item.processing_to_id, this.item.text_to, this.item.line_id_to, "to", (res) => {
+          if (res == RESULT_OK) {
+              console.log("editToMoveUpEnd OK")
+
+              //обновляем предыдущий элемент
+            } else {
+              console.log("Edit error on editToMoveUpEnd.")
+            }
+        });
+      },
       editProcessing(event, line_id, text_type) {
         // event.target.value = event.target.value .replace(/(\r\n|\n|\r)/gm, "")
 
         // #Не сохранять, если не изменилось
-
         let newText = event.target.value;
         if (Helper.trim(newText) != Helper.trim(this.uneditedText)) {
           this.$emit('editProcessing', line_id, newText, text_type, (res) => {
@@ -173,13 +190,14 @@
     },
     computed: {
       lineIdFrom() {
-        return JSON.parse(this.item.line_id_from)[0]+1;
+        return JSON.parse(this.item.line_id_from).map(function(num) { return num }).join(", ");
       },
       lineIdTo() {
-        return JSON.parse(this.item.line_id_to)[0]+1;
+        return JSON.parse(this.item.line_id_to).map(function(num) { return num }).join(", ");
       },
       prevLineIdTo() {
-        return JSON.parse(this.prevItem.line_id_to)[0]+1;
+        //correct
+        return JSON.parse(this.prevItem.line_id_to)[0];
       },
       linesTo() {
         // let sid = this.item.selected.line_id;
@@ -193,7 +211,7 @@
         if (this.showLines) {
           return this.item.trans.filter(function (tr) {
 
-            return tr.line_id_to >= prevLineId;
+            return tr.processing_to_id >= prevLineId;
             // return tr.line_id < sid + wnd && tr.line_id > sid - wnd;
           })
           
