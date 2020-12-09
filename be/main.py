@@ -186,13 +186,6 @@ def get_processing(username, lang_from, lang_to, file_id, count, page):
     wnd = 20
     shift = (page-1)*count
     pages = index[shift:shift+count]
-
-    # start_index = max(0, shift-wnd)
-    # end_index = min(shift+count+wnd, len(index))
-    # pages_wnd = index[start_index:end_index]
-
-    # print("start:", start_index, "end:", end_index)
-
     res = []
 
     items = helper.get_doc_page(db_path, pages)
@@ -227,69 +220,11 @@ def get_processing(username, lang_from, lang_to, file_id, count, page):
                 } for t in candidates[max(0,round(i*k)-wnd) : round(i*k)+wnd]]
             })
 
-    # items_wnd = helper.get_doc_page(db_path, pages_wnd)
-
-    # for texts, data in zip(items, pages):
-    #     res.append({
-    #         #from
-    #         "text_from": texts[0],
-    #         "line_id_from": data[1],
-    #         "processing_from_id": data[0],
-    #         "proxy_from": texts[2],
-    #         #to
-    #         "text_to": texts[1],
-    #         "line_id_to": data[3],
-    #         "processing_to_id": data[2],
-    #         "proxy_to": texts[3],
-    #         #candidates
-    #         "trans": [{
-    #             "text": "t[0].text.strip()", 
-    #             "line_id_to": "t[0].line_id",
-    #             "proxy": "t[0].proxy",
-    #             "sim": 1
-    #             }  ]
-    #         })
-
     lines_count = len(index)
     total_pages = (lines_count//count) + (1 if lines_count%count != 0 else 0)
     meta = {"page": page, "total_pages": total_pages}
 
     return {"items": res, "meta": meta}
-
-
-
-    # processing_folder = os.path.join(con.UPLOAD_FOLDER, username, con.PROCESSING_FOLDER, lang_from, lang_to)
-    # files = helper.get_files_list(processing_folder)
-    # processing_file = os.path.join(processing_folder, files[file_id])
-    # if not helper.check_file(processing_folder, files, file_id):
-    #     abort(404)
-
-    # res = []
-    # lines_count = 0    
-    # shift = (page-1)*count
-    # for line_from_orig, line_from, line_to, candidates in helper.read_processing(processing_file):
-    #     lines_count += 1
-    #     if count>0 and (lines_count<=shift or lines_count>shift+count):
-    #         continue
-    #     res.append({
-    #         "text": line_from[0].text.strip(),
-    #         "line_id": line_from[0].line_id,
-    #         "text_orig": line_from_orig.text.strip(),
-    #         "trans": [{
-    #             "text": t[0].text.strip(), 
-    #             "line_id": t[0].line_id,
-    #             "proxy": t[0].proxy,
-    #             "sim": t[1]
-    #             } for t in candidates],
-    #         "selected": {
-    #             "text": line_to[0].text.strip(),
-    #             "line_id": line_to[0].line_id,
-    #             "proxy": line_to[0].proxy,
-    #             "sim": line_to[1]
-    #             }})
-    # total_pages = (lines_count//count) + (1 if lines_count%count != 0 else 0)
-    # meta = {"page": page, "total_pages": total_pages}
-    # return {"items": res, "meta": meta}
 
 @app.route("/items/<username>/processing/<lang_from>/<lang_to>/<int:file_id>/edit", methods=["POST"])
 def edit_processing(username, lang_from, lang_to, file_id):
