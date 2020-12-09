@@ -134,8 +134,8 @@ def get_processed(lines_from, lines_to, lines_proxy_to, line_ids_from, line_ids_
         id_to = line_ids_to[best_sim_ind[line_from_id]]
         text_to = lines_to[best_sim_ind[line_from_id]]
 
-        texts_from.append((f'[{id_from+1}]', id_from+1, text_from))
-        texts_to.append((f'[{id_to+1}]', id_to+1, text_to))
+        texts_from.append((f'[{id_from+1}]', id_from+1, text_from.strip()))
+        texts_to.append((f'[{id_to+1}]', id_to+1, text_to.strip()))
     
     with sqlite3.connect(db_path) as db:
         db.executemany(f"insert into processing_from(text_ids, initial_id, text) values (?,?,?)", texts_from)
