@@ -25,3 +25,4 @@ EMPTY_FILES = {"items": {"ru":[]}}
 
 #edit operations
 EDIT_TO_ADD_PREV_END = "edit_to_add_prev_end"
+EDIT_DELETE_LINE = "edit_delete_line"

@@ -176,6 +176,7 @@
         <div v-for="(line, i) in processing.items" :key="i">
           <EditItem @editProcessing="editProcessing"
                     @editToMoveUpEnd="editToMoveUpEnd"
+                    @editDeleteLine="editDeleteLine"
                     :item="line"
                     :prevItem="i == 0 ? processing.items[0] : processing.items[i-1]"
                     :collapse="triggerCollapseEditItem"
@@ -190,7 +191,18 @@
             @input="onProcessingPageChange(processing.meta.page)">
           </v-pagination>
         </div>
-      </v-card>
+      </v-card>     
+
+      <div class="text-h4 mt-10 font-weight-bold">🧩 Unused strings</div>
+
+      <v-alert v-if="!processing || !processing.items || processing.items.length == 0" type="info" border="left"
+        colored-border color="info" class="mt-6" elevation="2">
+        Please, wait. Alignment is in progress.
+      </v-alert>
+      <div v-else>
+        <div></div>
+        {{docIndex}}
+      </div>
 
       <div class="text-h4 mt-10 font-weight-bold">🍍 Corpora</div>
 
@@ -269,7 +281,8 @@
     PROC_IN_PROGRESS,
     PROC_DONE,
     PROC_ERROR,
-    EDIT_TO_ADD_PREV_END
+    EDIT_TO_ADD_PREV_END,
+    EDIT_DELETE_LINE
   } from "@/common/constants"
   import {
     FETCH_ITEMS,
@@ -446,18 +459,45 @@
           });
         });
       },
-      editToMoveUpEnd(processingToId, editItemToText, editItemToIds, textType) {
+      editToMoveUpEnd(indexId, processingToId, processingToTargetId, editItemToText, editItemToIds, textType) {
         this.$store.dispatch(EDIT_PROCESSING, {
             username: this.$route.params.username,
             fileId: this.selectedProcessingId,
             langCodeFrom: this.langCodeFrom,
             langCodeTo: this.langCodeTo,
+            indexId: indexId,
             processing_id: processingToId,
+            processing_target_id: processingToTargetId,
             line_id: editItemToIds,
             text: editItemToText,
             text_type: textType,
             operation: EDIT_TO_ADD_PREV_END
           }).then(() => {
+
+          console.log("document index after editing", this.docIndex)
+
+            this.$store.dispatch(GET_PROCESSING, {
+              username: this.$route.params.username,
+              langCodeFrom: this.langCodeFrom,
+              langCodeTo: this.langCodeTo,
+              fileId: this.selectedProcessingId,
+              linesCount: 10,
+              page: this.processing.meta.page
+            });
+          });
+      },
+      editDeleteLine(indexId) {
+        this.$store.dispatch(EDIT_PROCESSING, {
+            username: this.$route.params.username,
+            fileId: this.selectedProcessingId,
+            langCodeFrom: this.langCodeFrom,
+            langCodeTo: this.langCodeTo,
+            indexId: indexId,
+            operation: EDIT_DELETE_LINE
+          }).then(() => {
+
+          console.log("document index after editing", this.docIndex)
+
             this.$store.dispatch(GET_PROCESSING, {
               username: this.$route.params.username,
               langCodeFrom: this.langCodeFrom,

@@ -32,7 +32,8 @@ const initialState = {
   items: LanguageHelper.initItems(),
   itemsProcessing: LanguageHelper.initItems(),
   splitted: LanguageHelper.initSplitted(),
-  processing: LanguageHelper.initProcessing()
+  processing: LanguageHelper.initProcessing(),
+  docIndex: []
 };
 
 export const state = {
@@ -62,10 +63,11 @@ export const actions = {
   },
   // params {file, username, langCode}
   async [UPLOAD_FILES](context, params) {
-    await ItemsService.upload(params);
-    if (!params.isProxy) {
-      await context.dispatch(FETCH_ITEMS, params);
-    }
+    await ItemsService.upload(params).then(() => {
+      if (!params.isProxy) {
+        context.dispatch(FETCH_ITEMS, params);
+      }
+    });
     return;
   },
   // params {fileId, username, langCode, fileName}
@@ -92,13 +94,13 @@ export const actions = {
   async [GET_DOC_INDEX](context, params) {
     await ItemsService.getDocIndex(params).then(
       function (response) {
+        // console.log("setting index", response.data)
         context.commit(SET_DOC_INDEX, response.data);
       },
       function () {
         console.log(`Didn't find database.`);
       }
     );
-    return;
   },
   async [GET_PROCESSING](context, params) {
     await ItemsService.getProcessing(params).then(
@@ -118,8 +120,14 @@ export const actions = {
   // params {fileId, username}
   async [EDIT_PROCESSING](context, params) {
     await ItemsService.editProcessing(params).then(
-      function () {
-        console.log(`EDIT_PROCESSING OK`);
+      () => {
+        console.log(`EDIT_PROCESSING OK. Getting index.`);
+        context.dispatch(GET_DOC_INDEX, {
+          username: params.username,
+          langCodeFrom: params.langCodeFrom,
+          langCodeTo: params.langCodeTo,
+          fileId: params.fileId
+        })
       },
       function () {
         console.log(`Didn't find processing document.`);
@@ -151,6 +159,7 @@ export const mutations = {
     state.processing = data;
   },
   [SET_DOC_INDEX](state, data) {
+    console.log("new index:", data.items)
     state.docIndex = data.items;
   }
 };

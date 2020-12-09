@@ -39,7 +39,7 @@
               </div>
               <div class="cell-edit-to-action-panel">
                 <div class="cell-edit-button" @click="editToMoveUpEnd()"></div>
-                <div class="cell-edit-button"></div>
+                <div class="cell-edit-button" @click="editDeleteLine()"></div>
                 <!-- <div class="cell-edit-button"></div> -->
                 <!-- <div class="cell-edit-button"></div> -->
               </div>
@@ -145,7 +145,7 @@
     },
     methods: {
       editToMoveUpEnd() {
-        this.$emit('editToMoveUpEnd', this.item.processing_to_id, this.item.text_to, this.item.line_id_to, "to", (res) => {
+        this.$emit('editToMoveUpEnd', this.item.index_id, this.item.processing_to_id, this.prevItem.processing_to_id, this.item.text_to, this.item.line_id_to, "to", (res) => {
           if (res == RESULT_OK) {
               console.log("editToMoveUpEnd OK")
 
@@ -154,6 +154,9 @@
               console.log("Edit error on editToMoveUpEnd.")
             }
         });
+      },
+      editDeleteLine() {
+        this.$emit('editDeleteLine', this.item.index_id);
       },
       editProcessing(event, line_id, text_type) {
         // event.target.value = event.target.value .replace(/(\r\n|\n|\r)/gm, "")

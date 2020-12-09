@@ -185,17 +185,17 @@ def get_processing(username, lang_from, lang_to, file_id, count, page):
 
     wnd = 20
     shift = (page-1)*count
-    # pages = index[shift:shift+count]
+    pages = index[shift:shift+count]
 
-    start_index = max(0, shift-wnd)
-    end_index = min(shift+count+wnd, len(index))
-    pages_wnd = index[start_index:end_index]
+    # start_index = max(0, shift-wnd)
+    # end_index = min(shift+count+wnd, len(index))
+    # pages_wnd = index[start_index:end_index]
 
-    print("start:", start_index, "end:", end_index)
+    # print("start:", start_index, "end:", end_index)
 
     res = []
 
-    items = helper.get_doc_page(db_path, pages_wnd)
+    items = helper.get_doc_page(db_path, pages)
 
     text_from_len, text_to_len = helper.get_texts_length(db_path)
     k = text_to_len/text_from_len
@@ -203,26 +203,28 @@ def get_processing(username, lang_from, lang_to, file_id, count, page):
 
     print("from_len:", text_from_len, "to_len:", text_to_len)
 
-    for i in range(min(wnd, shift), min(min(wnd, shift)+count, wnd+len(index)-shift)):
-        print(i)
+    for i, (data, texts) in enumerate(zip(pages, items)):
+        print(shift + i)
+        # print("data",data)
         res.append({
+            "index_id": shift + i, #absolute position in index
             #from
-            "text_from": items[i][0],
-            "line_id_from": pages_wnd[i][1],        #array with ids
-            "processing_from_id": pages_wnd[i][0],  #primary key in DB (processing_from)
-            "proxy_from": items[i][2],
+            "text_from": texts[0],
+            "line_id_from": data[1],        #array with ids
+            "processing_from_id": data[0],  #primary key in DB (processing_from)
+            "proxy_from": texts[2],
             #to
-            "text_to": items[i][1],
-            "line_id_to": pages_wnd[i][3],          #array with ids
-            "processing_to_id": pages_wnd[i][2],    #primary key in DB (processing_to)
-            "proxy_to": items[i][3],
+            "text_to": texts[1],
+            "line_id_to": data[3],          #array with ids
+            "processing_to_id": data[2],    #primary key in DB (processing_to)
+            "proxy_to": texts[3],
             #candidates
             "trans": [{
-                "text": texts[1], 
-                "processing_to_id": texts[0],       #primary key in DB (proxy_to)
-                "proxy": texts[2],
+                "text": t[1], 
+                "processing_to_id": t[0],       #primary key in DB (proxy_to)
+                "proxy": t[2],
                 "sim": 1
-                } for texts in candidates[max(0,round(i*k)-wnd) : round(i*k)+wnd]]
+                } for t in candidates[max(0,round(i*k)-wnd) : round(i*k)+wnd]]
             })
 
     # items_wnd = helper.get_doc_page(db_path, pages_wnd)
@@ -299,14 +301,17 @@ def edit_processing(username, lang_from, lang_to, file_id):
 
     line_ids = request.form.get("line_id", "[]")
     processing_id, processing_id_is_int = helper.tryParseInt(request.form.get("processing_id", -1))
+    processing_target_id, processing_target_id_is_int = helper.tryParseInt(request.form.get("processing_target_id", -1))
+    index_id, index_id_is_int = helper.tryParseInt(request.form.get("index_id", -1))
     text = request.form.get("text", '')
     text_type = request.form.get("text_type", con.TYPE_TO)
     operation = request.form.get("operation", "")
 
     print("operation", operation)
 
-    if processing_id_is_int and processing_id >= 0:
-        editor.edit_doc(db_path, processing_id, line_ids, text, operation, text_type)
+    #TODO перенести в edit_doc, там чекать валидность необходимых параметров
+    if (processing_id_is_int and processing_target_id_is_int) or index_id_is_int:
+        editor.edit_doc(db_path, index_id, processing_id, processing_target_id, line_ids, text, operation, text_type)
     else:
         abort(400)
     return ('', 200)
