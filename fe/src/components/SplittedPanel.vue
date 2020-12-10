@@ -33,10 +33,12 @@
       <v-divider></v-divider>
       <v-card-actions>
         <v-btn @click="downloadSplitted(info.langCode)">Download</v-btn>
+        <v-spacer></v-spacer>
+        <v-btn v-if="showUploadProxyBtn" @click="showUploadProxyPanel = true">Upload translation</v-btn>
       </v-card-actions>
     </v-card>
 
-    <v-card class="mt-5">
+    <v-card v-if="showUploadProxyPanel" class="mt-5">
       <v-card-title>Upload translation</v-card-title>
       <v-card-text>Optionally add translation for the downloaded file.</v-card-text>
       <v-card-actions>
@@ -58,7 +60,12 @@
   import PreviewItem from "@/components/PreviewItem";
   export default {
     name: "SplittedPanel",
-    props: ["info", "splitted", "selected", "isLoading"],
+    props: ["info", "splitted", "selected", "isLoading", "showUploadProxyBtn"],
+    data () {
+      return {
+        showUploadProxyPanel: false
+      }
+    },
     methods: {      
       onProxyFileChange(event, langCode) {
         this.$emit('onProxyFileChange', event, langCode)

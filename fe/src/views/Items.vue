@@ -37,15 +37,29 @@
     </v-alert>
     <v-row>
       <v-col cols="12" sm="6">
-        <SplittedPanel @onPreviewPageChange="onPreviewPageChange" @onProxyFileChange="onProxyFileChange"
-          @downloadSplitted="downloadSplitted" @uploadProxyFile="uploadProxyFile"
-          :info="LANGUAGES[langCodeFrom]" :splitted=splitted :selected=selected :isLoading=isLoading>
+        <SplittedPanel
+          @onPreviewPageChange="onPreviewPageChange"
+          @onProxyFileChange="onProxyFileChange"
+          @downloadSplitted="downloadSplitted"
+          @uploadProxyFile="uploadProxyFile"
+          :info="LANGUAGES[langCodeFrom]"
+          :splitted=splitted
+          :selected=selected
+          :isLoading=isLoading
+          :showUploadProxyBtn=false>
         </SplittedPanel>
       </v-col>
       <v-col cols="12" sm="6">
-        <SplittedPanel @onPreviewPageChange="onPreviewPageChange" @onProxyFileChange="onProxyFileChange"
-          @downloadSplitted="downloadSplitted" @uploadProxyFile="uploadProxyFile"
-          :info="LANGUAGES[langCodeTo]" :splitted=splitted :selected=selected :isLoading=isLoading>
+        <SplittedPanel
+          @onPreviewPageChange="onPreviewPageChange"
+          @onProxyFileChange="onProxyFileChange"
+          @downloadSplitted="downloadSplitted"
+          @uploadProxyFile="uploadProxyFile"
+          :info="LANGUAGES[langCodeTo]"
+          :splitted=splitted
+          :selected=selected
+          :isLoading=isLoading
+          :showUploadProxyBtn=true>
         </SplittedPanel>
       </v-col>
     </v-row>
@@ -438,6 +452,8 @@
         this.selectedProcessing = item;
         this.selectedProcessingId = fileId;
 
+        console.log("aaaa")
+
         this.$store.dispatch(GET_DOC_INDEX, {
           username: this.$route.params.username,
           langCodeFrom: this.langCodeFrom,
@@ -604,6 +620,7 @@
         }
       },
       selectFirstProcessingDocument() {
+        console.log("this.itemsProcessing", this.itemsProcessing)
         if (this.itemsProcessingNotEmpty(this.langCodeFrom)) {
           this.selectProcessing(this.itemsProcessing[this.langCodeFrom][0], 0);
         }
