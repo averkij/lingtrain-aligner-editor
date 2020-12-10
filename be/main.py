@@ -234,19 +234,17 @@ def edit_processing(username, lang_from, lang_to, file_id):
     if not os.path.isfile(db_path):
         abort(404)
 
-    line_ids = request.form.get("line_id", "[]")
-    processing_id, processing_id_is_int = helper.tryParseInt(request.form.get("processing_id", -1))
-    processing_target_id, processing_target_id_is_int = helper.tryParseInt(request.form.get("processing_target_id", -1))
     index_id, index_id_is_int = helper.tryParseInt(request.form.get("index_id", -1))
     text = request.form.get("text", '')
     text_type = request.form.get("text_type", con.TYPE_TO)
     operation = request.form.get("operation", "")
+    target = request.form.get("target", "")
 
-    print("operation", operation)
+    print("OPERATION:", operation, "text_type:", text_type)
 
     #TODO перенести в edit_doc, там чекать валидность необходимых параметров
-    if (processing_id_is_int and processing_target_id_is_int) or index_id_is_int:
-        editor.edit_doc(db_path, index_id, processing_id, processing_target_id, line_ids, text, operation, text_type)
+    if index_id_is_int:
+        editor.edit_doc(db_path, index_id, text, operation, target, text_type)
     else:
         abort(400)
     return ('', 200)

@@ -24,5 +24,8 @@ EMPTY_SIMS = {"items": {"ru":[], "zh":[], "sim":[]}}
 EMPTY_FILES = {"items": {"ru":[]}}
 
 #edit operations
-EDIT_TO_ADD_PREV_END = "edit_to_add_prev_end"
+EDIT_ADD_PREV_END = "edit_add_prev_end"
+EDIT_ADD_NEXT_END = "edit_add_next_end"
 EDIT_DELETE_LINE = "edit_delete_line"
+ADD_EMPTY_LINE_BEFORE = "add_empty_line_before"
+ADD_EMPTY_LINE_AFTER = "add_empty_line_after"

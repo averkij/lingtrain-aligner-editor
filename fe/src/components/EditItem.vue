@@ -1,20 +1,83 @@
 <template>
   <div>
-    <v-row justify="center" no-gutters>
+    <!-- <v-row justify="center" no-gutters>
+      <v-col class="text-left grey lighten-4" cols="12">
+        <div class="d-table fill-height">
+          <div class="d-table-cell px-2 py-0 font-weight-bold text-caption">
+            line {{ item.index_id + 1 }}
+          </div>
+          <div class="d-table-cell px-2 py-0 font-weight-bold text-caption grey--text d-flex">
+            <div class="px-2">
+              вставить
+            </div>
+            <div class="px-2">
+              удалить
+            </div>
+          </div>
+        </div>
+      </v-col>
+    </v-row> -->
+
+
+
+    <!-- <v-divider></v-divider> -->
+
+
+    <v-row justify="center" class="edit-row" no-gutters>
+
+      <!-- top menu -->
+      <div class="cell-top-menu">
+          <div class="px-2 py-0 font-weight-bold text-caption d-flex">
+            <div class="px-2 cell-top-menu-item" @click="editAddEmptyLineAfter()">
+              + строка
+            </div>
+            <!-- ↑ ↓ -->
+            <div class="px-2 cell-top-menu-item" @click="editDeleteLine()">
+              удалить
+            </div>
+            <v-spacer></v-spacer>
+            <div class="px-2 cell-top-menu-item">
+              строка {{item.index_id + 1}}
+            </div>
+          </div>
+      </div>
+
       <!-- left side -->
       <v-col class="text-left" cols="6">
         <div class="d-table fill-height">
-          <div class="d-table-cell grey lighten-5 pa-2 text-center font-weight-medium cell-edit-to-index">
+
+          <!-- <div class="d-table-cell grey lighten-5 pa-2 text-center font-weight-medium cell-edit-to-index line-num">
             {{ lineIdFrom }}
+          </div>
+          <v-divider class="d-table-cell" vertical></v-divider> -->
+          <div class="d-table-cell green lighten-5 cell-edit-to-index text-center">
+            <div class="fill-height d-flex cell-edit-to-index-cont flex-column justify-space-between">
+              <div class="pa-2 font-weight-medium line-num">
+                {{ lineIdFrom }}
+              </div>
+              <div class="cell-edit-to-action-panel">
+                <div class="cell-edit-button" @click="editAddUpEnd('from', item.text_from)"></div>
+                <div class="cell-edit-button" @click="editAddDownEnd('from', item.text_from)"></div>
+                <div class="cell-edit-button" @click="editClear()"></div>
+                <!-- <div class="cell-edit-button"></div> -->
+                <!-- <div class="cell-edit-button"></div> -->
+              </div>
+              <!-- <div class="text-caption pa-1">
+                {{ item.selected.sim | numeral("0.00") }}
+              </div> -->
+            </div>
           </div>
           <v-divider class="d-table-cell" vertical></v-divider>
           <div class="d-table-cell fill-width color-transition" :class="[{blue: changed_from},{'lighten-5': changed_from}]">
-            <div class="pa-2">
+            <div class="pa-2 pb-8">
               <div class="d-table fill-height fill-width">
                 <div class="d-table-cell">
-                  <v-textarea class="ta-custom" auto-grow rows=1 text-wrap @click.native.stop @keyup.space.prevent
+                  <v-textarea class="ta-custom" auto-grow rows=1 text-wrap placeholder="Write your text here"
+                    @click.native.stop
+                    @keyup.space.prevent
                     @keydown.ctrl.83.prevent="$event.target.blur()"
-                    @blur="editProcessing($event, item.processing_from_id, 'from')" @input="onTextChange('from')"
+                    @blur="editProcessing($event, item.processing_from_id, 'from')"
+                    @input="onTextChange('from')"
                     :value="item.text_from">
                   </v-textarea>
                 </div>
@@ -33,13 +96,14 @@
                 yellow: (item.selected.sim <= 0.5) && (item.selected.sim > 0.3)
               }"> -->
           <div class="d-table-cell green lighten-5 cell-edit-to-index text-center">
-            <div class="fill-height lighten-5 d-flex cell-edit-to-index-cont flex-column justify-space-between">
-              <div class="pa-2 font-weight-medium">
+            <div class="fill-height d-flex cell-edit-to-index-cont flex-column justify-space-between">
+              <div class="pa-2 font-weight-medium line-num">
                 {{ lineIdTo }}
               </div>
               <div class="cell-edit-to-action-panel">
-                <div class="cell-edit-button" @click="editToMoveUpEnd()"></div>
-                <div class="cell-edit-button" @click="editDeleteLine()"></div>
+                <div class="cell-edit-button" @click="editAddUpEnd('to', item.text_to)"></div>
+                <div class="cell-edit-button" @click="editAddDownEnd('to', item.text_to)"></div>
+                <div class="cell-edit-button" @click="editClear()"></div>
                 <!-- <div class="cell-edit-button"></div> -->
                 <!-- <div class="cell-edit-button"></div> -->
               </div>
@@ -52,10 +116,12 @@
           <v-divider class="d-table-cell" vertical></v-divider>
           <div class="d-table-cell fill-width color-transition"
             :class="[{blue: changed_to},{'lighten-5': changed_to}]">
-            <div class="pa-2">
+            <div class="pa-2 pb-8">
               <div class="d-table fill-height fill-width">
                 <div class="d-table-cell">
-                  <v-textarea class="ta-custom" auto-grow rows=1 text-wrap @click.native.stop @keyup.space.prevent
+                  <v-textarea class="ta-custom" auto-grow rows=1 text-wrap placeholder="Write your text here"
+                    @click.native.stop
+                    @keyup.space.prevent
                     @keydown.ctrl.83.prevent="$event.target.blur()"
                     @focus="setUneditedText($event)"
                     @blur="editProcessing($event, item.processing_to_id, 'to')" @input="onTextChange('to')"
@@ -144,19 +210,34 @@
       }
     },
     methods: {
-      editToMoveUpEnd() {
-        this.$emit('editToMoveUpEnd', this.item.index_id, this.item.processing_to_id, this.prevItem.processing_to_id, this.item.text_to, this.item.line_id_to, "to", (res) => {
+      editAddUpEnd(text_type, text) {
+        this.$emit('editAddUpEnd', this.item.index_id, text, text_type, (res) => {
           if (res == RESULT_OK) {
-              console.log("editToMoveUpEnd OK")
+              console.log("editAddUpEnd OK")
 
               //обновляем предыдущий элемент
             } else {
-              console.log("Edit error on editToMoveUpEnd.")
+              console.log("Edit error on editAddUpEnd.")
+            }
+        });
+      },
+      editAddDownEnd(text_type, text) {
+        this.$emit('editAddDownEnd', this.item.index_id, text, text_type, (res) => {
+          if (res == RESULT_OK) {
+              console.log("editAddDownEnd OK")
+            } else {
+              console.log("Edit error on editAddDownEnd.")
             }
         });
       },
       editDeleteLine() {
         this.$emit('editDeleteLine', this.item.index_id);
+      },
+      editAddEmptyLineBefore() {
+        this.$emit('editAddEmptyLineBefore', this.item.index_id);
+      },
+      editAddEmptyLineAfter() {
+        this.$emit('editAddEmptyLineAfter', this.item.index_id);
       },
       editProcessing(event, line_id, text_type) {
         // event.target.value = event.target.value .replace(/(\r\n|\n|\r)/gm, "")

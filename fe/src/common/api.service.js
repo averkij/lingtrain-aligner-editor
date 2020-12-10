@@ -133,13 +133,11 @@ export const ItemsService = {
   editProcessing(params) {
     let form = new FormData();
     
-    form.append("line_id", params.line_id);
     form.append("text", params.text);
     form.append("text_type", params.text_type);
-    form.append("processing_id", params.processing_id);
-    form.append("processing_target_id", params.processing_target_id);
     form.append("operation", params.operation);
     form.append("index_id", params.indexId);
+    form.append("target", params.target)
 
     return ApiService.post(
       "items",

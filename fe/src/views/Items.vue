@@ -189,8 +189,11 @@
         <!-- items -->
         <div v-for="(line, i) in processing.items" :key="i">
           <EditItem @editProcessing="editProcessing"
-                    @editToMoveUpEnd="editToMoveUpEnd"
+                    @editAddUpEnd="editAddUpEnd"
+                    @editAddDownEnd="editAddDownEnd"
                     @editDeleteLine="editDeleteLine"
+                    @editAddEmptyLineBefore="editAddEmptyLineBefore"
+                    @editAddEmptyLineAfter="editAddEmptyLineAfter"
                     :item="line"
                     :prevItem="i == 0 ? processing.items[0] : processing.items[i-1]"
                     :collapse="triggerCollapseEditItem"
@@ -295,8 +298,11 @@
     PROC_IN_PROGRESS,
     PROC_DONE,
     PROC_ERROR,
-    EDIT_TO_ADD_PREV_END,
-    EDIT_DELETE_LINE
+    EDIT_ADD_PREV_END,
+    EDIT_ADD_NEXT_END,
+    EDIT_DELETE_LINE,
+    ADD_EMPTY_LINE_BEFORE,
+    ADD_EMPTY_LINE_AFTER
   } from "@/common/constants"
   import {
     FETCH_ITEMS,
@@ -475,31 +481,69 @@
           });
         });
       },
-      editToMoveUpEnd(indexId, processingToId, processingToTargetId, editItemToText, editItemToIds, textType) {
+      refreshProcessingPage() {
+        this.$store.dispatch(GET_PROCESSING, {
+            username: this.$route.params.username,
+            langCodeFrom: this.langCodeFrom,
+            langCodeTo: this.langCodeTo,
+            fileId: this.selectedProcessingId,
+            linesCount: 10,
+            page: this.processing.meta.page
+          });
+      },
+      editAddUpEnd(indexId, editItemToText, textType) {
         this.$store.dispatch(EDIT_PROCESSING, {
             username: this.$route.params.username,
             fileId: this.selectedProcessingId,
             langCodeFrom: this.langCodeFrom,
             langCodeTo: this.langCodeTo,
             indexId: indexId,
-            processing_id: processingToId,
-            processing_target_id: processingToTargetId,
-            line_id: editItemToIds,
             text: editItemToText,
             text_type: textType,
-            operation: EDIT_TO_ADD_PREV_END
+            operation: EDIT_ADD_PREV_END,
+            target: "previous"
           }).then(() => {
-
-          console.log("document index after editing", this.docIndex)
-
-            this.$store.dispatch(GET_PROCESSING, {
-              username: this.$route.params.username,
-              langCodeFrom: this.langCodeFrom,
-              langCodeTo: this.langCodeTo,
-              fileId: this.selectedProcessingId,
-              linesCount: 10,
-              page: this.processing.meta.page
-            });
+            this.refreshProcessingPage();
+          });
+      },
+      editAddDownEnd(indexId, editItemText, textType) {
+        console.log("textType", textType)
+        this.$store.dispatch(EDIT_PROCESSING, {
+            username: this.$route.params.username,
+            fileId: this.selectedProcessingId,
+            langCodeFrom: this.langCodeFrom,
+            langCodeTo: this.langCodeTo,
+            indexId: indexId,
+            text: editItemText,
+            text_type: textType,
+            operation: EDIT_ADD_NEXT_END,
+            target: "next"
+          }).then(() => {
+            this.refreshProcessingPage();
+          });
+      },
+      editAddEmptyLineBefore(indexId) {
+        this.$store.dispatch(EDIT_PROCESSING, {
+            username: this.$route.params.username,
+            fileId: this.selectedProcessingId,
+            langCodeFrom: this.langCodeFrom,
+            langCodeTo: this.langCodeTo,
+            indexId: indexId,
+            operation: ADD_EMPTY_LINE_BEFORE
+          }).then(() => {
+            this.refreshProcessingPage()          
+          });
+      },
+      editAddEmptyLineAfter(indexId) {
+        this.$store.dispatch(EDIT_PROCESSING, {
+            username: this.$route.params.username,
+            fileId: this.selectedProcessingId,
+            langCodeFrom: this.langCodeFrom,
+            langCodeTo: this.langCodeTo,
+            indexId: indexId,
+            operation: ADD_EMPTY_LINE_AFTER
+          }).then(() => {
+            this.refreshProcessingPage()          
           });
       },
       editDeleteLine(indexId) {
@@ -511,17 +555,7 @@
             indexId: indexId,
             operation: EDIT_DELETE_LINE
           }).then(() => {
-
-          console.log("document index after editing", this.docIndex)
-
-            this.$store.dispatch(GET_PROCESSING, {
-              username: this.$route.params.username,
-              langCodeFrom: this.langCodeFrom,
-              langCodeTo: this.langCodeTo,
-              fileId: this.selectedProcessingId,
-              linesCount: 10,
-              page: this.processing.meta.page
-            });
+            this.refreshProcessingPage()          
           });
       },
       editProcessing(line_id, text, text_type, callback) {

@@ -119,7 +119,7 @@ def get_doc_index(db_path):
         logging.error("can not fetch index")
     return res
 
-def update_doc_index(db, db_path, index):
+def update_doc_index(db, index):
     index = json.dumps(index)
     db.execute('update doc_index set contents = ?', [index])
 
@@ -133,14 +133,21 @@ def get_processing_text(db_path, text_type, processing_id):
         res = (cur.fetchone())
     return res
 
-def update_processing(db, db_path, text_type, processing_id, text_ids, text_to_update):
+def update_processing(db, text_type, processing_id, text_ids, text_to_update):
     if text_type == con.TYPE_FROM:
         db.execute('update processing_from set text_ids = :text_ids, text = :text where id = :id', {"text_ids":text_ids, "text":text_to_update, "id":processing_id})
     else:            
         db.execute('update processing_to set text_ids = :text_ids, text = :text where id = :id', {"text_ids":text_ids, "text":text_to_update, "id":processing_id})
 
+def add_empty_processing_line(db):
+    from_id = db.execute('insert into processing_from(text_ids, text) values (:text_ids, :text) ', {"text_ids":"[]", "text":''}).lastrowid
+    to_id = db.execute('insert into processing_to(text_ids, text) values (:text_ids, :text) ', {"text_ids":"[]", "text":''}).lastrowid
+    return (from_id, to_id)
+
 def get_doc_page(db_path, page):
     res = []
+
+    # print("> page", page)
 
     with sqlite3.connect(db_path) as db:
         db.execute('DROP TABLE If EXISTS temp.text_ids')
@@ -163,6 +170,8 @@ def get_doc_page(db_path, page):
                 join
                     temp.text_ids ti
                         on ti.id = f.id
+            ORDER BY
+                ti.rank
             '''
             ):
             res.append((text_from, text_to, proxy_from, proxy_to))
