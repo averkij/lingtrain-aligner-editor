@@ -17,6 +17,8 @@ def edit_doc(db_path, index_id, text, operation, target, text_type=con.TYPE_TO):
     else:
         index_target_id = index_id-1
 
+    update_index = True
+
     with sqlite3.connect(db_path) as db:
         if index_id < 0 or index_id >= len(index): return
 
@@ -50,9 +52,19 @@ def edit_doc(db_path, index_id, text, operation, target, text_type=con.TYPE_TO):
             print("from_id", from_id, "to_id", to_id)
             index.insert(index_id+1, (from_id,"[]",to_id,"[]"))
 
-        elif operation == con.EDIT_DELETE_LINE:
-            print("deleting data", index_id)            
+        elif operation == con.EDIT_LINE:
+            processing_target_id = index[index_id][0]
+            helper.update_processing(db, text_type, processing_target_id, json.dumps(line_ids), text)
 
+            update_index = False
+
+        elif operation == con.EDIT_CLEAR_LINE:
+            processing_target_id = index[index_id][0]
+            index[index_id][direction] = "[]"
+            
+            helper.clear_processing(db, text_type, processing_target_id)
+
+        elif operation == con.EDIT_DELETE_LINE:
             index.pop(index_id)
             #TODO should we leave data in processing tables?
         else:
@@ -61,4 +73,5 @@ def edit_doc(db_path, index_id, text, operation, target, text_type=con.TYPE_TO):
 
         # print("new_ids", new_ids)
 
-        helper.update_doc_index(db, index)
+        if update_index:
+            helper.update_doc_index(db, index)

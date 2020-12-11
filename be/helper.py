@@ -135,9 +135,19 @@ def get_processing_text(db_path, text_type, processing_id):
 
 def update_processing(db, text_type, processing_id, text_ids, text_to_update):
     if text_type == con.TYPE_FROM:
-        db.execute('update processing_from set text_ids = :text_ids, text = :text where id = :id', {"text_ids":text_ids, "text":text_to_update, "id":processing_id})
+        db.execute('update processing_from set text_ids = :text_ids, text = :text where id = :id', \
+            {"text_ids":text_ids, "text":text_to_update, "id":processing_id})
     else:            
-        db.execute('update processing_to set text_ids = :text_ids, text = :text where id = :id', {"text_ids":text_ids, "text":text_to_update, "id":processing_id})
+        db.execute('update processing_to set text_ids = :text_ids, text = :text where id = :id', \
+            {"text_ids":text_ids, "text":text_to_update, "id":processing_id})
+
+def clear_processing(db, text_type, processing_id):
+    if text_type == con.TYPE_FROM:
+        db.execute('update processing_from set text_ids = "[]", text = "", initial_id = NULL where id = :id', \
+            {"id":processing_id})
+    else:            
+        db.execute('update processing_to set text_ids = "[]", text = "", initial_id = NULL where id = :id', \
+            {"id":processing_id})
 
 def add_empty_processing_line(db):
     from_id = db.execute('insert into processing_from(text_ids, text) values (:text_ids, :text) ', {"text_ids":"[]", "text":''}).lastrowid

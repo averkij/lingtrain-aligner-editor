@@ -194,6 +194,7 @@
                     @editDeleteLine="editDeleteLine"
                     @editAddEmptyLineBefore="editAddEmptyLineBefore"
                     @editAddEmptyLineAfter="editAddEmptyLineAfter"
+                    @editClearLine="editClearLine"
                     :item="line"
                     :prevItem="i == 0 ? processing.items[0] : processing.items[i-1]"
                     :collapse="triggerCollapseEditItem"
@@ -301,6 +302,8 @@
     EDIT_ADD_PREV_END,
     EDIT_ADD_NEXT_END,
     EDIT_DELETE_LINE,
+    EDIT_CLEAR_LINE,
+    EDIT_LINE,
     ADD_EMPTY_LINE_BEFORE,
     ADD_EMPTY_LINE_AFTER
   } from "@/common/constants"
@@ -558,16 +561,30 @@
             this.refreshProcessingPage()          
           });
       },
-      editProcessing(line_id, text, text_type, callback) {
+      editClearLine(indexId, textType) {
+        this.$store.dispatch(EDIT_PROCESSING, {
+            username: this.$route.params.username,
+            fileId: this.selectedProcessingId,
+            langCodeFrom: this.langCodeFrom,
+            langCodeTo: this.langCodeTo,
+            indexId: indexId,
+            text_type: textType,
+            operation: EDIT_CLEAR_LINE
+          }).then(() => {
+            this.refreshProcessingPage()          
+          });
+      },
+      editProcessing(indexId, editItemText, textType, callback) {
         this.$store
           .dispatch(EDIT_PROCESSING, {
             username: this.$route.params.username,
             fileId: this.selectedProcessingId,
             langCodeFrom: this.langCodeFrom,
             langCodeTo: this.langCodeTo,
-            line_id: line_id,
-            text: text,
-            text_type: text_type
+            indexId: indexId,
+            text: editItemText,
+            text_type: textType,
+            operation: EDIT_LINE
           }).then(function () {
             callback(RESULT_OK)
           }).catch(() => {

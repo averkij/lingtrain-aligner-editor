@@ -58,7 +58,7 @@
               <div class="cell-edit-to-action-panel">
                 <div class="cell-edit-button" @click="editAddUpEnd('from', item.text_from)"></div>
                 <div class="cell-edit-button" @click="editAddDownEnd('from', item.text_from)"></div>
-                <div class="cell-edit-button" @click="editClear()"></div>
+                <div class="cell-edit-button" @click="editClearLine('from')"></div>
                 <!-- <div class="cell-edit-button"></div> -->
                 <!-- <div class="cell-edit-button"></div> -->
               </div>
@@ -76,7 +76,8 @@
                     @click.native.stop
                     @keyup.space.prevent
                     @keydown.ctrl.83.prevent="$event.target.blur()"
-                    @blur="editProcessing($event, item.processing_from_id, 'from')"
+                    @focus="setUneditedText($event)"
+                    @blur="editProcessing($event, 'from')"
                     @input="onTextChange('from')"
                     :value="item.text_from">
                   </v-textarea>
@@ -103,7 +104,7 @@
               <div class="cell-edit-to-action-panel">
                 <div class="cell-edit-button" @click="editAddUpEnd('to', item.text_to)"></div>
                 <div class="cell-edit-button" @click="editAddDownEnd('to', item.text_to)"></div>
-                <div class="cell-edit-button" @click="editClear()"></div>
+                <div class="cell-edit-button" @click="editClearLine('to')"></div>
                 <!-- <div class="cell-edit-button"></div> -->
                 <!-- <div class="cell-edit-button"></div> -->
               </div>
@@ -124,7 +125,8 @@
                     @keyup.space.prevent
                     @keydown.ctrl.83.prevent="$event.target.blur()"
                     @focus="setUneditedText($event)"
-                    @blur="editProcessing($event, item.processing_to_id, 'to')" @input="onTextChange('to')"
+                    @blur="editProcessing($event, 'to')"
+                    @input="onTextChange('to')"
                     :value="item.text_to">
                   </v-textarea>
                   <!-- prevItemLineId {{prevSelectedLineId}} -->
@@ -221,8 +223,8 @@
             }
         });
       },
-      editAddDownEnd(text_type, text) {
-        this.$emit('editAddDownEnd', this.item.index_id, text, text_type, (res) => {
+      editAddDownEnd(textType, text) {
+        this.$emit('editAddDownEnd', this.item.index_id, text, textType, (res) => {
           if (res == RESULT_OK) {
               console.log("editAddDownEnd OK")
             } else {
@@ -239,13 +241,16 @@
       editAddEmptyLineAfter() {
         this.$emit('editAddEmptyLineAfter', this.item.index_id);
       },
-      editProcessing(event, line_id, text_type) {
+      editClearLine(textType) {
+        this.$emit('editClearLine', this.item.index_id, textType);
+      },
+      editProcessing(event, textType) {
         // event.target.value = event.target.value .replace(/(\r\n|\n|\r)/gm, "")
 
         // #Не сохранять, если не изменилось
         let newText = event.target.value;
         if (Helper.trim(newText) != Helper.trim(this.uneditedText)) {
-          this.$emit('editProcessing', line_id, newText, text_type, (res) => {
+          this.$emit('editProcessing', this.item.index_id, newText, textType, (res) => {
             console.log("edit result:", res)
             if (res == RESULT_OK) {
               this.state = STATE_SAVED;
