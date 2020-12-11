@@ -15,6 +15,7 @@ import {
   GET_SPLITTED,
   GET_DOC_INDEX,
   GET_PROCESSING,
+  GET_CANDIDATES,
   EDIT_PROCESSING,
   STOP_ALIGNMENT,
   ALIGN_SPLITTED
@@ -68,17 +69,14 @@ export const actions = {
         context.dispatch(FETCH_ITEMS, params);
       }
     });
-    return;
   },
   // params {fileId, username, langCode, fileName}
   async [DOWNLOAD_SPLITTED](context, params) {
     await ItemsService.downloadSplitted(params);
-    return;
   },
   // params {fileId, username, langCode, fileName}
   async [DOWNLOAD_PROCESSING](context, params) {
     await ItemsService.downloadProcessing(params);
-    return;
   },
   // params {fileId, username, langCode, count, page}
   async [GET_SPLITTED](context, params) {
@@ -112,6 +110,9 @@ export const actions = {
       }
     );
     return;
+  },
+  async [GET_CANDIDATES](context, params) {
+    return await ItemsService.getCandidates(params);
   },
   async [STOP_ALIGNMENT](context, params) {
     await ItemsService.stopAlignment(params);

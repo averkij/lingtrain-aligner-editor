@@ -195,9 +195,11 @@
                     @editAddEmptyLineBefore="editAddEmptyLineBefore"
                     @editAddEmptyLineAfter="editAddEmptyLineAfter"
                     @editClearLine="editClearLine"
+                    @getCandidates="getCandidates"
                     :item="line"
                     :prevItem="i == 0 ? processing.items[0] : processing.items[i-1]"
                     :collapse="triggerCollapseEditItem"
+                    :clearCandidates="triggerClearCandidates"
                     :showProxyTo="showProxyTo">
           </EditItem>
           <v-divider></v-divider>
@@ -314,6 +316,7 @@
     GET_SPLITTED,
     GET_DOC_INDEX,
     GET_PROCESSING,
+    GET_CANDIDATES,
     STOP_ALIGNMENT,
     EDIT_PROCESSING,
     ALIGN_SPLITTED,
@@ -353,6 +356,7 @@
           processing: false
         },
         triggerCollapseEditItem: false,
+        triggerClearCandidates:false ,
         userAlignInProgress: false,
         satisfactionEmojis: ['😍', '😄', '😁', '😊', '🙂', '😐', '🙁', '☹️', '😢', '😭'],
         downloadThreshold: 9,
@@ -376,7 +380,7 @@
         });
       },
       onProcessingPageChange(page) {
-        this.triggerCollapseEditItem = !this.triggerCollapseEditItem;
+        this.triggerClearCandidates = !this.triggerClearCandidates;
         this.$store.dispatch(GET_PROCESSING, {
           username: this.$route.params.username,
           langCodeFrom: this.langCodeFrom,
@@ -412,6 +416,22 @@
           .then(() => {
             this.isLoading.uploadProxy[langCode] = false;
           });
+      },
+      getCandidates(indexId, textType, countBefore, countAfter, callback) {
+        this.$store.dispatch(GET_CANDIDATES, {
+            username: this.$route.params.username,
+            langCodeFrom: this.langCodeFrom,
+            langCodeTo: this.langCodeTo,
+            indexId: indexId,
+            fileId: this.selectedProcessingId,
+            textType: textType,
+            countBefore: countBefore,
+            countAfter: countAfter
+        }).then(function (response) {
+          callback(RESULT_OK, response.data)
+        }).catch(() => {
+          callback(RESULT_ERROR)
+        });        
       },
       downloadSplitted(langCode) {
         this.$store.dispatch(DOWNLOAD_SPLITTED, {

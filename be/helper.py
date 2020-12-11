@@ -133,6 +133,39 @@ def get_processing_text(db_path, text_type, processing_id):
         res = (cur.fetchone())
     return res
 
+def get_candidates_page(db_path, text_type, id_from, id_to):
+    res = []
+    with sqlite3.connect(db_path) as db:
+        if text_type==con.TYPE_FROM:
+            for id, splitted, proxy in db.execute(
+            '''SELECT
+                    sf.id, sf.text, pf.text
+                FROM
+                    splitted_from sf
+                    left join
+                        proxy_from pf
+                            on pf.id=sf.id
+                WHERE
+                    sf.id >= :id_from and sf.id <= :id_to
+                ''', {"id_from": id_from, "id_to": id_to}
+                ):
+                res.append({"id": id, "text": splitted, "proxy": proxy})
+        elif text_type==con.TYPE_TO:
+            for id, splitted, proxy in db.execute(
+            '''SELECT
+                    st.id, st.text, pt.text
+                FROM
+                    splitted_to st
+                    left join
+                        proxy_to pt
+                            on pt.id=st.id
+                WHERE
+                    st.id >= :id_from and st.id <= :id_to
+                ''', {"id_from": id_from, "id_to": id_to}
+                ):
+                res.append({"id": id, "text": splitted, "proxy": proxy})
+    return res
+
 def update_processing(db, text_type, processing_id, text_ids, text_to_update):
     if text_type == con.TYPE_FROM:
         db.execute('update processing_from set text_ids = :text_ids, text = :text where id = :id', \
@@ -156,9 +189,6 @@ def add_empty_processing_line(db):
 
 def get_doc_page(db_path, page):
     res = []
-
-    # print("> page", page)
-
     with sqlite3.connect(db_path) as db:
         db.execute('DROP TABLE If EXISTS temp.text_ids')
         db.execute('CREATE TEMP TABLE text_ids(rank integer primary key, id integer)')
@@ -185,27 +215,6 @@ def get_doc_page(db_path, page):
             '''
             ):
             res.append((text_from, text_to, proxy_from, proxy_to))
-
-    return res
-
-def get_candidates_page(db_path, start_id, end_id):
-    res = []
-
-    with sqlite3.connect(db_path) as db:
-        for id, splitted_to, proxy_to in db.execute(
-        '''SELECT
-                t.id, t.text, pt.text
-            FROM
-                splitted_to t
-                left join
-                    proxy_to pt
-                        on pt.id=t.id
-            WHERE
-                t.id > :start_id and t.id < :end_id
-            ''', { "start_id": start_id, "end_id": end_id }
-            ):
-            res.append((id, splitted_to, proxy_to))
-
     return res
 
 def get_texts_length(db_path):

@@ -189,13 +189,6 @@ def get_processing(username, lang_from, lang_to, file_id, count, page):
     res = []
 
     items = helper.get_doc_page(db_path, pages)
-
-    text_from_len, text_to_len = helper.get_texts_length(db_path)
-    k = text_to_len/text_from_len
-    candidates = helper.get_candidates_page(db_path, round(k*shift)-wnd, round(k*shift)+count+wnd)
-
-    print("from_len:", text_from_len, "to_len:", text_to_len)
-
     for i, (data, texts) in enumerate(zip(pages, items)):
         print(shift + i)
         # print("data",data)
@@ -211,20 +204,40 @@ def get_processing(username, lang_from, lang_to, file_id, count, page):
             "line_id_to": data[3],          #array with ids
             "processing_to_id": data[2],    #primary key in DB (processing_to)
             "proxy_to": texts[3],
-            #candidates
-            "trans": [{
-                "text": t[1], 
-                "processing_to_id": t[0],       #primary key in DB (proxy_to)
-                "proxy": t[2],
-                "sim": 1
-                } for t in candidates[max(0,round(i*k)-wnd) : round(i*k)+wnd]]
-            })
+            });
 
     lines_count = len(index)
     total_pages = (lines_count//count) + (1 if lines_count%count != 0 else 0)
     meta = {"page": page, "total_pages": total_pages}
 
     return {"items": res, "meta": meta}
+
+@app.route("/items/<username>/processing/<lang_from>/<lang_to>/<int:file_id>/candidates/<text_type>/<int:index_id>/<int:count_before>/<int:count_after>", methods=["GET"])
+def get_processing_candidates(username, lang_from, lang_to, file_id, text_type, index_id, count_before, count_after):    
+    if text_type != con.TYPE_FROM and text_type != con.TYPE_TO:
+        abort(404)
+    db_folder = os.path.join(con.UPLOAD_FOLDER, username, con.DB_FOLDER, lang_from, lang_to)
+    files = helper.get_files_list(db_folder, mask="*.db")
+    db_path = os.path.join(db_folder, f'{files[file_id]}')
+    if not os.path.isfile(db_path):
+        abort(404)
+        
+    index = helper.get_doc_index(db_path)
+    if index_id < 0 or index_id >= len(index):
+        return
+
+    direction = 3 if text_type==con.TYPE_TO else 1
+    line_ids = helper.parseJsonArray(index[index_id][direction])
+
+    print("line_ids", line_ids)
+    line_id = line_ids[0]
+
+    id_from = line_id - count_before
+    id_to = line_id + count_after
+
+    candidates = helper.get_candidates_page(db_path, text_type, id_from, id_to)
+
+    return {"items": candidates}
 
 @app.route("/items/<username>/processing/<lang_from>/<lang_to>/<int:file_id>/edit", methods=["POST"])
 def edit_processing(username, lang_from, lang_to, file_id):
