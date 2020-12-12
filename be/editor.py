@@ -68,13 +68,11 @@ def edit_doc(db_path, index_id, text, operation, target, candidate_line_id, cand
         elif operation == con.EDIT_LINE:
             processing_target_id = index[index_id][0]
             helper.update_processing(db, text_type, processing_target_id, json.dumps(line_ids), text)
-
             update_index = False
 
         elif operation == con.EDIT_CLEAR_LINE:
             processing_target_id = index[index_id][0]
-            index[index_id][direction] = "[]"
-            
+            index[index_id][direction] = "[]"            
             helper.clear_processing(db, text_type, processing_target_id)
 
         elif operation == con.EDIT_DELETE_LINE:

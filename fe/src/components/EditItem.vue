@@ -92,7 +92,7 @@
 
                   <!-- PROXY TRANSLATION CANDIDATES TEXT -->
                   <div class="d-table-cell yellow pa-2 fill-width candidate-text"
-                    :class="[{'lighten-4': t.id==lineIdTo}, {'lighten-5': t.id!=lineIdTo}]">
+                    :class="[{'lighten-4': t.id==lineIdFrom}, {'lighten-5': t.id!=lineIdFrom}]">
                     {{ t.text }}                    
                     <div v-if="showProxyTo == 'true' && t.proxy" class="mt-4 proxy-to-cand-subtitles font-weight-medium">  
                       {{t.proxy}}
@@ -245,7 +245,7 @@
     },
     methods: {
       getCandidates(textType) {
-        this.$emit('getCandidates', this.item.index_id, textType, 2, 5, (res, data) => {
+        this.$emit('getCandidates', this.item.index_id, textType, 1, 6, (res, data) => {
           if (res == RESULT_OK) {
               console.log("getCandidates", data.items)
               if (textType=="from") {
