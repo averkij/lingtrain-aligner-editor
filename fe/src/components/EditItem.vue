@@ -46,12 +46,9 @@
       <v-col class="text-left" cols="6">
         <div class="d-table fill-height">
 
-          <!-- <div class="d-table-cell grey lighten-5 pa-2 text-center font-weight-medium cell-edit-to-index line-num">
-            {{ lineIdFrom }}
-          </div>
-          <v-divider class="d-table-cell" vertical></v-divider> -->
-          <div class="d-table-cell green lighten-5 cell-edit-to-index text-center">
-            <div class="fill-height d-flex cell-edit-to-index-cont flex-column justify-space-between">
+          <!-- left line id column -->
+          <div class="d-table-cell green lighten-5 cell-edit-index text-center">            
+            <div class="fill-height d-flex cell-edit-index-cont flex-column justify-space-between">
               <div class="pa-2 font-weight-medium line-num">
                 {{ lineIdFrom }}
               </div>
@@ -59,14 +56,13 @@
                 <div class="cell-edit-button" @click="editAddUpEnd('from', item.text_from)"></div>
                 <div class="cell-edit-button" @click="editAddDownEnd('from', item.text_from)"></div>
                 <div class="cell-edit-button" @click="editClearLine('from')"></div>
-                <!-- <div class="cell-edit-button"></div> -->
-                <!-- <div class="cell-edit-button"></div> -->
               </div>
               <!-- <div class="text-caption pa-1">
                 {{ item.selected.sim | numeral("0.00") }}
               </div> -->
             </div>
           </div>
+
           <v-divider class="d-table-cell" vertical></v-divider>
           <div class="d-table-cell fill-width color-transition" :class="[{blue: changed_from},{'lighten-5': changed_from}]">
             <div class="pa-2 pb-8">
@@ -93,12 +89,14 @@
 
             <!-- CANDIDATES LEFT BLOCK -->
             <div v-show="showLinesFrom">
-              <div v-for="(t,i) in transFrom" :key="i">
+              <div class="candidates-cont" v-for="(t,i) in transFrom" :key="i">
                 <v-divider></v-divider>
                 <div class="d-table fill-height fill-width">
-                  <div class="d-table-cell lighten-5 grey text-center font-weight-medium" style="min-width:45px">
+                  
+                  <!-- left candidates line id column -->
+                  <div class="d-table-cell lighten-5 grey text-center font-weight-medium cell-edit-index">                    
                     <div class="fill-height lighten-5 d-flex flex-column justify-space-between">
-                      <div class="pa-2 font-weight-medium">
+                      <div class="pa-2 font-weight-medium line-num">
                         {{ t.id }}
                       </div>
 
@@ -108,8 +106,9 @@
                       </div> -->
                     </div>
                   </div>
+
                   <v-divider class="d-table-cell" vertical></v-divider>
-                  <div class="d-table-cell yellow pa-2 fill-width"
+                  <div class="d-table-cell yellow pa-2 fill-width candidate-text"
                     :class="[{'lighten-4': t.id==lineIdTo}, {'lighten-5': t.id!=lineIdTo}]">
                     {{ t.text }}
                     <!-- PROXY TRANSLATION CANDIDATES TEXT -->
@@ -134,8 +133,10 @@
                 green: item.selected.sim > 0.5,
                 yellow: (item.selected.sim <= 0.5) && (item.selected.sim > 0.3)
               }"> -->
-          <div class="d-table-cell green lighten-5 cell-edit-to-index text-center">
-            <div class="fill-height d-flex cell-edit-to-index-cont flex-column justify-space-between">
+            
+          <!-- right line id column -->
+          <div class="d-table-cell green lighten-5 cell-edit-index text-center">
+            <div class="fill-height d-flex cell-edit-index-cont flex-column justify-space-between">
               <div class="pa-2 font-weight-medium line-num">
                 {{ lineIdTo }}
               </div>
@@ -188,23 +189,25 @@
             <!-- <v-expand-transition> -->
             <!-- <v-slide-y-transition group hide-on-leave> -->
             <div v-show="showLines">
-              <div v-for="(t,i) in trans" :key="i">
+              <div class="candidates-cont" v-for="(t,i) in trans" :key="i">
                 <v-divider></v-divider>
                 <div class="d-table fill-height fill-width">
-                  <div class="d-table-cell lighten-5 grey text-center font-weight-medium" style="min-width:45px">
+                  
+                  <!-- right candidates line id column -->
+                  <div class="d-table-cell lighten-5 grey text-center font-weight-medium cell-edit-index">
                     <div class="fill-height lighten-5 d-flex flex-column justify-space-between">
-                      <div class="pa-2 font-weight-medium">
+                      <div class="pa-2 font-weight-medium line-num">
                         {{ t.id }}
                       </div>
-
                       <!-- candidates similarity -->
                       <!-- <div class="text-caption pa-1">
                         {{ t.sim | numeral("0.00") }}
                       </div> -->
                     </div>
                   </div>
+
                   <v-divider class="d-table-cell" vertical></v-divider>
-                  <div class="d-table-cell yellow pa-2 fill-width"
+                  <div class="d-table-cell yellow pa-2 fill-width candidate-text"
                     :class="[{'lighten-4': t.id==lineIdTo}, {'lighten-5': t.id!=lineIdTo}]">
                     {{ t.text }}
                     <!-- PROXY TRANSLATION CANDIDATES TEXT -->

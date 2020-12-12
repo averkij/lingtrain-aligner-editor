@@ -48,27 +48,17 @@
     cursor: pointer;
 }
 
-.cell-edit-to:hover > .cell-edit-to-index {
-    /* background: aliceblue !important;
-    transition: all 0.2s ease-in-out; */
-}
-
-/* .cell-edit-to:hover > .cell-edit-to-index > .cell-edit-to-index-cont > .cell-edit-to-action-panel {
-    visibility: visible;
-    transition: all 0.6s ease-in-out;
-} */
-
-.cell-edit-to-index-cont:hover > .cell-edit-to-action-panel {
+.cell-edit-index-cont:hover > .cell-edit-to-action-panel {
     display: block;
 }
 
-.cell-edit-to-index-cont {
+.cell-edit-index-cont {
     min-height: 150px;
 }
 
-.cell-edit-to-index {
+.cell-edit-index {
     min-width:40px;
-    min-height:200px !important;
+    min-height:150px !important;
     position: relative;
 }
 
@@ -92,7 +82,7 @@
 }
 
 .line-num {
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .edit-row {
@@ -121,4 +111,8 @@
 .cell-top-menu-item:hover {
     cursor:pointer;
     color: black;
+}
+
+.candidates-cont:last-child > .d-table > .d-table-cell.candidate-text {
+    padding-bottom: 30px;
 }
