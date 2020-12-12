@@ -389,6 +389,7 @@
         this.trans = [];
         this.transFrom = [];
         this.showLines = false;
+        this.showLinesFrom = false;
       }
     }
   };
