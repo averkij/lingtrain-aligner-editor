@@ -29,10 +29,16 @@
               <div class="pa-2 font-weight-medium line-num">
                 {{ lineIdFrom }}
               </div>
-              <div class="cell-edit-action-panel">
-                <div class="cell-edit-button" @click="editAddUpEnd('from', item.text_from)"></div>
-                <div class="cell-edit-button" @click="editAddDownEnd('from', item.text_from)"></div>
-                <div class="cell-edit-button" @click="editClearLine('from')"></div>
+              <div class="cell-edit-action-panel colored">
+                <div class="cell-edit-button" @click="editAddUpEnd('from', item.text_from)">
+                  <v-icon>mdi-arrow-up-bold-circle</v-icon>
+                </div>
+                <div class="cell-edit-button" @click="editAddDownEnd('from', item.text_from)">
+                  <v-icon>mdi-arrow-down-bold-circle</v-icon>
+                </div>
+                <div class="cell-edit-button" @click="editClearLine('from')">
+                  <v-icon>mdi-eraser</v-icon>
+                </div>
               </div>
               <!-- <div class="text-caption pa-1">
                 {{ item.selected.sim | numeral("0.00") }}
@@ -79,7 +85,9 @@
                       </div>                      
                       <!-- candidates action panel -->
                       <div class="cell-edit-action-panel">
-                        <div class="cell-edit-button" @click="editAddCandidateEnd('from', t.id, t.text)"></div>
+                        <div class="cell-edit-button" @click="editAddCandidateEnd('from', t.id, t.text)">
+                          <v-icon>mdi-arrow-up-bold-circle</v-icon>
+                        </div>
                       </div>
                       <!-- candidates similarity -->
                       <!-- <div class="text-caption pa-1">
@@ -123,10 +131,16 @@
               <div class="pa-2 font-weight-medium line-num">
                 {{ lineIdTo }}
               </div>
-              <div class="cell-edit-action-panel">
-                <div class="cell-edit-button" @click="editAddUpEnd('to', item.text_to)"></div>
-                <div class="cell-edit-button" @click="editAddDownEnd('to', item.text_to)"></div>
-                <div class="cell-edit-button" @click="editClearLine('to')"></div>
+              <div class="cell-edit-action-panel colored">
+                <div class="cell-edit-button" @click="editAddUpEnd('to', item.text_to)">
+                  <v-icon>mdi-arrow-up-bold-circle</v-icon>
+                </div>
+                <div class="cell-edit-button" @click="editAddDownEnd('to', item.text_to)">
+                  <v-icon>mdi-arrow-down-bold-circle</v-icon>
+                </div>
+                <div class="cell-edit-button" @click="editClearLine('to')">
+                  <v-icon>mdi-eraser</v-icon>
+                </div>
               </div>
               <!-- <div class="text-caption pa-1">
                 {{ item.selected.sim | numeral("0.00") }}
@@ -184,7 +198,9 @@
                       </div>
                       <!-- candidates action panel -->
                       <div class="cell-edit-action-panel">
-                        <div class="cell-edit-button" @click="editAddCandidateEnd('to', t.id, t.text)"></div>
+                        <div class="cell-edit-button" @click="editAddCandidateEnd('to', t.id, t.text)">
+                          <v-icon>mdi-arrow-up-bold-circle</v-icon>
+                        </div>
                       </div>
                       <!-- candidates similarity -->
                       <!-- <div class="text-caption pa-1">
