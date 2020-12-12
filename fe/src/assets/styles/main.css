@@ -45,7 +45,7 @@
 
 /* aasd */
 .cell-edit:hover {
-    cursor: pointer;
+    /* cursor: pointer; */
 }
 
 .cell-edit-index-cont:hover > .cell-edit-action-panel {
@@ -72,6 +72,7 @@
 }
 
 .cell-edit-button {
+    cursor:pointer;
     height: 40px;
     border-radius: 50%;
     background: khaki;
@@ -109,7 +110,6 @@
 }
 
 .cell-top-menu-item:hover {
-    cursor:pointer;
     color: black;
 }
 
