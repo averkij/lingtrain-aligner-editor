@@ -196,6 +196,7 @@
                     @editAddEmptyLineAfter="editAddEmptyLineAfter"
                     @editClearLine="editClearLine"
                     @getCandidates="getCandidates"
+                    @editAddCandidateEnd="editAddCandidateEnd"
                     :item="line"
                     :prevItem="i == 0 ? processing.items[0] : processing.items[i-1]"
                     :collapse="triggerCollapseEditItem"
@@ -303,6 +304,7 @@
     PROC_ERROR,
     EDIT_ADD_PREV_END,
     EDIT_ADD_NEXT_END,
+    EDIT_ADD_CANDIDATE_END,
     EDIT_DELETE_LINE,
     EDIT_CLEAR_LINE,
     EDIT_LINE,
@@ -512,6 +514,22 @@
             fileId: this.selectedProcessingId,
             linesCount: 10,
             page: this.processing.meta.page
+          });
+      },
+      editAddCandidateEnd(indexId, textType, candidateLineId, candidateText) {
+        this.$store.dispatch(EDIT_PROCESSING, {
+            username: this.$route.params.username,
+            fileId: this.selectedProcessingId,
+            langCodeFrom: this.langCodeFrom,
+            langCodeTo: this.langCodeTo,
+            indexId: indexId,
+            candidateLineId: candidateLineId,
+            candidateText: candidateText,
+            text_type: textType,
+            operation: EDIT_ADD_CANDIDATE_END,
+            target: "previous"
+          }).then(() => {
+            this.refreshProcessingPage();
           });
       },
       editAddUpEnd(indexId, editItemToText, textType) {

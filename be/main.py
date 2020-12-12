@@ -263,12 +263,14 @@ def edit_processing(username, lang_from, lang_to, file_id):
     text_type = request.form.get("text_type", con.TYPE_TO)
     operation = request.form.get("operation", "")
     target = request.form.get("target", "")
+    candidate_line_id, candidate_line_id_is_int = helper.tryParseInt(request.form.get("candidate_line_id", -1))
+    candidate_text = request.form.get("candidate_text", '')
 
     print("OPERATION:", operation, "text_type:", text_type)
 
     #TODO перенести в edit_doc, там чекать валидность необходимых параметров
     if index_id_is_int:
-        editor.edit_doc(db_path, index_id, text, operation, target, text_type)
+        editor.edit_doc(db_path, index_id, text, operation, target, candidate_line_id, candidate_text, text_type)
     else:
         abort(400)
     return ('', 200)

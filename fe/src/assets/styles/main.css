@@ -52,7 +52,7 @@
     display: block;
 }
 
-.cell-edit-index-cont {
+.cell-edit-index-cont.fix-height {
     min-height: 150px;
 }
 

@@ -26,6 +26,7 @@ EMPTY_FILES = {"items": {"ru":[]}}
 #edit operations
 EDIT_ADD_PREV_END = "edit_add_prev_end"
 EDIT_ADD_NEXT_END = "edit_add_next_end"
+EDIT_ADD_CANDIDATE_END = "edit_add_candidate_end"
 EDIT_DELETE_LINE = "edit_delete_line"
 EDIT_CLEAR_LINE = "edit_clear_line"
 EDIT_LINE = "edit_line"

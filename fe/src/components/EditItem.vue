@@ -1,28 +1,5 @@
 <template>
   <div>
-    <!-- <v-row justify="center" no-gutters>
-      <v-col class="text-left grey lighten-4" cols="12">
-        <div class="d-table fill-height">
-          <div class="d-table-cell px-2 py-0 font-weight-bold text-caption">
-            line {{ item.index_id + 1 }}
-          </div>
-          <div class="d-table-cell px-2 py-0 font-weight-bold text-caption grey--text d-flex">
-            <div class="px-2">
-              вставить
-            </div>
-            <div class="px-2">
-              удалить
-            </div>
-          </div>
-        </div>
-      </v-col>
-    </v-row> -->
-
-
-
-    <!-- <v-divider></v-divider> -->
-
-
     <v-row justify="center" class="edit-row" no-gutters>
 
       <!-- line menu -->
@@ -48,7 +25,7 @@
 
           <!-- left line id column -->
           <div class="d-table-cell green lighten-5 cell-edit-index text-center">            
-            <div class="fill-height d-flex cell-edit-index-cont flex-column justify-space-between">
+            <div class="fill-height d-flex cell-edit-index-cont fix-height flex-column justify-space-between">
               <div class="pa-2 font-weight-medium line-num">
                 {{ lineIdFrom }}
               </div>
@@ -63,6 +40,7 @@
             </div>
           </div>
 
+          <!-- left textarea -->
           <v-divider class="d-table-cell" vertical></v-divider>
           <div class="d-table-cell fill-width color-transition" :class="[{blue: changed_from},{'lighten-5': changed_from}]">
             <div class="pa-2 pb-8">
@@ -95,11 +73,14 @@
                   
                   <!-- left candidates line id column -->
                   <div class="d-table-cell lighten-5 grey text-center font-weight-medium cell-edit-index">                    
-                    <div class="fill-height lighten-5 d-flex flex-column justify-space-between">
+                    <div class="fill-height lighten-5 d-flex flex-column justify-space-between cell-edit-index-cont">
                       <div class="pa-2 font-weight-medium line-num">
                         {{ t.id }}
+                      </div>                      
+                      <!-- candidates action panel -->
+                      <div class="cell-edit-action-panel">
+                        <div class="cell-edit-button" @click="editAddCandidateEnd('from', t.id, t.text)"></div>
                       </div>
-
                       <!-- candidates similarity -->
                       <!-- <div class="text-caption pa-1">
                         {{ t.sim | numeral("0.00") }}
@@ -108,10 +89,11 @@
                   </div>
 
                   <v-divider class="d-table-cell" vertical></v-divider>
+
+                  <!-- PROXY TRANSLATION CANDIDATES TEXT -->
                   <div class="d-table-cell yellow pa-2 fill-width candidate-text"
                     :class="[{'lighten-4': t.id==lineIdTo}, {'lighten-5': t.id!=lineIdTo}]">
-                    {{ t.text }}
-                    <!-- PROXY TRANSLATION CANDIDATES TEXT -->
+                    {{ t.text }}                    
                     <div v-if="showProxyTo == 'true' && t.proxy" class="mt-4 proxy-to-cand-subtitles font-weight-medium">  
                       {{t.proxy}}
                     </div>
@@ -123,6 +105,7 @@
           </div>
         </div>
       </v-col>
+
       <!-- right side -->
       <v-col class="text-left" cols="6">
         <div class="d-table fill-height fill-width cell-edit">
@@ -136,7 +119,7 @@
             
           <!-- right line id column -->
           <div class="d-table-cell green lighten-5 cell-edit-index text-center">
-            <div class="fill-height d-flex cell-edit-index-cont flex-column justify-space-between">
+            <div class="fill-height d-flex cell-edit-index-cont fix-height flex-column justify-space-between">
               <div class="pa-2 font-weight-medium line-num">
                 {{ lineIdTo }}
               </div>
@@ -144,8 +127,6 @@
                 <div class="cell-edit-button" @click="editAddUpEnd('to', item.text_to)"></div>
                 <div class="cell-edit-button" @click="editAddDownEnd('to', item.text_to)"></div>
                 <div class="cell-edit-button" @click="editClearLine('to')"></div>
-                <!-- <div class="cell-edit-button"></div> -->
-                <!-- <div class="cell-edit-button"></div> -->
               </div>
               <!-- <div class="text-caption pa-1">
                 {{ item.selected.sim | numeral("0.00") }}
@@ -155,6 +136,7 @@
           
           <v-divider class="d-table-cell" vertical></v-divider>
 
+          <!-- right textarea -->
           <div class="d-table-cell fill-width color-transition"
             :class="[{blue: changed_to},{'lighten-5': changed_to}]">
             <div class="pa-2 pb-8">
@@ -170,6 +152,7 @@
                     :value="item.text_to">
                   </v-textarea>
                   <!-- prevItemLineId {{prevSelectedLineId}} -->
+
                   <!-- PROXY TRANSLATION TEXT -->
                   <div v-if="showProxyTo == 'true' && item.proxy_to" class="mt-3 proxy-to-subtitles grey lighten-3 font-weight-medium">  
                     {{item.proxy_to}}
@@ -195,9 +178,13 @@
                   
                   <!-- right candidates line id column -->
                   <div class="d-table-cell lighten-5 grey text-center font-weight-medium cell-edit-index">
-                    <div class="fill-height lighten-5 d-flex flex-column justify-space-between">
+                    <div class="fill-height lighten-5 d-flex flex-column justify-space-between cell-edit-index-cont">
                       <div class="pa-2 font-weight-medium line-num">
                         {{ t.id }}
+                      </div>
+                      <!-- candidates action panel -->
+                      <div class="cell-edit-action-panel">
+                        <div class="cell-edit-button" @click="editAddCandidateEnd('to', t.id, t.text)"></div>
                       </div>
                       <!-- candidates similarity -->
                       <!-- <div class="text-caption pa-1">
@@ -205,12 +192,12 @@
                       </div> -->
                     </div>
                   </div>
-
+                  
+                  <!-- PROXY TRANSLATION CANDIDATES TEXT -->
                   <v-divider class="d-table-cell" vertical></v-divider>
                   <div class="d-table-cell yellow pa-2 fill-width candidate-text"
                     :class="[{'lighten-4': t.id==lineIdTo}, {'lighten-5': t.id!=lineIdTo}]">
                     {{ t.text }}
-                    <!-- PROXY TRANSLATION CANDIDATES TEXT -->
                     <div v-if="showProxyTo == 'true' && t.proxy" class="mt-4 proxy-to-cand-subtitles font-weight-medium">  
                       {{t.proxy}}
                     </div>
@@ -272,23 +259,13 @@
         });
       },
       editAddUpEnd(textType, text) {
-        this.$emit('editAddUpEnd', this.item.index_id, text, textType, (res) => {
-          if (res == RESULT_OK) {
-              console.log("editAddUpEnd OK")
-              //обновляем предыдущий элемент
-            } else {
-              console.log("Edit error on editAddUpEnd.")
-            }
-        });
+        this.$emit('editAddUpEnd', this.item.index_id, text, textType);
+      },
+      editAddCandidateEnd(textType, lineId, text) {
+        this.$emit('editAddCandidateEnd', this.item.index_id, textType, lineId, text);
       },
       editAddDownEnd(textType, text) {
-        this.$emit('editAddDownEnd', this.item.index_id, text, textType, (res) => {
-          if (res == RESULT_OK) {
-              console.log("editAddDownEnd OK")
-            } else {
-              console.log("Edit error on editAddDownEnd.")
-            }
-        });
+        this.$emit('editAddDownEnd', this.item.index_id, text, textType);
       },
       editDeleteLine() {
         this.$emit('editDeleteLine', this.item.index_id);

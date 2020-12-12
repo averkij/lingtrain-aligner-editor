@@ -8,7 +8,7 @@ from aligner import DocLine
 
 import sqlite3
 
-def edit_doc(db_path, index_id, text, operation, target, text_type=con.TYPE_TO):    
+def edit_doc(db_path, index_id, text, operation, target, candidate_line_id, candidate_text, text_type=con.TYPE_TO):    
     index = helper.get_doc_index(db_path)
     print("starting operation", operation, index_id)
 
@@ -35,11 +35,24 @@ def edit_doc(db_path, index_id, text, operation, target, text_type=con.TYPE_TO):
 
             processing_text_ids = helper.parseJsonArray(index[index_target_id][direction])
             new_ids = processing_text_ids + line_ids
-            new_ids = json.dumps(list(set(new_ids)))
+            new_ids = json.dumps(sorted(list(set(new_ids))))
 
             #update index ([0]processing_from.id, [1]processing_from.text_ids, [2]processing_to.id, [3]processing_to.text_ids)
             index[index_target_id][direction] = new_ids
+            helper.update_processing(db, text_type, processing_target_id, new_ids, text_to_update)
 
+        elif operation == con.EDIT_ADD_CANDIDATE_END:
+            processing_target_id = index[index_id][0]
+            text_to_edit = helper.get_processing_text(db_path, text_type, processing_target_id)[0]
+            text_to_update = text_to_edit + candidate_text
+
+            processing_text_ids = helper.parseJsonArray(index[index_id][direction])
+            print("index[index_id]", index[index_id])
+
+            new_ids = processing_text_ids + [candidate_line_id]
+            new_ids = json.dumps(sorted(list(set(new_ids))))
+
+            index[index_id][direction] = new_ids
             helper.update_processing(db, text_type, processing_target_id, new_ids, text_to_update)
 
         elif operation == con.ADD_EMPTY_LINE_BEFORE:
