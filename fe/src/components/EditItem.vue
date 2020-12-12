@@ -364,6 +364,7 @@
     watch: {
       collapse: function () {
         this.showLines = false;
+        this.showLinesFrom = false;
       },
       clearCandidates: function () {
         this.trans = [];
