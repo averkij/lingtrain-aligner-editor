@@ -44,7 +44,7 @@
 
       <!-- left side -->
       <v-col class="text-left" cols="6">
-        <div class="d-table fill-height">
+        <div class="d-table fill-height cell-edit">
 
           <!-- left line id column -->
           <div class="d-table-cell green lighten-5 cell-edit-index text-center">            
@@ -52,7 +52,7 @@
               <div class="pa-2 font-weight-medium line-num">
                 {{ lineIdFrom }}
               </div>
-              <div class="cell-edit-to-action-panel">
+              <div class="cell-edit-action-panel">
                 <div class="cell-edit-button" @click="editAddUpEnd('from', item.text_from)"></div>
                 <div class="cell-edit-button" @click="editAddDownEnd('from', item.text_from)"></div>
                 <div class="cell-edit-button" @click="editClearLine('from')"></div>
@@ -125,7 +125,7 @@
       </v-col>
       <!-- right side -->
       <v-col class="text-left" cols="6">
-        <div class="d-table fill-height fill-width cell-edit-to">
+        <div class="d-table fill-height fill-width cell-edit">
 
           <v-divider class="d-table-cell" vertical></v-divider>
           <!-- <div class="d-table-cell lighten-5 text-center" style="min-width:45px" :class="{
@@ -140,7 +140,7 @@
               <div class="pa-2 font-weight-medium line-num">
                 {{ lineIdTo }}
               </div>
-              <div class="cell-edit-to-action-panel">
+              <div class="cell-edit-action-panel">
                 <div class="cell-edit-button" @click="editAddUpEnd('to', item.text_to)"></div>
                 <div class="cell-edit-button" @click="editAddDownEnd('to', item.text_to)"></div>
                 <div class="cell-edit-button" @click="editClearLine('to')"></div>

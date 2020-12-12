@@ -44,11 +44,11 @@
 }
 
 /* aasd */
-.cell-edit-to:hover {
+.cell-edit:hover {
     cursor: pointer;
 }
 
-.cell-edit-index-cont:hover > .cell-edit-to-action-panel {
+.cell-edit-index-cont:hover > .cell-edit-action-panel {
     display: block;
 }
 
@@ -62,7 +62,7 @@
     position: relative;
 }
 
-.cell-edit-to-action-panel {
+.cell-edit-action-panel {
     position: absolute;
     margin: 0 auto;
     background: aquamarine;
@@ -114,5 +114,5 @@
 }
 
 .candidates-cont:last-child > .d-table > .d-table-cell.candidate-text {
-    padding-bottom: 30px;
+    padding-bottom: 30px !important;
 }
