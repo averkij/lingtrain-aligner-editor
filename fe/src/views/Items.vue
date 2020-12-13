@@ -214,7 +214,7 @@
         </div>
       </v-card>     
 
-      <div class="text-h4 mt-10 font-weight-bold">🧩 Unused strings</div>
+      <!-- <div class="text-h4 mt-10 font-weight-bold">🧩 Unused strings</div>
 
       <v-alert v-if="!processing || !processing.items || processing.items.length == 0" type="info" border="left"
         colored-border color="info" class="mt-6" elevation="2">
@@ -223,7 +223,7 @@
       <div v-else>
         <div></div>
         {{docIndex}}
-      </div>
+      </div> -->
 
       <div class="text-h4 mt-10 font-weight-bold">🍍 Corpora</div>
 

@@ -227,7 +227,10 @@ def get_processing_candidates(username, lang_from, lang_to, file_id, text_type, 
         return
 
     direction = 3 if text_type==con.TYPE_TO else 1
-    line_ids = helper.parseJsonArray(index[index_id][direction])
+    if index_id > 0:
+        line_ids = helper.parseJsonArray(index[index_id-1][direction])
+    else:    
+        line_ids = helper.parseJsonArray(index[index_id][direction])
 
     while index_id > 0:
         print("line_ids", line_ids)
@@ -238,7 +241,7 @@ def get_processing_candidates(username, lang_from, lang_to, file_id, text_type, 
             break
 
     print("line_ids", line_ids)
-    if not line_ids:
+    if not line_ids or index_id == 0:
         line_id = 1
     else:
         line_id = line_ids[0]

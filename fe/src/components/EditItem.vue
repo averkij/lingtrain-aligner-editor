@@ -263,7 +263,7 @@
     },
     methods: {
       getCandidates(textType) {
-        this.$emit('getCandidates', this.item.index_id, textType, 3, 6, (res, data) => {
+        this.$emit('getCandidates', this.item.index_id, textType, 1, 6, (res, data) => {
           if (res == RESULT_OK) {
               console.log("getCandidates", data.items)
               if (textType=="from") {
