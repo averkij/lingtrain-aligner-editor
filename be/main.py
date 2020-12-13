@@ -229,7 +229,7 @@ def get_processing_candidates(username, lang_from, lang_to, file_id, text_type, 
     direction = 3 if text_type==con.TYPE_TO else 1
     line_ids = helper.parseJsonArray(index[index_id][direction])
 
-    while index_id >= 0:
+    while index_id > 0:
         print("line_ids", line_ids)
         if not line_ids:
             index_id -= 1

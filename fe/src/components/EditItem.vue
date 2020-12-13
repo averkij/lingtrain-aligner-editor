@@ -30,10 +30,10 @@
                 {{ lineIdFrom }}
               </div>
               <div class="cell-edit-action-panel colored">
-                <div class="cell-edit-button" @click="editAddUpEnd('from', item.text_from)">
+                <div class="cell-edit-button" @click="editAddUpEnd('from')">
                   <v-icon>mdi-arrow-up-bold-circle</v-icon>
                 </div>
-                <div class="cell-edit-button" @click="editAddDownEnd('from', item.text_from)">
+                <div class="cell-edit-button" @click="editAddDownEnd('from')">
                   <v-icon>mdi-arrow-down-bold-circle</v-icon>
                 </div>
                 <div class="cell-edit-button" @click="editClearLine('from')">
@@ -58,7 +58,7 @@
                     @keydown.ctrl.83.prevent="$event.target.blur()"
                     @focus="setUneditedText($event)"
                     @blur="editProcessing($event, 'from')"
-                    @input="onTextChange('from')"
+                    @input="onTextChange($event, 'from')"
                     :value="item.text_from">
                   </v-textarea>
                 </div>
@@ -132,10 +132,10 @@
                 {{ lineIdTo }}
               </div>
               <div class="cell-edit-action-panel colored">
-                <div class="cell-edit-button" @click="editAddUpEnd('to', item.text_to)">
+                <div class="cell-edit-button" @click="editAddUpEnd('to')">
                   <v-icon>mdi-arrow-up-bold-circle</v-icon>
                 </div>
-                <div class="cell-edit-button" @click="editAddDownEnd('to', item.text_to)">
+                <div class="cell-edit-button" @click="editAddDownEnd('to')">
                   <v-icon>mdi-arrow-down-bold-circle</v-icon>
                 </div>
                 <div class="cell-edit-button" @click="editClearLine('to')">
@@ -162,7 +162,7 @@
                     @keydown.ctrl.83.prevent="$event.target.blur()"
                     @focus="setUneditedText($event)"
                     @blur="editProcessing($event, 'to')"
-                    @input="onTextChange('to')"
+                    @input="onTextChange($event, 'to')"
                     :value="item.text_to">
                   </v-textarea>
                   <!-- prevItemLineId {{prevSelectedLineId}} -->
@@ -256,12 +256,14 @@
         changed_to: false,
         uneditedText: null,
         trans: [],
-        transFrom: []
+        transFrom: [],
+        editedFromText: '',
+        editedToText: ''
       }
     },
     methods: {
       getCandidates(textType) {
-        this.$emit('getCandidates', this.item.index_id, textType, 1, 6, (res, data) => {
+        this.$emit('getCandidates', this.item.index_id, textType, 3, 6, (res, data) => {
           if (res == RESULT_OK) {
               console.log("getCandidates", data.items)
               if (textType=="from") {
@@ -274,14 +276,28 @@
             }
         });
       },
-      editAddUpEnd(textType, text) {
-        this.$emit('editAddUpEnd', this.item.index_id, text, textType);
+      editAddUpEnd(textType) {
+        if (textType == "from") {
+          let newText = this.editedFromText ? this.editedFromText : this.item.text_from;
+          this.$emit('editAddUpEnd', this.item.index_id, newText, textType);
+        }
+        else if (textType == "to") {
+          let newText = this.editedToText ? this.editedToText : this.item.text_to;
+          this.$emit('editAddUpEnd', this.item.index_id, newText, textType);
+        }
+      },
+      editAddDownEnd(textType) {
+        if (textType == "from") {
+          let newText = this.editedFromText ? this.editedFromText : this.item.text_from;
+          this.$emit('editAddDownEnd', this.item.index_id, newText, textType);
+        }
+        else if (textType == "to") {
+          let newText = this.editedToText ? this.editedToText : this.item.text_to;
+          this.$emit('editAddDownEnd', this.item.index_id, newText, textType);
+        }
       },
       editAddCandidateEnd(textType, lineId, text) {
         this.$emit('editAddCandidateEnd', this.item.index_id, textType, lineId, text);
-      },
-      editAddDownEnd(textType, text) {
-        this.$emit('editAddDownEnd', this.item.index_id, text, textType);
       },
       editDeleteLine() {
         this.$emit('editDeleteLine', this.item.index_id);
@@ -316,11 +332,13 @@
       setUneditedText(event) {
         this.uneditedText = event.target.value;
       },
-      onTextChange(text_type) {
+      onTextChange(value, text_type) {
         this.state = STATE_CHANGED
         if (text_type == "from") {
+          this.editedFromText = value;
           this.changed_from = true;
         } else {
+          this.editedToText = value;
           this.changed_to = true;
         }
       },
@@ -387,6 +405,8 @@
         this.transFrom = [];
         this.showLines = false;
         this.showLinesFrom = false;
+        this.editedFromText = '';
+        this.editedToText = '';
       }
     }
   };
