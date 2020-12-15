@@ -113,8 +113,8 @@ def align(username, lang_from, lang_to, id_from, id_to):
         logging.info(f"[{username}]. Documents not found.")
         return con.EMPTY_SIMS
     
-    res_img = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{files_from[id_from]}.png")
-    res_img_best = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{files_from[id_from]}.best.png")
+    res_img = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{files_from[id_from]}.db.png")
+    res_img_best = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{files_from[id_from]}.db.best.png")
     splitted_from = os.path.join(con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_from, files_from[id_from])
     splitted_to = os.path.join(con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_to, files_to[id_to])
     proxy_to = os.path.join(con.UPLOAD_FOLDER, username, con.PROXY_FOLDER, lang_to, files_to[id_to])
@@ -154,10 +154,10 @@ def align(username, lang_from, lang_to, id_from, id_to):
     state.init_processing(db_path, (con.PROC_INIT, total_batches, 0))  
 
     logging.info(f"{username}: aligning started")    
-    alignment = Process(target=aligner.serialize_docs, args=(lines_from, lines_to, lines_proxy_to, res_img, res_img_best, lang_from, lang_to, db_path, total_batches), daemon=True)
-    alignment.start()
+    # alignment = Process(target=aligner.serialize_docs, args=(lines_from, lines_to, lines_proxy_to, res_img, res_img_best, lang_from, lang_to, db_path, total_batches), daemon=True)
+    # alignment.start()
 
-    #aligner.serialize_docs(lines_from, lines_to, processing_from_to, res_img, res_img_best, lang_from, lang_to)
+    aligner.serialize_docs(lines_from, lines_to, lines_proxy_to, res_img, res_img_best, lang_from, lang_to, db_path, total_batches)
     return con.EMPTY_LINES
 
 @app.route("/items/<username>/processing/<lang_from>/<lang_to>/<int:file_id>/index")
