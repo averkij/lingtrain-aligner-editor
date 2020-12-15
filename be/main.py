@@ -113,10 +113,6 @@ def align(username, lang_from, lang_to, id_from, id_to):
         logging.info(f"[{username}]. Documents not found.")
         return con.EMPTY_SIMS
     
-    processing_folder_from_to = os.path.join(con.UPLOAD_FOLDER, username, con.PROCESSING_FOLDER, lang_from, lang_to)
-    helper.check_folder(processing_folder_from_to)
-    processing_from_to = os.path.join(processing_folder_from_to, files_from[id_from])
-    
     res_img = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{files_from[id_from]}.png")
     res_img_best = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{files_from[id_from]}.best.png")
     splitted_from = os.path.join(con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_from, files_from[id_from])
@@ -151,9 +147,14 @@ def align(username, lang_from, lang_to, id_from, id_to):
     helper.init_db(username, db_path)
     helper.fill_db(db_path, splitted_from, splitted_to, proxy_from, proxy_to)
     
-    print("aligning...")
-    state.init_processing(processing_from_to, (con.PROC_INIT, config.TEST_RESTRICTION_MAX_BATCHES, 0))    
-    alignment = Process(target=aligner.serialize_docs, args=(lines_from, lines_to, lines_proxy_to, processing_from_to, res_img, res_img_best, lang_from, lang_to, db_path), daemon=True)
+    logging.info(f"{username}: initializing state")
+    len_from, _ = helper.get_texts_length(db_path)
+    total_batches = config.TEST_RESTRICTION_MAX_BATCHES if config.TEST_RESTRICTION_MAX_BATCHES > 0 else len_from//config.DEFAULT_BATCHSIZE
+    print("total_batches", total_batches)
+    state.init_processing(db_path, (con.PROC_INIT, total_batches, 0))  
+
+    logging.info(f"{username}: aligning started")    
+    alignment = Process(target=aligner.serialize_docs, args=(lines_from, lines_to, lines_proxy_to, res_img, res_img_best, lang_from, lang_to, db_path, total_batches), daemon=True)
     alignment.start()
 
     #aligner.serialize_docs(lines_from, lines_to, processing_from_to, res_img, res_img_best, lang_from, lang_to)
@@ -187,6 +188,8 @@ def get_processing(username, lang_from, lang_to, file_id, count, page):
     shift = (page-1)*count
     pages = index[shift:shift+count]
     res = []
+
+    print("db_path", db_path)
 
     items = helper.get_doc_page(db_path, pages)
     for i, (data, texts) in enumerate(zip(pages, items)):
@@ -315,7 +318,7 @@ def list_processing(username, lang_from, lang_to):
     helper.check_folder(processing_folder)    
     files = {
         "items": {
-            lang_from: helper.get_processing_list_with_state(os.path.join(con.UPLOAD_FOLDER, username, con.PROCESSING_FOLDER, lang_from, lang_to), username)
+            lang_from: helper.get_processing_list_with_state(os.path.join(con.UPLOAD_FOLDER, username, con.DB_FOLDER, lang_from, lang_to), username)
         }
     }
     return files

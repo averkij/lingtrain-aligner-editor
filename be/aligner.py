@@ -23,35 +23,32 @@ import sqlite3
 
 
 
-def serialize_docs(lines_from, lines_to, lines_proxy_to, processing_from_to, res_img, res_img_best, lang_name_from, lang_name_to, db_path, \
+def serialize_docs(lines_from, lines_to, lines_proxy_to, res_img, res_img_best, lang_name_from, lang_name_to, db_path, total_batches, \
                     threshold=config.DEFAULT_TRESHOLD, batch_size=config.DEFAULT_BATCHSIZE, window_size=config.DEFAULT_WINDOW):
     batch_number = 0
-    docs = {
-        "items":[],
-        "sim_grades":{}
-        }   
     zero_treshold = 0
     sims = []
 
     use_proxy_to = lines_proxy_to != None and len(lines_proxy_to)>=len(lines_to)
     print("use_proxy_to", use_proxy_to, len(lines_proxy_to), len(lines_to)) 
 
-    logging.debug(f"Aligning started.")
+    logging.info(f"Aligning started for {db_path}.")
     try:
         for lines_from_batch, lines_to_batch, line_ids_from, line_ids_to in helper.get_batch_intersected(lines_from, lines_to, batch_size, window_size):
             batch_number += 1
             
             #test version restriction
-            if batch_number > config.TEST_RESTRICTION_MAX_BATCHES or not state.processing_state_exist(processing_from_to):
-                logging.debug(f"[Test restriction]. Finishing and removing state. {processing_from_to}")
-                state.destroy_processing_state(processing_from_to)
+            if (config.TEST_RESTRICTION_MAX_BATCHES > 0 and batch_number > config.TEST_RESTRICTION_MAX_BATCHES) \
+                    or not state.processing_state_exist(db_path):
+                logging.info(f"[Test restriction]. Finishing and removing state. {db_path}")
+                state.destroy_processing_state(db_path)
                 break
             
-            state.set_processing_state(processing_from_to, (con.PROC_IN_PROGRESS, config.TEST_RESTRICTION_MAX_BATCHES, batch_number))
+            state.set_processing_state(db_path, (con.PROC_IN_PROGRESS, total_batches, batch_number))
 
             print("batch:", batch_number)
-            logging.debug(f"Batch {batch_number}. Calculating vectors.")
-
+            logging.info(f"Batch {batch_number}. Calculating vectors.")
+            
             vectors1 = [*get_line_vectors(lines_from_batch)]
             vectors2 = [*get_line_vectors(lines_to_batch)]
             logging.debug(f"Batch {batch_number}. Vectors calculated. len(vectors1)={len(vectors1)}. len(vectors2)={len(vectors2)}.")
@@ -84,29 +81,24 @@ def serialize_docs(lines_from, lines_to, lines_proxy_to, processing_from_to, res
             sims.extend(sim_matrix_best[range(best_sim_ind.shape[0]), best_sim_ind])            
 
             lines_proxy_to_batch = [''] * len(lines_to_batch)
-            # print(">> len(lines_to)", len(lines_to_batch))
             if use_proxy_to:
                 lines_proxy_to_batch = lines_proxy_to[line_ids_to[0]:line_ids_to[-1]+1]
-
+            
             # Actual work
             logging.debug(f"Processing lines.")
-            doc = get_processed(lines_from_batch, lines_to_batch, lines_proxy_to_batch, line_ids_from, line_ids_to, \
+            get_processed(lines_from_batch, lines_to_batch, lines_proxy_to_batch, line_ids_from, line_ids_to, \
                 sim_matrix, sim_matrix_best, best_sim_ind, zero_treshold, batch_number, batch_size, db_path)
-            docs["items"].append(doc)
 
         helper.create_doc_index(db_path)
 
         sim_grades = calc_sim_grades(sims)
-        docs["sim_grades"] = sim_grades
+        # docs["sim_grades"] = sim_grades
 
-        logging.debug(f"Dumping to file {processing_from_to}.")
-        pickle.dump(docs, open(processing_from_to, "wb"))
-
-        logging.debug(f"Alignment is finished. Removing state. {processing_from_to}")
-        state.destroy_processing_state(processing_from_to)
+        logging.info(f"Alignment is finished. Removing state. {db_path}")
+        state.destroy_processing_state(db_path)
     except Exception as e:
         logging.error(e, exc_info=True)
-        state.set_processing_state(processing_from_to, (con.PROC_ERROR, config.TEST_RESTRICTION_MAX_BATCHES, batch_number))
+        state.set_processing_state(db_path, (con.PROC_ERROR, config.TEST_RESTRICTION_MAX_BATCHES, batch_number))
 
 def calc_sim_grades(sims):
     key, res = 0, {}
@@ -140,35 +132,7 @@ def get_processed(lines_from, lines_to, lines_proxy_to, line_ids_from, line_ids_
     with sqlite3.connect(db_path) as db:
         db.executemany(f"insert into processing_from(text_ids, initial_id, text) values (?,?,?)", texts_from)
         db.executemany(f"insert into processing_to(text_ids, initial_id, text) values (?,?,?)", texts_to)
-
-    #saving to object        
-    doc = {}
-    for line_from_id in range(sim_matrix.shape[0]):
-        line_id_from_abs = line_ids_from[line_from_id]
-        line = DocLine(line_id_from_abs, lines_from[line_from_id])
-        doc[line] = {}
-
-        candidates = [(line_to_id, sim_matrix[line_from_id, line_to_id]) for line_to_id in range(sim_matrix.shape[1]) if sim_matrix[line_from_id, line_to_id] > threshold]
-        doc[line]["from"] = (line, False) #("line", "isEdited")
-        doc[line]["to"] = (DocLine(
-                                line_id = line_ids_to[best_sim_ind[line_from_id]],
-                                text = lines_to[best_sim_ind[line_from_id]],
-                                proxy = lines_proxy_to[best_sim_ind[line_from_id]] #proxy text (translation)
-                                ),
-                            sim_matrix[line_from_id,
-                            best_sim_ind[line_from_id]],
-                            False                                
-                            )
-        doc[line]["cnd"] = [
-                    #text with line_id
-                    (DocLine(
-                        line_id = line_ids_to[c[0]],
-                        text = lines_to[c[0]],
-                        proxy = lines_proxy_to[c[0]]),
-                    #text similarity
-                    sim_matrix[line_from_id, c[0]])
-                    for c in candidates]
-    return doc
+    return
 
 def get_pairs(lines_from, lines_to, ru_proxy_lines, sim_matrix, threshold):
     res_from = []

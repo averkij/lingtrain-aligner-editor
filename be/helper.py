@@ -20,12 +20,12 @@ def get_files_list_with_path(folder, mask="*.txt"):
 
 def get_processing_list_with_state(folder, username):
     res = []
-    for file in get_files_list_with_path(folder):
+    for file in get_files_list_with_path(folder, mask="*.db"):
         res.append({
             "name": os.path.basename(file),
             "state": state.get_processing_state(file, (con.PROC_DONE,0,0)),
             "imgs": get_files_list(os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username), mask=f"{os.path.basename(file)}.best_*.png"),
-            "sim_grades": get_sim_grades(file)
+            # "sim_grades": get_sim_grades(file)
             })
     return res
 

@@ -5,7 +5,6 @@ import logging
 
 def init_processing(processing_file_path, state):
     set_processing_state(processing_file_path, state)
-    pickle.dump({"items":[],"sim_grades":[]}, open(processing_file_path, "wb"))
 
 def set_processing_state(processing_file_path, state):
     state_path = "{0}.state".format(processing_file_path)

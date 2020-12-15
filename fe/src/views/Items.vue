@@ -103,7 +103,7 @@
         <v-list class="pa-0">
           <v-list-item-group mandatory color="gray">
             <v-list-item v-for="(item, i) in itemsProcessing[langCodeFrom]" :key="i"
-              @change="selectProcessing(item, i)">
+                        @change="selectProcessing(item, i)">
               <v-list-item-icon>
                 <v-icon v-if="item.state[0]==PROC_INIT || item.state[0]==PROC_IN_PROGRESS" color="blue">
                   mdi-clock-outline</v-icon>
@@ -113,6 +113,8 @@
               <v-list-item-content>
                 <v-list-item-title v-text="item.name"></v-list-item-title>
               </v-list-item-content>
+
+              <!-- progress bar -->
               <v-progress-linear stream buffer-value="0" :value="item.state[2]/item.state[1] * 100" color="green"
                 :active="item.state[0]==PROC_INIT || item.state[0]==PROC_IN_PROGRESS" absolute bottom>
               </v-progress-linear>
@@ -816,12 +818,14 @@
         return (this.downloadThreshold / 100).toFixed(2);
       },
       corporaSizeRelative() {
-        return this.selectedProcessing['sim_grades'][this.downloadThreshold] / this.selectedProcessing['sim_grades'][
-          0
-        ] * 100;
+        return 5;
+        // return this.selectedProcessing['sim_grades'][this.downloadThreshold] / this.selectedProcessing['sim_grades'][
+        //   0
+        // ] * 100;
       },
       corporaSizeAbsolute() {
-        return this.selectedProcessing['sim_grades'][this.downloadThreshold];
+        return 10;
+        // return this.selectedProcessing['sim_grades'][this.downloadThreshold];
       }
     },
     components: {
