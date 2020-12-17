@@ -101,7 +101,7 @@
         </div>
         <v-divider></v-divider>
         <v-list class="pa-0">
-          <v-list-item-group mandatory color="gray">
+          <v-list-item-group mandatory color="gray" v-model="selectedListItem">
             <v-list-item v-for="(item, i) in itemsProcessing[langCodeFrom]" :key="i"
                         @change="selectProcessing(item, i)">
               <v-list-item-icon>
@@ -364,7 +364,8 @@
         userAlignInProgress: false,
         satisfactionEmojis: ['😍', '😄', '😁', '😊', '🙂', '😐', '🙁', '☹️', '😢', '😭'],
         downloadThreshold: 9,
-        showProxyTo: SettingsHelper.getShowProxyTo()
+        showProxyTo: SettingsHelper.getShowProxyTo(),
+        selectedListItem: 0
       };
     },
     methods: {
@@ -481,9 +482,12 @@
         });
       },
       selectProcessing(item, fileId) {
+        this.selectedListItem = fileId;
         this.isLoading.processing = true;
         this.selectedProcessing = item;
         this.selectedProcessingId = fileId;
+
+        console.log("select processing file", item)
 
         console.log("aaaa")
 
@@ -493,7 +497,7 @@
           langCodeTo: this.langCodeTo,
           fileId
         }).then(() => {
-          console.log("document index", this.docIndex)
+          // console.log("document index", this.docIndex)
 
           this.$store.dispatch(GET_PROCESSING, {
             username: this.$route.params.username,
@@ -503,7 +507,7 @@
             linesCount: 10,
             page: 1
           }).then(() => {
-            console.log("processing", this.processing)
+            // console.log("processing", this.processing)
             this.isLoading.processing = false;
           });
         });
@@ -654,10 +658,11 @@
               this.selectCurrentlyProcessingDocument();
             });
 
-            this.fetchItemsProvessingTimer();
+            this.fetchItemsProcessingTimer();
           });
       },
       stopAlignment() {
+        console.log("currentlyProcessing", this.currentlyProcessing)
         this.userAlignInProgress = false;
         this.isLoading.alignStopping = true;
         this.$store.dispatch(STOP_ALIGNMENT, {
@@ -718,35 +723,36 @@
       },
       selectCurrentlyProcessingDocument() {
         if (this.itemsProcessingNotEmpty(this.langCodeFrom)) {
-          this.currentlyProcessingId = this.itemsProcessing[this.langCodeFrom].findIndex(x => x.name == this
-            .currentlyProcessing);
-          console.log(this.currentlyProcessing, this.currentlyProcessingId)
           if (this.currentlyProcessingId >= 0) {
-            this.selectProcessing(this.itemsProcessing[this.langCodeFrom][this.currentlyProcessingId], this
-              .currentlyProcessingId);
+            console.log("selecting current processing", this.itemsProcessing[this.langCodeFrom][this.currentlyProcessingId]);
+            this.selectProcessing(this.itemsProcessing[this.langCodeFrom][this.currentlyProcessingId], this.currentlyProcessingId);
           }
         }
       },
       collapseEditItems() {
         this.triggerCollapseEditItem = !this.triggerCollapseEditItem;
       },
-      fetchItemsProvessingTimer() {
+      fetchItemsProcessingTimer() {
         setTimeout(() => {
           this.$store.dispatch(FETCH_ITEMS_PROCESSING, {
             username: this.$route.params.username,
             langCodeFrom: this.langCodeFrom,
             langCodeTo: this.langCodeTo
           }).then(() => {
-            if (this.itemsProcessing[this.langCodeFrom].filter(x => x.state[0] == 0 || x.state[0] == 1).length >
-              0) {
+            let in_progress_items = this.itemsProcessing[this.langCodeFrom].filter(x => x.state[0] == 0 || x.state[0] == 1)
+            if (in_progress_items.length > 0) {
+              let item_index = this.itemsProcessing[this.langCodeFrom].indexOf(in_progress_items[0])
+              this.currentlyProcessingId = item_index
               this.userAlignInProgress = true;
-              this.fetchItemsProvessingTimer();
-            } else {
-              this.userAlignInProgress = false;
-              this.isLoading.alignStopping = false;
+              this.fetchItemsProcessingTimer();
+
               this.selectCurrentlyProcessingDocument();
             }
-            this.selectProcessing(this.itemsProcessing[this.langCodeFrom][0], 0)
+            else {
+              this.userAlignInProgress = false;
+              this.isLoading.alignStopping = false;
+              this.selectFirstProcessingDocument();
+            }
           });
         }, 5000)
       }
@@ -769,11 +775,18 @@
         langCodeFrom: this.langCodeFrom,
         langCodeTo: this.langCodeTo
       }).then(() => {
-        if (this.itemsProcessing[this.langCodeFrom].filter(x => x.state[0] == 0 || x.state[0] == 1).length > 0) {
+        let in_progress_items = this.itemsProcessing[this.langCodeFrom].filter(x => x.state[0] == 0 || x.state[0] == 1)
+        if (in_progress_items.length > 0) {
+          let item_index = this.itemsProcessing[this.langCodeFrom].indexOf(in_progress_items[0])
+          this.currentlyProcessingId = item_index
           this.userAlignInProgress = true;
-          this.fetchItemsProvessingTimer();
+          this.fetchItemsProcessingTimer();
+
+          this.selectCurrentlyProcessingDocument();
         }
-        this.selectFirstProcessingDocument();
+        else {
+          this.selectFirstProcessingDocument();
+        }
       });
       if (localStorage.showProxyTo) {
         this.showProxyTo = localStorage.showProxyTo;
