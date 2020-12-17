@@ -98,16 +98,12 @@ def fill_db(db_path, splitted_from, splitted_to, proxy_from, proxy_to):
         with sqlite3.connect(db_path) as db:
             db.executemany(f"insert into proxy_to(text) values (?)", [(x.strip(),) for x in lines])
 
-def create_doc_index(db_path):
+def create_doc_index(db):
     doc_index = []
-    logging.info(f"creating index for {db_path}")
+    for x in db.execute('SELECT f.id, f.text_ids, t.id, t.text_ids FROM processing_from f join processing_to t on f.id=t.id order by f.id'):
+        doc_index.append(x)
 
-    with sqlite3.connect(db_path) as db:
-        for x in db.execute('SELECT f.id, f.text_ids, t.id, t.text_ids FROM processing_from f join processing_to t on f.id=t.id order by f.id'):
-            doc_index.append(x)
-        db.execute('insert into doc_index(contents) values (?)', [json.dumps(doc_index)])
-        
-    logging.info(f"index successfully created for {db_path}")
+    db.execute('insert into doc_index(contents) values (?)', [json.dumps(doc_index)])
 
 def get_doc_index(db_path):
     res = []

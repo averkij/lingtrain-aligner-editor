@@ -160,7 +160,7 @@ export const mutations = {
     state.processing = data;
   },
   [SET_DOC_INDEX](state, data) {
-    console.log("new index:", data.items)
+    // console.log("new index:", data.items)
     state.docIndex = data.items;
   }
 };

@@ -4,7 +4,6 @@ import helper
 import json
 import logging
 
-from aligner import DocLine
 
 import sqlite3
 

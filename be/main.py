@@ -19,7 +19,7 @@ import editor
 import output
 import splitter
 import state_manager as state
-from aligner import DocLine 
+from align_processor import processor
 
 #from mlflow import log_metric
 
@@ -113,8 +113,6 @@ def align(username, lang_from, lang_to, id_from, id_to):
         logging.info(f"[{username}]. Documents not found.")
         return con.EMPTY_SIMS
     
-    res_img = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{files_from[id_from]}.db.png")
-    res_img_best = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{files_from[id_from]}.db.best.png")
     splitted_from = os.path.join(con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_from, files_from[id_from])
     splitted_to = os.path.join(con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_to, files_to[id_to])
     proxy_to = os.path.join(con.UPLOAD_FOLDER, username, con.PROXY_FOLDER, lang_to, files_to[id_to])
@@ -131,12 +129,6 @@ def align(username, lang_from, lang_to, id_from, id_to):
         lines_to = input_to.readlines()
         #lines_ru_proxy = input_proxy.readlines()
     
-    lines_proxy_to = []
-    if os.path.isfile(proxy_to):
-        logging.info(f"[{username}]. Proxy file detected (to). Path: {proxy_to}")
-        with open(proxy_to, mode="r", encoding="utf-8") as input_proxy_to:
-            lines_proxy_to = input_proxy_to.readlines()
-
     #TODO refactor to queues (!)
     #init
     
@@ -157,7 +149,22 @@ def align(username, lang_from, lang_to, id_from, id_to):
     # alignment = Process(target=aligner.serialize_docs, args=(lines_from, lines_to, lines_proxy_to, res_img, res_img_best, lang_from, lang_to, db_path, total_batches), daemon=True)
     # alignment.start()
 
-    aligner.serialize_docs(lines_from, lines_to, lines_proxy_to, res_img, res_img_best, lang_from, lang_to, db_path, total_batches)
+    #parallel processing
+    batch_size=config.DEFAULT_BATCHSIZE
+    window_size=config.DEFAULT_WINDOW
+
+    res_img = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{files_from[id_from]}.db.png")
+    res_img_best = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{files_from[id_from]}.db.best.png")
+    
+    task_list = [(lines_from_batch, lines_to_batch, line_ids_from, line_ids_to) for lines_from_batch, lines_to_batch, line_ids_from, line_ids_to in helper.get_batch_intersected(lines_from, lines_to, batch_size, window_size)]
+
+    proc_count = config.PROCESSORS_COUNT
+
+    proc = processor(proc_count, db_path, res_img, res_img_best, lang_from, lang_to)
+    proc.add_tasks(task_list)
+    proc.start()
+
+    #aligner.serialize_docs(lines_from, lines_to, lines_proxy_to, res_img, res_img_best, lang_from, lang_to, db_path, total_batches)
     return con.EMPTY_LINES
 
 @app.route("/items/<username>/processing/<lang_from>/<lang_to>/<int:file_id>/index")
@@ -326,8 +333,8 @@ def list_processing(username, lang_from, lang_to):
 @app.route("/items/<username>/align/stop/<lang_from>/<lang_to>/<int:file_id>", methods=["POST"])
 def stop_alignment(username, lang_from, lang_to, file_id):
     logging.debug(f"[{username}]. Stopping alignment for {lang_from}-{lang_to} {file_id}.")
-    processing_folder = os.path.join(con.UPLOAD_FOLDER, username, con.PROCESSING_FOLDER, lang_from, lang_to)
-    files = helper.get_files_list(processing_folder)
+    processing_folder = os.path.join(con.UPLOAD_FOLDER, username, con.DB_FOLDER, lang_from, lang_to)
+    files = helper.get_files_list(processing_folder, mask="*.db")
     processing_file = os.path.join(processing_folder, files[file_id])
     if not helper.check_file(processing_folder, files, file_id):
         abort(404)

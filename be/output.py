@@ -3,7 +3,6 @@ from datetime import datetime
 
 import helper
 import output_templates
-from aligner import DocLine
 
 
 def save_tmx(input_file, output_file, lang_from, lang_to, threshold):
