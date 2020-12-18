@@ -112,7 +112,7 @@ class processor:
         result_handler = Process(target=self.handle_result, args=(self.queue_out,), daemon=True)
         result_handler.start()
 
-        workers = [Process(target=self.work, args=(self.queue_in, self.queue_out), daemon=True) for _ in range(self.proc_count)]
+        workers = [Process(target=self.work, args=(self.queue_in, self.queue_out), daemon=True) for _ in range(min(self.proc_count, self.tasks_count))] #do not run more processes than necessary
         for w in workers:
             w.start()
 
