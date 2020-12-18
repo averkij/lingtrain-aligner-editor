@@ -19,13 +19,23 @@
     <div class="mt-6">
       <v-row>
         <v-col cols="12" sm="6">
-          <RawPanel @uploadFile="uploadFile" @onFileChange="onFileChange" @selectAndLoadPreview="selectAndLoadPreview"
-            :info="LANGUAGES[langCodeFrom]" :items=items :isLoading=isLoading>
+          <RawPanel
+            @uploadFile="uploadFile"
+            @onFileChange="onFileChange"
+            @selectAndLoadPreview="selectAndLoadPreview"
+            :info="LANGUAGES[langCodeFrom]"
+            :items=items
+            :isLoading=isLoading>
           </RawPanel>
         </v-col>
         <v-col cols="12" sm="6">
-          <RawPanel @uploadFile="uploadFile" @onFileChange="onFileChange" @selectAndLoadPreview="selectAndLoadPreview"
-            :info="LANGUAGES[langCodeTo]" :items=items :isLoading=isLoading>
+          <RawPanel
+            @uploadFile="uploadFile"
+            @onFileChange="onFileChange"
+            @selectAndLoadPreview="selectAndLoadPreview"
+            :info="LANGUAGES[langCodeTo]"
+            :items=items
+            :isLoading=isLoading>
           </RawPanel>
         </v-col>
       </v-row>
@@ -70,14 +80,23 @@
     </v-alert>
     <v-row class="mt-6">
       <v-col cols="12" sm="6">
-        <InfoPanel :info="LANGUAGES[langCodeFrom]" :splitted=splitted :selected=selected></InfoPanel>
+        <InfoPanel
+          :info="LANGUAGES[langCodeFrom]"
+          :splitted=splitted
+          :selected=selected>
+        </InfoPanel>
       </v-col>
       <v-col cols="12" sm="6">
-        <InfoPanel :info="LANGUAGES[langCodeTo]" :splitted=splitted :selected=selected></InfoPanel>
+        <InfoPanel
+          :info="LANGUAGES[langCodeTo]"
+          :splitted=splitted
+          :selected=selected>
+        </InfoPanel>
       </v-col>
     </v-row>
     <v-btn v-if="!userAlignInProgress" v-show="selected[langCodeFrom] && selected[langCodeTo]" class="success mt-6"
-      :loading="isLoading.align || isLoading.alignStopping" :disabled="isLoading.align || isLoading.alignStopping"
+      :loading="isLoading.align || isLoading.alignStopping"
+      :disabled="isLoading.align || isLoading.alignStopping"
       @click="align()">
       Align documents
     </v-btn>
@@ -397,15 +416,19 @@
       },
       uploadFile(langCode) {
         this.isLoading.upload[langCode] = true;
-        this.$store
-          .dispatch(UPLOAD_FILES, {
+        this.$store.dispatch(UPLOAD_FILES, {
             file: this.files[langCode],
             username: this.$route.params.username,
             langCode
           })
           .then(() => {
-            this.isLoading.upload[langCode] = false;
-            this.selectFirstDocument(langCode);
+            this.$store.dispatch(FETCH_ITEMS, {
+              username: this.$route.params.username,
+              langCode: langCode
+            }).then(() => {
+              this.selectFirstDocument(langCode);
+              this.isLoading.upload[langCode] = false;
+            });
           });
       },      
       uploadProxyFile(langCode) {
@@ -700,7 +723,7 @@
       //helpers
       itemsNotEmpty(langCode) {
         if (!this.items | !this.items[langCode]) {
-          return true;
+          return false;
         }
         return this.items[langCode].length != 0;
       },
@@ -711,7 +734,15 @@
         return this.itemsProcessing[langCode].length != 0;
       },
       selectFirstDocument(langCode) {
+
+        console.log("this.items[langCode]", this.items[langCode])
+
+        console.log("!this.selected[langCode]", !this.selected[langCode])
+        console.log("this.itemsNotEmpty(langCode)", this.itemsNotEmpty(langCode))
+
         if (this.itemsNotEmpty(langCode) & !this.selected[langCode]) {
+          console.log("selectAndLoadPreview", langCode)
+
           this.selectAndLoadPreview(langCode, this.items[langCode][0].name, 0);
         }
       },
