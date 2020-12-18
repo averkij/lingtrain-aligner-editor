@@ -107,6 +107,8 @@ class processor:
             print("finishing with error")
         
     def start(self):
+        state.set_processing_state(self.db_path, (con.PROC_IN_PROGRESS, self.tasks_count, 1))
+
         result_handler = Process(target=self.handle_result, args=(self.queue_out,), daemon=True)
         result_handler.start()
 

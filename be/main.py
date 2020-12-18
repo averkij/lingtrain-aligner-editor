@@ -106,6 +106,7 @@ def splitted(username, lang, id, count, page):
 
 @app.route("/items/<username>/align/<lang_from>/<lang_to>/<int:id_from>/<int:id_to>", methods=["GET"])
 def align(username, lang_from, lang_to, id_from, id_to):
+    batch_size = config.DEFAULT_BATCHSIZE
     files_from = helper.get_files_list(os.path.join(con.UPLOAD_FOLDER,username, con.SPLITTED_FOLDER, lang_from))
     files_to = helper.get_files_list(os.path.join(con.UPLOAD_FOLDER,username, con.SPLITTED_FOLDER, lang_to))
     logging.info(f"[{username}]. Aligning documents. {files_from[id_from]}, {files_to[id_to]}.")
@@ -141,8 +142,13 @@ def align(username, lang_from, lang_to, id_from, id_to):
     
     logging.info(f"{username}: initializing state")
     len_from, _ = helper.get_texts_length(db_path)
-    total_batches = config.TEST_RESTRICTION_MAX_BATCHES if config.TEST_RESTRICTION_MAX_BATCHES > 0 else len_from//config.DEFAULT_BATCHSIZE
-    print("total_batches", total_batches)
+    
+    if config.TEST_RESTRICTION_MAX_BATCHES > 0:
+        total_batches = config.TEST_RESTRICTION_MAX_BATCHES
+    else:
+        is_last = len_from % batch_size > 0 
+        total_batches = len_from//batch_size + 1 if is_last else 0
+    logging.info(f"{username}: total_batches:", total_batches)
     state.init_processing(db_path, (con.PROC_INIT, total_batches, 0))  
 
     logging.info(f"{username}: aligning started")    
@@ -150,13 +156,10 @@ def align(username, lang_from, lang_to, id_from, id_to):
     # alignment.start()
 
     #parallel processing
-    batch_size=config.DEFAULT_BATCHSIZE
-    window_size=config.DEFAULT_WINDOW
-
     res_img = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{files_from[id_from]}.db.png")
     res_img_best = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{files_from[id_from]}.db.best.png")
     
-    task_list = [(lines_from_batch, lines_to_batch, line_ids_from, line_ids_to) for lines_from_batch, lines_to_batch, line_ids_from, line_ids_to in helper.get_batch_intersected(lines_from, lines_to, batch_size, window_size)]
+    task_list = [(lines_from_batch, lines_to_batch, line_ids_from, line_ids_to) for lines_from_batch, lines_to_batch, line_ids_from, line_ids_to in helper.get_batch_intersected(lines_from, lines_to)][:total_batches]
 
     proc_count = config.PROCESSORS_COUNT
 

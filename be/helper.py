@@ -9,6 +9,7 @@ import logging
 from warnings import simplefilter
 import sqlite3
 import json
+import config
 
 def get_files_list(folder, mask="*.txt"):
     return [os.path.basename(x) for x in get_files_list_with_path(folder, mask)]
@@ -248,7 +249,7 @@ def get_batch(iter1, iter2, iter3, n):
         kdx += k
         yield iter1[ndx:min(ndx + n, l1)], iter2[kdx:min(kdx + k, l3)], iter3[kdx:min(kdx + k, l3)]
 
-def get_batch_intersected(iter1, iter2, n, window):
+def get_batch_intersected(iter1, iter2, n=config.DEFAULT_BATCHSIZE, window=config.DEFAULT_WINDOW):
     l1 = len(iter1)
     l2 = len(iter2)
     k = int(round(n * l2/l1))
