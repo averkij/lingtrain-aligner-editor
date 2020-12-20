@@ -148,10 +148,10 @@ def align(username, lang_from, lang_to, id_from, id_to):
     else:
         is_last = len_from % batch_size > 0 
         total_batches = len_from//batch_size + 1 if is_last else 0
-    logging.info(f"{username}: total_batches:", total_batches)
+    logging.info(f"{username}: total_batches: {total_batches}")
     state.init_processing(db_path, (con.PROC_INIT, total_batches, 0))  
 
-    logging.info(f"{username}: aligning started")    
+    logging.info(f"{username}: aligning started")
     # alignment = Process(target=aligner.serialize_docs, args=(lines_from, lines_to, lines_proxy_to, res_img, res_img_best, lang_from, lang_to, db_path, total_batches), daemon=True)
     # alignment.start()
 
