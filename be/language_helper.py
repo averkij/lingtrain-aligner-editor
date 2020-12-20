@@ -12,7 +12,9 @@ TR_CODE = "tr"
 ES_CODE = "es"
 PL_CODE = "pl"
 PT_CODE = "pt"
-LANGUAGES = [RU_CODE, ZH_CODE, DE_CODE, EN_CODE, FR_CODE, IT_CODE, TR_CODE, ES_CODE, PL_CODE, PT_CODE]
+HU_CODE = "hu"
+CZ_CODE = "cz"
+LANGUAGES = [RU_CODE, ZH_CODE, DE_CODE, EN_CODE, FR_CODE, IT_CODE, TR_CODE, ES_CODE, PL_CODE, PT_CODE, HU_CODE, CZ_CODE]
 
 pattern_ru_orig = re.compile(r'[a-zA-Z\(\)\[\]\/\<\>•\'\n]+')
 double_spaces = re.compile(r'[\s]+')

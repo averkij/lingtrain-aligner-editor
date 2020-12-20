@@ -48,6 +48,16 @@ export const LANGUAGES = {
         langCode: "pt",
         name: "Portugal",
         icon: "🍊"
+    },
+    'hu': {
+        langCode: "hu",
+        name: "Hungarian",
+        icon: "🎄"
+    },
+    'cz': {
+        langCode: "cz",
+        name: "Czech",
+        icon: "🍻"
     }
 };
 export const DEFAULT_FROM = 'ru';
