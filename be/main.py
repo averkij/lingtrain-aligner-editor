@@ -12,7 +12,6 @@ from flask_cors import CORS
 import helper
 helper.configure_logging()
 
-import aligner
 import config
 import constants as con
 import editor
