@@ -16,3 +16,6 @@ be/__pycache__/translation_helper.cpython-38.pyc
 .vscode/.ropeproject/config.py
 be/models/sentence_transformers.bin
 be/__pycache__/align_processor.cpython-38.pyc
+be/models/labse.bin
+be/models/sentence_transformers_xlm_100.bin
+be/models/sentence_transformers-v2.bin

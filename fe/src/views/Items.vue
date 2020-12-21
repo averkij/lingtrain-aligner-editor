@@ -228,12 +228,23 @@
         </div>
 
         <!-- pagination -->
-        <div class="text-center pa-3">
-          <v-pagination v-model="processing.meta.page" :length="processing.meta.total_pages" total-visible="10"
+        <v-row class="py-1 px-5">
+          <v-col cols="12" sm="2"></v-col>
+          <v-col cols="12" sm="8">
+            <v-pagination v-model="processing.meta.page" :length="processing.meta.total_pages" total-visible="10"
             @input="onProcessingPageChange(processing.meta.page)">
           </v-pagination>
-        </div>
-      </v-card>     
+          </v-col>
+          <v-col cols="12" sm="2" class="text-right">
+            <v-btn width="100" class="mt-1"
+              @click="showGoToDialog=true">
+              Go To 
+            </v-btn>
+          </v-col>
+          <GoToDialog v-model="showGoToDialog"
+            @goToPage="goToPage" />
+        </v-row>
+      </v-card>      
 
       <!-- <div class="text-h4 mt-10 font-weight-bold">🧩 Unused strings</div>
 
@@ -253,7 +264,7 @@
         Please, wait. Alignment is in progress.
       </v-alert>
       <div v-else>
-        <div class="mt-10">
+        <!-- <div class="mt-10">
           <v-row>
             <v-col cols="12">
               <v-subheader class="pl-0">Similarity threshold: {{thresholdText}}</v-subheader>
@@ -268,10 +279,9 @@
             <v-progress-circular :rotate="360" :size="260" :width="15" :value="corporaSizeRelative" color="teal">
               <div class="text-h2 black--text mt-4" style="line-height:2rem !important;">{{corporaSizeAbsolute}} <br />
                 <span class="text-h5 grey--text">sentences</span></div>
-              <!-- <div class="text-h5 black--text">sentences</div> -->
             </v-progress-circular>
           </div>
-        </div>
+        </div> -->
         <div class="mt-10">
           <v-row>
             <v-col cols="12" sm="6">
@@ -299,6 +309,7 @@
   import SplittedPanel from "@/components/SplittedPanel";
   import InfoPanel from "@/components/InfoPanel";
   import EditItem from "@/components/EditItem";
+  import GoToDialog from "@/components/GoToDialog";
   import {
     mapGetters
   } from "vuex";
@@ -384,7 +395,9 @@
         satisfactionEmojis: ['😍', '😄', '😁', '😊', '🙂', '😐', '🙁', '☹️', '😢', '😭'],
         downloadThreshold: 9,
         showProxyTo: SettingsHelper.getShowProxyTo(),
-        selectedListItem: 0
+        selectedListItem: 0,
+        //dialogs
+        showGoToDialog: false,
       };
     },
     methods: {
@@ -404,6 +417,7 @@
         });
       },
       onProcessingPageChange(page) {
+        let num = Math.min(page, this.processing.meta.total_pages)
         this.triggerClearCandidates = !this.triggerClearCandidates;
         this.$store.dispatch(GET_PROCESSING, {
           username: this.$route.params.username,
@@ -411,7 +425,7 @@
           langCodeTo: this.langCodeTo,
           fileId: this.selectedProcessingId,
           linesCount: 10,
-          page: page
+          page: num
         });
       },
       uploadFile(langCode) {
@@ -720,6 +734,10 @@
             langCode: this.langCodeFrom
           });
       },
+      //dialogs
+      goToPage(pageNumber) {
+        this.onProcessingPageChange(pageNumber);
+      },
       //helpers
       itemsNotEmpty(langCode) {
         if (!this.items | !this.items[langCode]) {
@@ -877,7 +895,8 @@
       RawPanel,
       DownloadPanel,
       SplittedPanel,
-      InfoPanel
+      InfoPanel,
+      GoToDialog
     }
   };
 </script>
