@@ -39,7 +39,8 @@ def calculate_graphs(lines_from, processing_from_to, res_img, res_img_path, res_
     centr_html = df_centr.sort_values(by='frame', ascending=False).T.to_html(index=False)
 
     #4
-    density = graph.density
+    density = round(graph.density,5)
+    sparsity = round(1/density,5)
 
     #5
     pd.set_option('display.float_format', lambda x: '%.2f' % x)
@@ -59,6 +60,7 @@ def calculate_graphs(lines_from, processing_from_to, res_img, res_img_path, res_
                 "deg_html": deg_html,
                 "centr_html": centr_html,
                 "density": density,
+                "sparsity": sparsity,
                 "spectr_html": spectr_html,
                 "spectr_img": res_img,
                 "clusters": letter_clusters

@@ -62,8 +62,8 @@ export const ItemsService = {
       alert("File is empty");
       return;
     }
-    if (params.file.size > 5 * 1024 * 1024) {
-      alert("File is too big (> 5MB)");
+    if (params.file.size > 100 * 1024) {
+      alert("Please, choose file < 100KB");
       return;
     }
     let form = new FormData();

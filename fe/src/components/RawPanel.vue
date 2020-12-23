@@ -4,8 +4,8 @@
                             <v-card-title>{{info.lang}}</v-card-title>
                         </v-img> -->
     <div class="blue lighten-5">
-      <v-card-title>{{ info.icon }} {{ info.name }}</v-card-title>
-      <v-card-text>Your {{ info.name }} files</v-card-text>
+      <v-card-title>{{ info.icon }} Документы</v-card-title>
+      <v-card-text>Загруженные ранее файлы</v-card-text>
     </div>
     <v-divider></v-divider>
     <v-list class="pa-0">
@@ -22,8 +22,8 @@
       </v-list-item-group>
     </v-list>
     <v-divider></v-divider>
-    <v-card-title>Upload</v-card-title>
-    <v-card-text>Upload raw {{ info.name }} document in txt format.</v-card-text>
+    <v-card-title>Загрузить</v-card-title>
+    <v-card-text>Выберите текст на русском языке в формате .txt</v-card-text>
     <v-card-actions>
       <v-file-input outlined dense accept=".txt" @change="onFileChange($event, info.langCode)">
       </v-file-input>
@@ -32,7 +32,7 @@
     <v-card-actions>
       <v-btn @click="uploadFile(info.langCode)" :loading="isLoading.upload[info.langCode]"
         :disabled="isLoading.upload[info.langCode]">
-        Upload
+        Загрузить
       </v-btn>
     </v-card-actions>
   </v-card>

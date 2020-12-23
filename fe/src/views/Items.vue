@@ -8,10 +8,9 @@
     </div>
 
     <!-- RAW panels -->
-    <div class="text-h4 mt-15 font-weight-bold">💾 Документы</div>
+    <!-- <div class="text-h4 mt-15 font-weight-bold">💾 Документы</div> -->
     <v-alert type="info" class="mt-6" v-show="showAlert">
-      There are no uploaded documents yet. Please upload some using the form
-      below.
+      Вы пока ничего не загружали. Загрузите текстовый файл через форму ниже.
     </v-alert>
     <div class="mt-6">
       <v-row>
@@ -24,7 +23,7 @@
     </div>
 
     <!-- PROCESSING panels -->
-    <div class="text-h4 mt-10 font-weight-bold">✒️ Результат</div>
+    <div class="text-h4 mt-10 font-weight-bold">😃 Результат</div>
 
     <v-btn v-if="!userAlignInProgress && !itemsProcessing[langCodeFrom]" v-show="selected[langCodeFrom]" class="success mt-6"
       :loading="isLoading.align || isLoading.alignStopping" :disabled="isLoading.align || isLoading.alignStopping"
@@ -34,45 +33,38 @@
 
     <div v-else>
 
-      <div class="text-h5 mt-10 font-weight-bold">Наибольшие связи между буквами</div>
-      <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-      </v-alert>
+      <div class="text-h5 mt-10 font-weight-bold">Плотность</div>
       <div class="mt-6 rendered-table">
-        <!-- {{itemsProcessing}} -->
-        <p v-html="itemsProcessing['ru'].conn_html"></p>
+        {{itemsProcessing['ru'].density}}
       </div>
 
-      <div class="text-h5 mt-10 font-weight-bold">Степени букв</div>
-      <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-      </v-alert>
+      <div class="text-h5 mt-10 font-weight-bold">Разреженность</div>
+      <div class="mt-6 rendered-table">
+        {{itemsProcessing['ru'].sparsity}}
+      </div>
+
+      <div class="text-h5 mt-10 font-weight-bold">Степени (частотности) букв</div>
       <div class="mt-6 rendered-table">
         <p v-html="itemsProcessing['ru'].deg_html"></p>
       </div>
 
       <div class="text-h5 mt-10 font-weight-bold">Центральности букв</div>
-      <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-      </v-alert>
       <div class="mt-6 rendered-table">
         <p v-html="itemsProcessing['ru'].centr_html"></p>
       </div>
 
-      <div class="text-h5 mt-10 font-weight-bold">Плотность связей букв</div>
+      <div class="text-h5 mt-10 font-weight-bold">Пары максимальной связности</div>
       <div class="mt-6 rendered-table">
-        {{itemsProcessing['ru'].density}}
+        <!-- {{itemsProcessing}} -->
+        <p v-html="itemsProcessing['ru'].conn_html"></p>
       </div>
 
-      <div class="text-h5 mt-10 font-weight-bold">Спектр графа (собственные векторы)</div>
-      <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-      </v-alert>
+      <div class="text-h5 mt-10 font-weight-bold">Спектр графа</div>
       <div class="mt-6 rendered-table">
         <p v-html="itemsProcessing['ru'].spectr_html"></p>
       </div>
 
-      <div class="text-h5 mt-10 font-weight-bold">Визуализация спектра</div>
+      <div class="text-h5 mt-10 font-weight-bold">Слои максимальной поляризации</div>
       <div class="mt-6" style="width:800px;">
         <v-img :src="`${API_URL}/static/img/${username}/${itemsProcessing['ru'].spectr_img}`" :lazy-src="`${API_URL}/static/proc_img_stub.jpg`">
               <template v-slot:placeholder>
@@ -469,24 +461,6 @@
           fileId: this.selectedIds[this.langCodeFrom]
         });
       });
-      // this.$store.dispatch(FETCH_ITEMS, {
-      //   username: this.$route.params.username,
-      //   langCode: this.langCodeTo
-      // }).then(() => {
-      //   this.selectFirstDocument(this.langCodeTo);
-      // });
-      // this.$store.dispatch(FETCH_ITEMS_PROCESSING, {
-      //   username: this.$route.params.username,
-      //   langCodeFrom: this.langCodeFrom,
-      //   langCodeTo: this.langCodeTo,
-      //   fileId: this.selectedIds[this.langCodeFrom]
-      // }).then(() => {
-      //   if (this.itemsProcessing[this.langCodeFrom].filter(x => x.state[0] == 0 || x.state[0] == 1).length > 0) {
-      //     this.userAlignInProgress = true;
-      //     this.fetchItemsProvessingTimer();
-      //   }
-      //   this.selectFirstProcessingDocument();
-      // });
     },
     computed: {
       ...mapGetters(["items", "itemsProcessing", "splitted", "processing"]),
@@ -531,11 +505,7 @@
       }
     },
     components: {
-      // EditItem,
       RawPanel,
-      // DownloadPanel,
-      // SplittedPanel,
-      // InfoPanel
     }
   };
 </script>

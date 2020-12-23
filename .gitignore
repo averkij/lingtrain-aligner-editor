@@ -26,3 +26,10 @@ be/static/img/serg/chekhov_6_ru.txt.best_0003.png
 be/static/img/serg/chekhov_6_ru.txt.best_0004.png
 be/__pycache__/translation_helper.cpython-38.pyc
 be/__pycache__/pdgraphs.cpython-38.pyc
+.vscode/.ropeproject/config.py
+.vscode/.ropeproject/objectdb
+be/__pycache__/align_processor.cpython-38.pyc
+be/models/sentence_transformers_xlm_100.bin
+be/models/labse.bin
+be/models/sentence_transformers-v2.bin
+be/models/sentence_transformers.bin
