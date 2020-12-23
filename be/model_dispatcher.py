@@ -1,10 +1,12 @@
-import os
-import pickle
+""""Model definitions"""
 
-import constants as con
 
 # from models.use_multilingual_models import use_multilingual_v3_model
-from models.sententense_transformers_models import sentence_transformers_model, sentence_transformers_model_xlm_100, sentence_transformers_model_labse
+from models.sententense_transformers_models import (
+    sentence_transformers_model,
+    sentence_transformers_model_labse,
+    sentence_transformers_model_xlm_100,
+)
 
 models = {
     "sentence_transformer_multilingual": sentence_transformers_model,

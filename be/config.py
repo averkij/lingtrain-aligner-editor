@@ -1,3 +1,5 @@
+"""App config"""
+
 # MODEL = "sentence_transformer_multilingual_xlm_100"
 MODEL = "sentence_transformer_multilingual"
 # MODEL = "sentence_transformer_multilingual_labse"

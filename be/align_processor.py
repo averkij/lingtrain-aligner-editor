@@ -1,33 +1,34 @@
+"""Alignment processor"""
+
 import logging
 import os
-import pickle
-import sys
-from typing import List
-
-import matplotlib
-import numpy as np
-import seaborn as sns
-#https://stackoverflow.com/questions/49921721/runtimeerror-main-thread-is-not-in-main-loop-with-matplotlib-and-flask
-matplotlib.use('Agg')
-from matplotlib import pyplot as plt
-from scipy import spatial
+import queue
+import sqlite3
+import time
+from multiprocessing import Process, Queue
 
 import config
 import constants as con
 import helper
+import matplotlib
 import model_dispatcher
+import numpy as np
+import seaborn as sns
 import sim_helper
 import state_manager as state
+from matplotlib import pyplot as plt
+from scipy import spatial
 
-import sqlite3
-import time
-import queue
+# https://stackoverflow.com/questions/49921721/runtimeerror-main-thread-is-not-in-main-loop-with-matplotlib-and-flask
+matplotlib.use('Agg')
 
-from multiprocessing import Queue, Process
 
 FINISH_PROCESS = "finish_process"
 
-class processor:
+
+class AlignmentProcessor:
+    """Processor with parallel texts alignment logic"""
+
     def __init__(self, proc_count, db_path, res_img, res_img_best, lang_name_from, lang_name_to):
         self.proc_count = proc_count
         self.queue_in = Queue()
@@ -38,29 +39,33 @@ class processor:
         # self.lines_proxy_to = lines_proxy_to
         self.lang_name_from = lang_name_from
         self.lang_name_to = lang_name_to
+        self.tasks_count = 0
 
     def add_tasks(self, task_list):
+        """Add batches with string arrays for the further processing"""
         for i, task in enumerate(task_list):
             self.queue_in.put((i, task))
         for i in range(self.proc_count):
-            self.queue_in.put((-1, FINISH_PROCESS))     
-        self.tasks_count = len(task_list)   
+            self.queue_in.put((-1, FINISH_PROCESS))
+        self.tasks_count = len(task_list)
 
     def work(self, queue_in, queue_out):
+        """Create separate alignment processes"""
         while True:
             try:
                 task_index, task = queue_in.get_nowait()
             except queue.Empty:
-                print('found an empty queue. Sleeping for a while before checking again...')
+                print(
+                    'found an empty queue. Sleeping for a while before checking again...')
                 time.sleep(0.01)
             else:
                 try:
                     if task == FINISH_PROCESS:
                         print('No more work left to be done. Exiting...')
                         break
-                    
+
                     print("task_index", task_index)
-                    
+
                     self.process_batch(task_index, *task)
 
                 except Exception as e:
@@ -68,6 +73,7 @@ class processor:
                     queue_out.put("error")
 
     def handle_result(self, queue_out):
+        """Handle the result of a single finished process"""
         counter = 0
         error_occured = False
         result = []
@@ -78,26 +84,30 @@ class processor:
             if result_code == con.PROC_DONE:
                 print("RESULT:", result_code)
                 result.append((batch_number, texts_from, texts_to))
-                state.set_processing_state(self.db_path, (con.PROC_IN_PROGRESS, self.tasks_count, counter+1))
+                state.set_processing_state(
+                    self.db_path, (con.PROC_IN_PROGRESS, self.tasks_count, counter+1))
 
-            elif result_code==con.PROC_ERROR:                
+            elif result_code == con.PROC_ERROR:
                 error_occured = True
-                state.set_processing_state(self.db_path, (con.PROC_ERROR, self.tasks_count, counter+1))
+                state.set_processing_state(
+                    self.db_path, (con.PROC_ERROR, self.tasks_count, counter+1))
                 break
 
             counter += 1
 
-        #sort by batch_id
+        # sort by batch_id
         result.sort()
         with sqlite3.connect(self.db_path) as db:
             logging.info(f"writing {len(result)} batches to {self.db_path}")
             for i, texts_from, texts_to in result:
-                db.executemany(f"insert into processing_from(text_ids, initial_id, text) values (?,?,?)", texts_from)
-                db.executemany(f"insert into processing_to(text_ids, initial_id, text) values (?,?,?)", texts_to)
+                db.executemany(
+                    "insert into processing_from(text_ids, initial_id, text) values (?,?,?)", texts_from)
+                db.executemany(
+                    "insert into processing_to(text_ids, initial_id, text) values (?,?,?)", texts_to)
 
             logging.info(f"creating index for {self.db_path}")
             helper.create_doc_index(db)
-            
+
         logging.info(f"Alignment is finished. Removing state. {self.db_path}")
 
         if not error_occured:
@@ -105,40 +115,46 @@ class processor:
             state.destroy_processing_state(self.db_path)
         else:
             print("finishing with error")
-        
-    def start(self):
-        state.set_processing_state(self.db_path, (con.PROC_IN_PROGRESS, self.tasks_count, 1))
 
-        result_handler = Process(target=self.handle_result, args=(self.queue_out,), daemon=True)
+    def start(self):
+        """Start workers"""
+        state.set_processing_state(
+            self.db_path, (con.PROC_IN_PROGRESS, self.tasks_count, 1))
+
+        result_handler = Process(
+            target=self.handle_result, args=(self.queue_out,), daemon=True)
         result_handler.start()
 
-        workers = [Process(target=self.work, args=(self.queue_in, self.queue_out), daemon=True) for _ in range(min(self.proc_count, self.tasks_count))] #do not run more processes than necessary
+        workers = [Process(target=self.work, args=(self.queue_in, self.queue_out), daemon=True) for _ in range(
+            min(self.proc_count, self.tasks_count))]  # do not run more processes than necessary
         for w in workers:
             w.start()
 
     def process_batch(self, batch_number, lines_from_batch, lines_to_batch, line_ids_from, line_ids_to):
+        """Do the actual alignment process logic"""
         zero_treshold = 0
         sims = []
 
         # use_proxy_to = False
         # use_proxy_to = self.lines_proxy_to != None #and len(self.lines_proxy_to)>=len(lines_to)
-        #print("use_proxy_to", use_proxy_to, len(lines_proxy_to), len(lines_to)) 
+        #print("use_proxy_to", use_proxy_to, len(lines_proxy_to), len(lines_to))
 
         logging.info(f"Aligning started for {self.db_path}.")
         try:
-            #test version restriction
+            # test version restriction
             # if (config.TEST_RESTRICTION_MAX_BATCHES > 0 and batch_number > config.TEST_RESTRICTION_MAX_BATCHES) \
             #         or not state.processing_state_exist(self.db_path):
             #     logging.info(f"[Test restriction]. Finishing and removing state. {self.db_path}")
             #     state.destroy_processing_state(self.db_path)
             #     break
-            
+
             print("batch:", batch_number)
             logging.info(f"Batch {batch_number}. Calculating vectors.")
-            
+
             vectors1 = [*get_line_vectors(lines_from_batch)]
             vectors2 = [*get_line_vectors(lines_to_batch)]
-            logging.debug(f"Batch {batch_number}. Vectors calculated. len(vectors1)={len(vectors1)}. len(vectors2)={len(vectors2)}.")
+            logging.debug(
+                f"Batch {batch_number}. Vectors calculated. len(vectors1)={len(vectors1)}. len(vectors2)={len(vectors2)}.")
 
             # Similarity matrix
             logging.debug(f"Calculating similarity matrix.")
@@ -146,31 +162,38 @@ class processor:
             sim_matrix_best = sim_helper.best_per_row(sim_matrix)
 
             # Heuristics
-            sim_matrix_best = sim_helper.fix_inside_window(sim_matrix, sim_matrix_best, fixed_window_size=2)
-        
-            res_img_batch = "{0}_{1:04d}{2}".format(os.path.splitext(self.res_img)[0], batch_number, os.path.splitext(self.res_img)[1])
-            res_img_batch_best = "{0}_{1:04d}{2}".format(os.path.splitext(self.res_img_best)[0], batch_number, os.path.splitext(self.res_img_best)[1])
+            sim_matrix_best = sim_helper.fix_inside_window(
+                sim_matrix, sim_matrix_best, fixed_window_size=2)
+
+            res_img_batch = "{0}_{1:04d}{2}".format(os.path.splitext(
+                self.res_img)[0], batch_number, os.path.splitext(self.res_img)[1])
+            res_img_batch_best = "{0}_{1:04d}{2}".format(os.path.splitext(
+                self.res_img_best)[0], batch_number, os.path.splitext(self.res_img_best)[1])
 
             # Visualization
-            plt.figure(figsize=(12,6))
-            sns.heatmap(sim_matrix, cmap="Greens", vmin=zero_treshold, cbar=False)
+            plt.figure(figsize=(12, 6))
+            sns.heatmap(sim_matrix, cmap="Greens",
+                        vmin=zero_treshold, cbar=False)
             plt.savefig(res_img_batch, bbox_inches="tight")
 
-            plt.figure(figsize=(12,6))
-            sns.heatmap(sim_matrix_best, cmap="Greens", vmin=zero_treshold, cbar=False)
+            plt.figure(figsize=(12, 6))
+            sns.heatmap(sim_matrix_best, cmap="Greens",
+                        vmin=zero_treshold, cbar=False)
             plt.xlabel(self.lang_name_to, fontsize=30, labelpad=-40)
             plt.ylabel(self.lang_name_from, fontsize=30, labelpad=-40)
-            plt.tick_params(axis='both', which='both', bottom=False, top=False, labelbottom=False, right=False, left=False, labelleft=False)
+            plt.tick_params(axis='both', which='both', bottom=False, top=False,
+                            labelbottom=False, right=False, left=False, labelleft=False)
             plt.savefig(res_img_batch_best, bbox_inches="tight")
 
             # Aggregating similarities for grade calculation
             best_sim_ind = sim_matrix_best.argmax(1)
-            sims.extend(sim_matrix_best[range(best_sim_ind.shape[0]), best_sim_ind])            
+            sims.extend(sim_matrix_best[range(
+                best_sim_ind.shape[0]), best_sim_ind])
 
             # lines_proxy_to_batch = [''] * len(lines_to_batch)
             # if use_proxy_to:
             #     lines_proxy_to_batch = self.lines_proxy_to[line_ids_to[0]:line_ids_to[-1]+1]
-            
+
             # Actual work
             logging.debug(f"Processing lines.")
             # get_processed(lines_from_batch, lines_to_batch, lines_proxy_to_batch, line_ids_from, line_ids_to, \
@@ -185,10 +208,12 @@ class processor:
                 id_to = line_ids_to[best_sim_ind[line_from_id]]
                 text_to = lines_to_batch[best_sim_ind[line_from_id]]
 
-                texts_from.append((f'[{id_from+1}]', id_from+1, text_from.strip()))
+                texts_from.append(
+                    (f'[{id_from+1}]', id_from+1, text_from.strip()))
                 texts_to.append((f'[{id_to+1}]', id_to+1, text_to.strip()))
 
-            self.queue_out.put((con.PROC_DONE, batch_number, texts_from, texts_to))
+            self.queue_out.put(
+                (con.PROC_DONE, batch_number, texts_from, texts_to))
 
             #sim_grades = calc_sim_grades(sims)
             # docs["sim_grades"] = sim_grades
@@ -197,10 +222,12 @@ class processor:
             logging.error(e, exc_info=True)
             self.queue_out.put((con.PROC_ERROR, [], []))
 
+
 def calc_sim_grades(sims):
+    """Calculate similarity gradations"""
     key, res = 0, {}
-    for i, s in enumerate(sorted(sims)):
-        while key < s:
+    for i, sim in enumerate(sorted(sims)):
+        while key < sim:
             res[round(key*100)] = len(sims) - i
             key += 0.01
     while len(res) <= 100:
@@ -208,15 +235,19 @@ def calc_sim_grades(sims):
         key += 0.01
     return res
 
+
 def get_line_vectors(lines):
+    """Calculate embedding of the string"""
     return model_dispatcher.models[config.MODEL].embed(lines)
 
+
 def get_sim_matrix(vec1, vec2, window=config.DEFAULT_WINDOW):
+    """Calculate similarity matrix"""
     sim_matrix = np.zeros((len(vec1), len(vec2)))
     k = len(vec1)/len(vec2)
-    for i in range(len(vec1)):
-        for j in range(len(vec2)):
+    for i, vector1 in enumerate(vec1):
+        for j, vector2 in enumerate(vec2):
             if (j*k > i-window) & (j*k < i+window):
-                sim = 1 - spatial.distance.cosine(vec1[i], vec2[j])
-                sim_matrix[i,j] = max(sim, 0.01)
+                sim = 1 - spatial.distance.cosine(vector1, vector2)
+                sim_matrix[i, j] = max(sim, 0.01)
     return sim_matrix
