@@ -1,7 +1,7 @@
 <template>
   <v-card width="400" class="mx-auto mt-5">
     <v-form>
-      <v-card-title>Привет, 你好, Szia, Hallo, Ahoj!</v-card-title>
+      <v-card-title>Привет, хабраюзер!</v-card-title>
       <v-card-text>
         <v-text-field
           label="Username"

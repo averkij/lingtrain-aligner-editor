@@ -171,5 +171,21 @@ def route_frontend(path):
         index_path = os.path.join(app.static_folder, "index.html")
         return send_file(index_path)
 
+@app.route("/debug/items", methods=["GET"])
+def show_items_tree():
+    """Show all files in data folder"""
+
+    tree_path = os.path.join(tempfile.gettempdir(), "items_tree.txt")
+    logging.debug(f"Temp file for tree structure: {tree_path}.")
+    with open(tree_path, mode="w", encoding="utf-8") as tree_out:
+        for root, dirs, files in os.walk(con.UPLOAD_FOLDER):
+            level = root.replace(con.UPLOAD_FOLDER, '').count(os.sep)
+            indent = ' ' * 4 * (level)
+            tree_out.write(f"{indent}{os.path.basename(root)}" + "\n")
+            subindent = ' ' * 4 * (level + 1)
+            for file in files:
+                tree_out.write(f"{subindent}{file}" + "\n")
+    return send_file(tree_path)
+    
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True, port=80)
