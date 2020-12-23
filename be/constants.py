@@ -1,3 +1,5 @@
+"""App constants"""
+
 UPLOAD_FOLDER = "data"
 STATIC_FOLDER = "static"
 RAW_FOLDER = "raw"
@@ -19,11 +21,11 @@ PROC_IN_PROGRESS = 1
 PROC_DONE = 2
 PROC_ERROR = 3
 
-EMPTY_LINES = {"items": {"ru":[], "zh":[]}}
-EMPTY_SIMS = {"items": {"ru":[], "zh":[], "sim":[]}}
-EMPTY_FILES = {"items": {"ru":[]}}
+EMPTY_LINES = {"items": {"ru": [], "zh": []}}
+EMPTY_SIMS = {"items": {"ru": [], "zh": [], "sim": []}}
+EMPTY_FILES = {"items": {"ru": []}}
 
-#edit operations
+# edit operations
 EDIT_ADD_PREV_END = "edit_add_prev_end"
 EDIT_ADD_NEXT_END = "edit_add_next_end"
 EDIT_ADD_CANDIDATE_END = "edit_add_candidate_end"
@@ -32,3 +34,11 @@ EDIT_CLEAR_LINE = "edit_clear_line"
 EDIT_LINE = "edit_line"
 ADD_EMPTY_LINE_BEFORE = "add_empty_line_before"
 ADD_EMPTY_LINE_AFTER = "add_empty_line_after"
+
+CULTURE_LIST = {
+    "en": "en-US",
+    "zh": "zh-CN",
+    "ru": "ru-RU",
+    "de": "de-DE"
+}
+DEFAULT_CULTURE = "en"

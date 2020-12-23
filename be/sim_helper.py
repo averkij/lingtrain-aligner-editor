@@ -1,12 +1,19 @@
+"""Similarity calculations helper"""
+
 import numpy as np
 
+
 def best_per_row(sim_matrix):
+    """Transfor matrix by leaving only best match"""
     sim_matrix_best = np.zeros_like(sim_matrix)
     max_sim = sim_matrix.argmax(1)
-    sim_matrix_best[range(sim_matrix.shape[0]), max_sim] = sim_matrix[range(sim_matrix.shape[0]), max_sim]
+    sim_matrix_best[range(sim_matrix.shape[0]), max_sim] = sim_matrix[range(
+        sim_matrix.shape[0]), max_sim]
     return sim_matrix_best
 
+
 def fix_inside_window(sim_matrix, sim_matrix_best, fixed_window_size=1):
+    """Fix matrix"""
     window = fixed_window_size + 1
     if sim_matrix_best.shape[0] <= window or window < 1:
         return sim_matrix_best
