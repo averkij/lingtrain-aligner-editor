@@ -21,17 +21,14 @@
         </v-col>
       </v-row>
     </div>
-
-    <!-- PROCESSING panels -->
-    <div class="text-h4 mt-10 font-weight-bold">😃 Результат</div>
-
-    <v-btn v-if="!userAlignInProgress && !itemsProcessing[langCodeFrom]" v-show="selected[langCodeFrom]" class="success mt-6"
+    <!-- <v-btn v-if="!userAlignInProgress && !itemsProcessing[langCodeFrom]" v-show="selected[langCodeFrom]" class="success mt-6"
       :loading="isLoading.align || isLoading.alignStopping" :disabled="isLoading.align || isLoading.alignStopping"
       @click="calculateGraphs()">
       Посчитать
-    </v-btn>
+    </v-btn> -->
 
-    <div v-else>
+    <div v-if="itemsProcessing[langCodeFrom]">
+      <div class="text-h4 mt-10 font-weight-bold">😃 Результат</div>
 
       <div class="text-h5 mt-10 font-weight-bold">Плотность</div>
       <div class="mt-6 rendered-table">

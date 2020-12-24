@@ -19,7 +19,7 @@ import pandas as pd
 import re
 
 
-def calculate_graphs(lines_from, processing_from_to, res_img, res_img_path, res_path, lang_name_from, lang_name_to):
+def calculate_graphs(lines_from, res_path, res_img_path, res_img):
     print("calculating...")
     # print(lines_from)
     pd.set_option('display.float_format', lambda x: '%.0f' % x)
@@ -35,6 +35,7 @@ def calculate_graphs(lines_from, processing_from_to, res_img, res_img_path, res_
     deg_html = df_deg.sort_values(by='frame', ascending=False).T.to_html(index=False)
 
     #3
+    pd.options.display.float_format = '{:,.2f}'.format
     df_centr = pd.DataFrame({'frame': graph.cn})
     centr_html = df_centr.sort_values(by='frame', ascending=False).T.to_html(index=False)
 
@@ -43,7 +44,6 @@ def calculate_graphs(lines_from, processing_from_to, res_img, res_img_path, res_
     sparsity = round(1/density,5)
 
     #5
-    pd.set_option('display.float_format', lambda x: '%.2f' % x)
     spectr = graph.lapSpectr()
     spectr_html = spectr.dfSpectr().to_html(table_id="spectr")
     

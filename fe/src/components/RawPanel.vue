@@ -22,17 +22,17 @@
       </v-list-item-group>
     </v-list>
     <v-divider></v-divider>
-    <v-card-title>Загрузить</v-card-title>
+    <v-card-title>Загрузить и посчитать</v-card-title>
     <v-card-text>Выберите текст на русском языке в формате .txt</v-card-text>
     <v-card-actions>
       <v-file-input outlined dense accept=".txt" @change="onFileChange($event, info.langCode)">
       </v-file-input>
     </v-card-actions>
-    <v-divider></v-divider>
+    <v-divider></v-divider> 
     <v-card-actions>
       <v-btn @click="uploadFile(info.langCode)" :loading="isLoading.upload[info.langCode]"
         :disabled="isLoading.upload[info.langCode]">
-        Загрузить
+        Начать
       </v-btn>
     </v-card-actions>
   </v-card>
