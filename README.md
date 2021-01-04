@@ -1,24 +1,59 @@
-# Lingtrain Aligner. ML powered application for extracting parallel corpora. 
+# Lingtrain Aligner. ML powered application for extracting parallel corpora.
 
-## 1. Upload raw texts
+## Introduction
+
+Lingtrain Aligner is a tool which can help you to automatically preperocess, align and edit the extracted parallel corpora.
+
+## Models
+
+Supported languages list depend on the selected backend sentence embedding model.
+
+- **distiluse-base-multilingual-cased-v2**
+  - more reliable and fast
+  - moderate weights size — 500MB
+  - supports 50+ languages
+  - full list of supported languages can be found in [this paper](https://arxiv.org/abs/2004.09813)
+- **LaBSE (Language-agnostic BERT Sentence Embedding)**
+  - can be used for rare languages
+  - pretty heavy weights — 1.8GB
+  - supports 100+ languages
+  - full list of supported languages can be found [here](https://arxiv.org/abs/2007.01852)
+
+
+## Credits
+
+
+
+
+
+<table>
+<tr><td><img src="/img/hse.jpg" alt="Higher School of Economics logo" width="200"/></td>
+<td>The project was supported by the Center for Academic Development of Students within the framework of the Competition of initiative collective research projects of students of the National Research University "Higher School of Economics".</td></tr>
+</table>
+
+## How-to
+
+Alignment process is pretty straightforward. After you have the app up and running follow the instructions to start the process.
+
+### 1. Upload raw texts
 ![Upload](/img/1.png)
 
-## 2. Check the splitted documents
+### 2. Check the splitted documents
 ![Splitted](/img/2.png)
 
-## 3. Align documents
+### 3. Align documents
 
 ![Visualization](/img/3.png)
 
-## 4. Check the result and edit if needed
+### 4. Check the result and edit if needed
 
 ![Edit](/img/4.png)
 
-## 5. Set the quality threshold
+### 5. Set the quality threshold
 
 ![Threshold](/img/5.png)
 
-## 6. Download the corpora
+### 6. Download the corpora
 
 ![Dowload](/img/6.png)
 
@@ -35,7 +70,7 @@ After that application will be available on your browser on the localhost addres
 
 ## Running in development mode
 
-## Backend
+### Backend
 
 - /be
 
@@ -45,19 +80,19 @@ Flask/uwsgi backend REST API service. It's pretty simple and contains all the al
 python main.py
 ```
 
-## Frontend
+### Frontend
 
 - /fe
 
 SPA. Vue + vuex + vuetify. UI for managing alignment process using BE and a tool for translators to edit processing documents.
 
-### Setup
+#### Setup
 
 ```
 npm install
 ```
 
-### Compile and run with hot-reloads for development
+#### Compile and run with hot-reloads for development
 
 ```
 npm run serve
