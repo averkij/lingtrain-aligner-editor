@@ -1,0 +1,30 @@
+Welcome to Lingtrain Aligner's documentation!
+=============================================
+
+Header
+======
+
+Some text some text some text some text
+
+   print 'hello'
+   >> hello
+
+
+Guide
+^^^^^
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+   license
+   help
+
+
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
