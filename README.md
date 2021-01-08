@@ -19,21 +19,23 @@ Supported languages list depend on the selected backend sentence embedding model
   - supports 100+ languages
   - full list of supported languages can be found [here](https://arxiv.org/abs/2007.01852)
 
-
 ## Credits
-
-
-
-
 
 <table>
 <tr><td><img src="/img/hse.jpg" alt="Higher School of Economics logo" width="200"/></td>
 <td>The project was supported by the Center for Academic Development of Students within the framework of the Competition of initiative collective research projects of students of the National Research University "Higher School of Economics".</td></tr>
 </table>
 
+## Demo
+
+For the quick overview of the alignment process and main functionality you can watch the demo which was helded on the [AINL Conference](https://ainlconf.ru/2020/program).
+
+
+<a href="https://www.youtube.com/watch?v=W6N7vJ4RqS4"><img src="/img/demo.png" alt="Higher School of Economics logo" width="800"/></a>
+
 ## How-to
 
-Alignment process is pretty straightforward. After you have the app up and running follow the instructions to start the process.
+Alignment process is pretty straightforward. After you have the app up and running follow the instructions to start the process. To start the app locally see the [Running from Docker Hub](#running-from-docker-hub) section.
 
 ### 1. Upload raw texts
 ![Upload](/img/1.png)
