@@ -6,7 +6,7 @@ Lingtrain Aligner is a tool which can help you to automatically preperocess, ali
 
 ## Models
 
-Supported languages list depend on the selected backend sentence embedding model.
+Automated alignment process relies on the sentence embeddings models. Embeddings are just a vectors of a special kind which are used to calculate a distance between the sentences. You can also plug your own model using the interface described in models directory. Supported languages list depend on the selected backend model.
 
 - **distiluse-base-multilingual-cased-v2**
   - more reliable and fast
