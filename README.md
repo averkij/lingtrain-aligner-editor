@@ -2,11 +2,13 @@
 
 ## Introduction
 
-Lingtrain Aligner is a tool which can help you to automatically preperocess, align and edit the extracted parallel corpora.
+Lingtrain Aligner is a tool for extracting parallel corpora from texts in different languages.
+
+![Parallel corpus example](/img/prince_parallel.png)
 
 ## Models
 
-Automated alignment process relies on the sentence embeddings models. Embeddings are just a vectors of a special kind which are used to calculate a distance between the sentences. You can also plug your own model using the interface described in models directory. Supported languages list depend on the selected backend model.
+Automated alignment process relies on the sentence embeddings models. Embeddings are multidimensional vectors of a special kind which are used to calculate a distance between the sentences. You can also plug your own model using the interface described in models directory. Supported languages list depend on the selected backend model.
 
 - **distiluse-base-multilingual-cased-v2**
   - more reliable and fast
@@ -68,7 +70,7 @@ docker pull lingtrain/aligner:st
 docker run -p 80:80 lingtrain/aligner:st
 ```
 
-After that application will be available on your browser on the localhost address.
+After that the app will be available on your browser on the localhost address.
 
 ## Running in development mode
 
