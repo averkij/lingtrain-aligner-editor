@@ -14,7 +14,7 @@
 
 .ta-custom > .v-input__control > .v-text-field__details {
     display: none !important;
-} 
+}
 
 .fill-width {
     width: 100%;
@@ -121,4 +121,9 @@
 
 .candidates-cont:last-child > .d-table > .d-table-cell.candidate-text {
     padding-bottom: 30px !important;
+}
+
+/* fonts */
+.font-josefin {
+    font-family: 'Josefin Sans', sans-serif;
 }
