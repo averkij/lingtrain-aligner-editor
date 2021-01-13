@@ -136,7 +136,7 @@ def align(username, lang_from, lang_to, id_from, id_to):
     proxy_to = os.path.join(con.UPLOAD_FOLDER, username,
                             con.PROXY_FOLDER, lang_to, files_to[id_to])
     proxy_from = os.path.join(
-        con.UPLOAD_FOLDER, username, con.PROXY_FOLDER, lang_from, files_to[id_to])
+        con.UPLOAD_FOLDER, username, con.PROXY_FOLDER, lang_from, files_from[id_from])
 
     logging.info(f"[{username}]. Cleaning images.")
     helper.clean_img_user_foler(username, files_from[id_from])

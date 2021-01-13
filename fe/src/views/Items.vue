@@ -55,7 +55,7 @@
           :splitted=splitted
           :selected=selected
           :isLoading=isLoading
-          :showUploadProxyBtn=false>
+          :showUploadProxyBtn=true>
         </SplittedPanel>
       </v-col>
       <v-col cols="12" sm="6">
