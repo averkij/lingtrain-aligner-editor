@@ -105,7 +105,7 @@
 
                   <!-- PROXY TRANSLATION CANDIDATES TEXT -->
                   <div class="d-table-cell yellow pa-2 fill-width candidate-text"
-                    :class="[{'lighten-4': t.id==lineIdFrom}, {'lighten-5': t.id!=lineIdFrom}]">
+                    :class="[{'lighten-4': isLineIdFromSelected(t.id)}, {'lighten-5': !isLineIdFromSelected(t.id)}]">
                     {{ t.text }}
                     <div v-if="showProxyTo == 'true' && t.proxy" class="mt-4 proxy-to-cand-subtitles font-weight-medium">
                       {{t.proxy}}
@@ -217,7 +217,7 @@
                   <!-- PROXY TRANSLATION CANDIDATES TEXT -->
                   <v-divider class="d-table-cell" vertical></v-divider>
                   <div class="d-table-cell yellow pa-2 fill-width candidate-text"
-                    :class="[{'lighten-4': t.id==lineIdTo}, {'lighten-5': t.id!=lineIdTo}]">
+                    :class="[{'lighten-4': isLineIdToSelected(t.id)}, {'lighten-5': !isLineIdToSelected(t.id)}]">
                     {{ t.text }}
                     <div v-if="showProxyTo == 'true' && t.proxy" class="mt-4 proxy-to-cand-subtitles font-weight-medium">
                       {{t.proxy}}
@@ -359,6 +359,12 @@
             this.getCandidates(textType);
           }
         }
+      },
+      isLineIdToSelected(id) {
+        return JSON.parse(this.item.line_id_to).includes(id);
+      },
+      isLineIdFromSelected(id) {
+        return JSON.parse(this.item.line_id_from).includes(id);
       }
     },
     computed: {
