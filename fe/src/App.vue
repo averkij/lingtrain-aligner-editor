@@ -13,17 +13,17 @@
         >
           <v-list-item>
             <v-list-item-icon>
-              <v-icon>mdi-home</v-icon>
+              <v-icon>mdi-github</v-icon>
             </v-list-item-icon>
-            <v-list-item-title>Home</v-list-item-title>
+            <v-list-item-title @click.stop.prevent="goToGithub()">Github</v-list-item-title>
           </v-list-item>
 
-          <v-list-item>
+          <!-- <v-list-item>
             <v-list-item-icon>
               <v-icon>mdi-account</v-icon>
             </v-list-item-icon>
             <v-list-item-title>Account</v-list-item-title>
-          </v-list-item>
+          </v-list-item> -->
         </v-list-item-group>
       </v-list>
     </v-navigation-drawer>
@@ -31,29 +31,74 @@
     <!-- Top app bar -->
     <v-app-bar app color="primary" dark hide-on-scroll>
       <v-row>
-        <v-col cols="12" sm="1">
+        <v-col v-if="showDrawerMenu" cols="12" sm="1">
           <v-app-bar-nav-icon @click="drawer = true"></v-app-bar-nav-icon>
         </v-col>
 
-        <v-col cols="12" sm="5" class="text-right">
-          <v-app-bar-title class="pa-2 font-josefin">Russian</v-app-bar-title>
-          <v-app-bar-nav-icon>
-            <v-img
-              class="ma-2"
-              src="@/assets/flags/flag-ru-h.svg"
-              width="35px"
-              height="35px" /></v-app-bar-nav-icon
-        ></v-col>
+        <v-col v-if="showLanguageBar" cols="12" sm="5" class="text-right">
+          <v-app-bar-title class="pa-2 font-josefin">{{
+            LANGUAGES[langCodeFrom].name
+          }}</v-app-bar-title>
+          <v-menu offset-y>
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn icon color="yellow" v-bind="attrs" v-on="on">
+                <v-img
+                  class="ma-2"
+                  :src="getFlagImgPath(langCodeFrom)"
+                  width="35px"
+                  height="35px"
+                />
+              </v-btn>
+            </template>
+            <v-list>
+              <v-list-item v-for="(item, i) in LANGUAGES" :key="i" link>
+                <v-list-item-title @click="changeLangFrom(item.langCode)">
+                  <div class="d-flex">
+                    <v-img
+                      class=""
+                      :src="getFlagImgPath(item.langCode)"
+                      max-width="35"
+                      max-height="35"
+                    />
+                    <div class="ml-4 align-self-center">{{ item.name }}</div>
+                  </div>
+                </v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+        </v-col>
 
-        <v-col cols="12" sm="6"
-          ><v-app-bar-nav-icon>
-            <v-img
-              class="ma-2"
-              src="@/assets/flags/flag-cn-h.svg"
-              width="35px"
-              height="35px"
-          /></v-app-bar-nav-icon>
-          <v-app-bar-title class="pa-2 font-josefin">Chinese</v-app-bar-title>
+        <v-col v-if="showLanguageBar" cols="12" sm="6">
+          <v-menu offset-y>
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn icon color="yellow" v-bind="attrs" v-on="on">
+                <v-img
+                  class="ma-2"
+                  :src="getFlagImgPath(langCodeTo)"
+                  width="35px"
+                  height="35px"
+                />
+              </v-btn>
+            </template>
+            <v-list>
+              <v-list-item v-for="(item, i) in LANGUAGES" :key="i" link>
+                <v-list-item-title @click="changeLangTo(item.langCode)">
+                  <div class="d-flex">
+                    <v-img
+                      class=""
+                      :src="getFlagImgPath(item.langCode)"
+                      max-width="35"
+                      max-height="35"
+                    />
+                    <div class="ml-4 align-self-center">{{ item.name }}</div>
+                  </div>
+                </v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+          <v-app-bar-title class="pa-2 font-josefin">{{
+            LANGUAGES[langCodeTo].name
+          }}</v-app-bar-title>
         </v-col>
       </v-row>
     </v-app-bar>
@@ -70,6 +115,8 @@
 
 <script>
 import Footer from "@/components/Footer";
+import { LANGUAGES } from "@/common/language.helper";
+import { DEFAULT_FROM, DEFAULT_TO } from "@/common/constants";
 
 export default {
   name: "App",
@@ -77,8 +124,49 @@ export default {
     Footer,
   },
   data: () => ({
+    LANGUAGES,
     drawer: false,
     group: null,
   }),
+  methods: {
+    getFlagImgPath(code) {
+      return require(`@/assets/flags/flag-${code}-h.svg`);
+    },
+    changeLangFrom(code) {
+      this.$router.push({
+        path: `/user/${this.$route.params.username}/items/${code}/${this.langCodeTo}`,
+      });
+    },
+    changeLangTo(code) {
+      this.$router.push({
+        path: `/user/${this.$route.params.username}/items/${this.langCodeFrom}/${code}`,
+      });
+    },
+    goToGithub() {
+      window.open("https://github.com/averkij/lingtrain-aligner", '_blank');
+    }
+  },
+  computed: {
+    langCodeFrom() {
+      let langCode = this.$route.params.from;
+      if (this.LANGUAGES[langCode]) {
+        return langCode;
+      }
+      return DEFAULT_FROM;
+    },
+    langCodeTo() {
+      let langCode = this.$route.params.to;
+      if (this.LANGUAGES[langCode]) {
+        return langCode;
+      }
+      return DEFAULT_TO;
+    },
+    showLanguageBar() {
+      return this.$route.name == "items";
+    },
+    showDrawerMenu() {
+      return this.$route.name != "login" && this.$route.name != "home";
+    },
+  },
 };
 </script>

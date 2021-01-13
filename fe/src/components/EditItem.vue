@@ -24,7 +24,7 @@
         <div class="d-table fill-height cell-edit">
 
           <!-- left line id column -->
-          <div class="d-table-cell green lighten-5 cell-edit-index text-center">            
+          <div class="d-table-cell green lighten-5 cell-edit-index text-center">
             <div class="fill-height d-flex cell-edit-index-cont fix-height flex-column justify-space-between">
               <div class="pa-2 font-weight-medium line-num">
                 {{ lineIdFrom }}
@@ -61,6 +61,11 @@
                     @input="onTextChange($event, 'from')"
                     :value="item.text_from">
                   </v-textarea>
+
+                  <!-- PROXY TRANSLATION TEXT -->
+                  <div v-if="showProxyTo == 'true' && item.proxy_from" class="mt-3 proxy-to-subtitles grey lighten-3 font-weight-medium">
+                    {{item.proxy_from}}
+                  </div>
                 </div>
 
                 <div class="d-table-cell" style="width:15px">
@@ -76,13 +81,13 @@
               <div class="candidates-cont" v-for="(t,i) in transFrom" :key="i">
                 <v-divider></v-divider>
                 <div class="d-table fill-height fill-width">
-                  
+
                   <!-- left candidates line id column -->
-                  <div class="d-table-cell lighten-5 grey text-center font-weight-medium cell-edit-index">                    
+                  <div class="d-table-cell lighten-5 grey text-center font-weight-medium cell-edit-index">
                     <div class="fill-height lighten-5 d-flex flex-column justify-space-between cell-edit-index-cont">
                       <div class="pa-2 font-weight-medium line-num">
                         {{ t.id }}
-                      </div>                      
+                      </div>
                       <!-- candidates action panel -->
                       <div class="cell-edit-action-panel">
                         <div class="cell-edit-button" @click="editAddCandidateEnd('from', t.id, t.text)">
@@ -101,15 +106,15 @@
                   <!-- PROXY TRANSLATION CANDIDATES TEXT -->
                   <div class="d-table-cell yellow pa-2 fill-width candidate-text"
                     :class="[{'lighten-4': t.id==lineIdFrom}, {'lighten-5': t.id!=lineIdFrom}]">
-                    {{ t.text }}                    
-                    <div v-if="showProxyTo == 'true' && t.proxy" class="mt-4 proxy-to-cand-subtitles font-weight-medium">  
+                    {{ t.text }}
+                    <div v-if="showProxyTo == 'true' && t.proxy" class="mt-4 proxy-to-cand-subtitles font-weight-medium">
                       {{t.proxy}}
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-            
+
           </div>
         </div>
       </v-col>
@@ -124,7 +129,7 @@
                 green: item.selected.sim > 0.5,
                 yellow: (item.selected.sim <= 0.5) && (item.selected.sim > 0.3)
               }"> -->
-            
+
           <!-- right line id column -->
           <div class="d-table-cell green lighten-5 cell-edit-index text-center">
             <div class="fill-height d-flex cell-edit-index-cont fix-height flex-column justify-space-between">
@@ -147,7 +152,7 @@
               </div> -->
             </div>
           </div>
-          
+
           <v-divider class="d-table-cell" vertical></v-divider>
 
           <!-- right textarea -->
@@ -168,7 +173,7 @@
                   <!-- prevItemLineId {{prevSelectedLineId}} -->
 
                   <!-- PROXY TRANSLATION TEXT -->
-                  <div v-if="showProxyTo == 'true' && item.proxy_to" class="mt-3 proxy-to-subtitles grey lighten-3 font-weight-medium">  
+                  <div v-if="showProxyTo == 'true' && item.proxy_to" class="mt-3 proxy-to-subtitles grey lighten-3 font-weight-medium">
                     {{item.proxy_to}}
                   </div>
                 </div>
@@ -189,7 +194,7 @@
               <div class="candidates-cont" v-for="(t,i) in trans" :key="i">
                 <v-divider></v-divider>
                 <div class="d-table fill-height fill-width">
-                  
+
                   <!-- right candidates line id column -->
                   <div class="d-table-cell lighten-5 grey text-center font-weight-medium cell-edit-index">
                     <div class="fill-height lighten-5 d-flex flex-column justify-space-between cell-edit-index-cont">
@@ -208,13 +213,13 @@
                       </div> -->
                     </div>
                   </div>
-                  
+
                   <!-- PROXY TRANSLATION CANDIDATES TEXT -->
                   <v-divider class="d-table-cell" vertical></v-divider>
                   <div class="d-table-cell yellow pa-2 fill-width candidate-text"
                     :class="[{'lighten-4': t.id==lineIdTo}, {'lighten-5': t.id!=lineIdTo}]">
                     {{ t.text }}
-                    <div v-if="showProxyTo == 'true' && t.proxy" class="mt-4 proxy-to-cand-subtitles font-weight-medium">  
+                    <div v-if="showProxyTo == 'true' && t.proxy" class="mt-4 proxy-to-cand-subtitles font-weight-medium">
                       {{t.proxy}}
                     </div>
                   </div>
@@ -382,7 +387,7 @@
         //     return tr.processing_to_id >= prevLineId;
         //     // return tr.line_id < sid + wnd && tr.line_id > sid - wnd;
         //   })
-          
+
         //   //sort by similarity
         //   // }).sort((a, b) => (a.sim > b.sim) ? -1 : ((b.sim > a.sim) ? 1 : 0))
 
