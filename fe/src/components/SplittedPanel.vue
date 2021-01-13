@@ -34,7 +34,7 @@
       <v-card-actions>
         <v-btn @click="downloadSplitted(info.langCode)">Download</v-btn>
         <v-spacer></v-spacer>
-        <v-btn v-if="showUploadProxyBtn" @click="showUploadProxyPanel = true">Upload translation</v-btn>
+        <v-btn v-if="showUploadProxyBtn" @click="showUploadProxyPanel = true">Add translation</v-btn>
       </v-card-actions>
     </v-card>
 
@@ -66,7 +66,7 @@
         showUploadProxyPanel: false
       }
     },
-    methods: {      
+    methods: {
       onProxyFileChange(event, langCode) {
         this.$emit('onProxyFileChange', event, langCode)
       },

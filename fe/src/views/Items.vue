@@ -1,17 +1,16 @@
 <template>
   <div>
-    <div class="d-flex">
+    <!-- <div class="d-flex">
       <div class="text-h3 mt-5 align-self-start">
         <v-img src="@/assets/logo.png" width="50px" height="50px" />
       </div>
       <div class="text-h3 mt-5 ml-3">
         Hello, <span class="text-capitalize">{{ username }}!</span>
         <div class="text-subtitle-1 mt-2 pl-1">Let's make it parallel</div>
-        <!-- <div class="text-subtitle-2 text-right">— Somebody</div> -->
       </div>
-    </div>
-    
-    <div class="text-h4 mt-15 font-weight-bold">💾 Documents</div>
+    </div> -->
+
+    <div class="text-h4 mt-10 font-weight-bold">💾 Documents</div>
     <v-alert type="info" class="mt-6" v-show="showAlert">
       There are no uploaded documents yet. Please upload some using the form
       below.
@@ -56,7 +55,7 @@
           :splitted=splitted
           :selected=selected
           :isLoading=isLoading
-          :showUploadProxyBtn=false>
+          :showUploadProxyBtn=true>
         </SplittedPanel>
       </v-col>
       <v-col cols="12" sm="6">
@@ -195,7 +194,7 @@
             {{selectedProcessing.name}}
             <v-spacer></v-spacer>
 
-            <v-icon>mdi-translate</v-icon>  
+            <v-icon>mdi-translate</v-icon>
             <v-switch value="true" v-model="showProxyTo" class="mx-2"></v-switch>
             <!-- <div>showTranslation: {{clientSettings}}</div> -->
 
@@ -238,13 +237,13 @@
           <v-col cols="12" sm="2" class="text-right">
             <v-btn width="100" class="mt-1"
               @click="showGoToDialog=true">
-              Go To 
+              Go To
             </v-btn>
           </v-col>
           <GoToDialog v-model="showGoToDialog"
             @goToPage="goToPage" />
         </v-row>
-      </v-card>      
+      </v-card>
 
       <!-- <div class="text-h4 mt-10 font-weight-bold">🧩 Unused strings</div>
 
@@ -444,7 +443,7 @@
               this.isLoading.upload[langCode] = false;
             });
           });
-      },      
+      },
       uploadProxyFile(langCode) {
         this.isLoading.uploadProxy[langCode] = true;
         this.$store
@@ -473,7 +472,7 @@
           callback(RESULT_OK, response.data)
         }).catch(() => {
           callback(RESULT_ERROR)
-        });        
+        });
       },
       downloadSplitted(langCode) {
         this.$store.dispatch(DOWNLOAD_SPLITTED, {
@@ -615,7 +614,7 @@
             indexId: indexId,
             operation: ADD_EMPTY_LINE_BEFORE
           }).then(() => {
-            this.refreshProcessingPage()          
+            this.refreshProcessingPage()
           });
       },
       editAddEmptyLineAfter(indexId) {
@@ -627,7 +626,7 @@
             indexId: indexId,
             operation: ADD_EMPTY_LINE_AFTER
           }).then(() => {
-            this.refreshProcessingPage()          
+            this.refreshProcessingPage()
           });
       },
       editDeleteLine(indexId) {
@@ -639,7 +638,7 @@
             indexId: indexId,
             operation: EDIT_DELETE_LINE
           }).then(() => {
-            this.refreshProcessingPage()          
+            this.refreshProcessingPage()
           });
       },
       editClearLine(indexId, textType) {
@@ -652,7 +651,7 @@
             text_type: textType,
             operation: EDIT_CLEAR_LINE
           }).then(() => {
-            this.refreshProcessingPage()          
+            this.refreshProcessingPage()
           });
       },
       editProcessing(indexId, editItemText, textType, callback) {

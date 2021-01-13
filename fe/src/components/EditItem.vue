@@ -61,6 +61,11 @@
                     @input="onTextChange($event, 'from')"
                     :value="item.text_from">
                   </v-textarea>
+
+                  <!-- PROXY TRANSLATION TEXT -->
+                  <div v-if="showProxyTo == 'true' && item.proxy_from" class="mt-3 proxy-to-subtitles grey lighten-3 font-weight-medium">
+                    {{item.proxy_from}}
+                  </div>
                 </div>
 
                 <div class="d-table-cell" style="width:15px">
