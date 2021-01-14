@@ -3,22 +3,22 @@
     <!-- <v-img position="top" class="white--text" height="200px" :src="info.img">
                             <v-card-title>{{info.lang}}</v-card-title>
                         </v-img> -->
-    <div class="blue lighten-5">
+    <!-- <div class="blue lighten-5">
       <v-card-title>{{ info.icon }} {{ info.name }}</v-card-title>
       <v-card-text>Your {{ info.name }} files</v-card-text>
-    </div>
-    <v-divider></v-divider>
+    </div> -->
+    <!-- <v-divider></v-divider> -->
     <v-list class="pa-0">
       <v-list-item-group mandatory color="gray">
         <v-list-item v-for="(item, i) in items[info.langCode]" :key="i"
           @change="selectAndLoadPreview(info.langCode, item.name, i)">
           <v-list-item-icon>
-            <v-icon>mdi-arrow-right</v-icon>
+            <v-icon>mdi-text-box-outline</v-icon>
           </v-list-item-icon>
           <v-list-item-content>
             <v-list-item-title v-text="item.name"></v-list-item-title>
           </v-list-item-content>
-          <v-icon v-if="item.has_proxy">mdi-translate</v-icon>          
+          <v-icon v-if="item.has_proxy">mdi-translate</v-icon>
         </v-list-item>
       </v-list-item-group>
     </v-list>
