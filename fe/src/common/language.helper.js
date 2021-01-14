@@ -9,6 +9,11 @@ export const LANGUAGES = {
         name: "Chinese",
         icon: "🥢"
     },
+    'jp': {
+        langCode: "jp",
+        name: "Japanese",
+        icon: "🍣"
+    },
     'de': {
         langCode: "de",
         name: "German",
