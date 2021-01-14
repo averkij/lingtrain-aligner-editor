@@ -4,19 +4,19 @@
 
       <!-- line menu -->
       <div class="cell-top-menu">
-          <div class="px-2 py-0 font-weight-bold text-caption d-flex">
-            <div class="px-2 cell-top-menu-item" @click="editAddEmptyLineAfter()">
-              + строка
-            </div>
-            <!-- ↑ ↓ -->
-            <div class="px-2 cell-top-menu-item" @click="editDeleteLine()">
-              удалить
-            </div>
-            <v-spacer></v-spacer>
-            <div class="px-2 cell-top-menu-item">
-              строка {{item.index_id + 1}}
-            </div>
+        <div class="px-2 py-0 font-weight-bold text-caption d-flex">
+          <div class="px-2 cell-top-menu-item" @click="editAddEmptyLineAfter()">
+            + строка
           </div>
+          <!-- ↑ ↓ -->
+          <div class="px-2 cell-top-menu-item" @click="editDeleteLine()">
+            удалить
+          </div>
+          <v-spacer></v-spacer>
+          <div class="px-2 cell-top-menu-item">
+            строка {{item.index_id + 1}}
+          </div>
+        </div>
       </div>
 
       <!-- left side -->
@@ -48,22 +48,20 @@
 
           <!-- left textarea -->
           <v-divider class="d-table-cell" vertical></v-divider>
-          <div class="d-table-cell fill-width color-transition" :class="[{blue: changed_from},{'lighten-5': changed_from}]">
+          <div class="d-table-cell fill-width color-transition"
+            :class="[{blue: changed_from},{'lighten-5': changed_from}]">
             <div class="pa-2 pb-8">
               <div class="d-table fill-height fill-width">
                 <div class="d-table-cell">
                   <v-textarea class="ta-custom" auto-grow rows=1 text-wrap placeholder="Write your text here"
-                    @click.native.stop
-                    @keyup.space.prevent
-                    @keydown.ctrl.83.prevent="$event.target.blur()"
-                    @focus="setUneditedText($event)"
-                    @blur="editProcessing($event, 'from')"
-                    @input="onTextChange($event, 'from')"
-                    :value="item.text_from">
+                    @click.native.stop @keyup.space.prevent @keydown.ctrl.83.prevent="$event.target.blur()"
+                    @focus="setUneditedText($event)" @blur="editProcessing($event, 'from')"
+                    @input="onTextChange($event, 'from')" :value="item.text_from">
                   </v-textarea>
 
                   <!-- PROXY TRANSLATION TEXT -->
-                  <div v-if="showProxyTo == 'true' && item.proxy_from" class="mt-3 proxy-to-subtitles grey lighten-3 font-weight-medium">
+                  <div v-if="showProxyTo == 'true' && item.proxy_from"
+                    class="mt-3 proxy-to-subtitles grey lighten-3 font-weight-medium">
                     {{item.proxy_from}}
                   </div>
                 </div>
@@ -107,7 +105,8 @@
                   <div class="d-table-cell yellow pa-2 fill-width candidate-text"
                     :class="[{'lighten-4': isLineIdFromSelected(t.id)}, {'lighten-5': !isLineIdFromSelected(t.id)}]">
                     {{ t.text }}
-                    <div v-if="showProxyTo == 'true' && t.proxy" class="mt-4 proxy-to-cand-subtitles font-weight-medium">
+                    <div v-if="showProxyTo == 'true' && t.proxy"
+                      class="mt-4 proxy-to-cand-subtitles font-weight-medium">
                       {{t.proxy}}
                     </div>
                   </div>
@@ -156,24 +155,20 @@
           <v-divider class="d-table-cell" vertical></v-divider>
 
           <!-- right textarea -->
-          <div class="d-table-cell fill-width color-transition"
-            :class="[{blue: changed_to},{'lighten-5': changed_to}]">
+          <div class="d-table-cell fill-width color-transition" :class="[{blue: changed_to},{'lighten-5': changed_to}]">
             <div class="pa-2 pb-8">
               <div class="d-table fill-height fill-width">
                 <div class="d-table-cell">
                   <v-textarea class="ta-custom" auto-grow rows=1 text-wrap placeholder="Write your text here"
-                    @click.native.stop
-                    @keyup.space.prevent
-                    @keydown.ctrl.83.prevent="$event.target.blur()"
-                    @focus="setUneditedText($event)"
-                    @blur="editProcessing($event, 'to')"
-                    @input="onTextChange($event, 'to')"
-                    :value="item.text_to">
+                    @click.native.stop @keyup.space.prevent @keydown.ctrl.83.prevent="$event.target.blur()"
+                    @focus="setUneditedText($event)" @blur="editProcessing($event, 'to')"
+                    @input="onTextChange($event, 'to')" :value="item.text_to">
                   </v-textarea>
                   <!-- prevItemLineId {{prevSelectedLineId}} -->
 
                   <!-- PROXY TRANSLATION TEXT -->
-                  <div v-if="showProxyTo == 'true' && item.proxy_to" class="mt-3 proxy-to-subtitles grey lighten-3 font-weight-medium">
+                  <div v-if="showProxyTo == 'true' && item.proxy_to"
+                    class="mt-3 proxy-to-subtitles grey lighten-3 font-weight-medium">
                     {{item.proxy_to}}
                   </div>
                 </div>
@@ -219,7 +214,8 @@
                   <div class="d-table-cell yellow pa-2 fill-width candidate-text"
                     :class="[{'lighten-4': isLineIdToSelected(t.id)}, {'lighten-5': !isLineIdToSelected(t.id)}]">
                     {{ t.text }}
-                    <div v-if="showProxyTo == 'true' && t.proxy" class="mt-4 proxy-to-cand-subtitles font-weight-medium">
+                    <div v-if="showProxyTo == 'true' && t.proxy"
+                      class="mt-4 proxy-to-cand-subtitles font-weight-medium">
                       {{t.proxy}}
                     </div>
                   </div>
@@ -270,23 +266,22 @@
       getCandidates(textType) {
         this.$emit('getCandidates', this.item.index_id, textType, 1, 6, (res, data) => {
           if (res == RESULT_OK) {
-              console.log("getCandidates", data.items)
-              if (textType=="from") {
-                this.transFrom = data.items;
-              } else if (textType=="to") {
-                this.trans = data.items;
-              }
-            } else {
-              console.log("Edit error on getCandidates.")
+            console.log("getCandidates", data.items)
+            if (textType == "from") {
+              this.transFrom = data.items;
+            } else if (textType == "to") {
+              this.trans = data.items;
             }
+          } else {
+            console.log("Edit error on getCandidates.")
+          }
         });
       },
       editAddUpEnd(textType) {
         if (textType == "from") {
           let newText = this.editedFromText ? this.editedFromText : this.item.text_from;
           this.$emit('editAddUpEnd', this.item.index_id, newText, textType);
-        }
-        else if (textType == "to") {
+        } else if (textType == "to") {
           let newText = this.editedToText ? this.editedToText : this.item.text_to;
           this.$emit('editAddUpEnd', this.item.index_id, newText, textType);
         }
@@ -295,8 +290,7 @@
         if (textType == "from") {
           let newText = this.editedFromText ? this.editedFromText : this.item.text_from;
           this.$emit('editAddDownEnd', this.item.index_id, newText, textType);
-        }
-        else if (textType == "to") {
+        } else if (textType == "to") {
           let newText = this.editedToText ? this.editedToText : this.item.text_to;
           this.$emit('editAddDownEnd', this.item.index_id, newText, textType);
         }
@@ -348,12 +342,12 @@
         }
       },
       toggleShowLines(textType) {
-        if (textType=="from") {
+        if (textType == "from") {
           this.showLinesFrom = !this.showLinesFrom;
           if (this.transFrom.length == 0) {
             this.getCandidates(textType);
           }
-        } else if (textType=="to") {
+        } else if (textType == "to") {
           this.showLines = !this.showLines;
           if (this.trans.length == 0) {
             this.getCandidates(textType);
@@ -369,10 +363,14 @@
     },
     computed: {
       lineIdFrom() {
-        return JSON.parse(this.item.line_id_from).map(function(num) { return num }).join(", ");
+        return JSON.parse(this.item.line_id_from).map(function (num) {
+          return num
+        }).join(", ");
       },
       lineIdTo() {
-        return JSON.parse(this.item.line_id_to).map(function(num) { return num }).join(", ");
+        return JSON.parse(this.item.line_id_to).map(function (num) {
+          return num
+        }).join(", ");
       },
       prevLineIdTo() {
         //correct

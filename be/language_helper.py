@@ -5,6 +5,7 @@ import re
 
 import constants as con
 import razdel
+from konoha import SentenceTokenizer
 
 RU_CODE = "ru"
 ZH_CODE = "zh"
@@ -18,8 +19,9 @@ PL_CODE = "pl"
 PT_CODE = "pt"
 HU_CODE = "hu"
 CZ_CODE = "cz"
+JP_CODE = "jp"
 LANGUAGES = [RU_CODE, ZH_CODE, DE_CODE, EN_CODE, FR_CODE,
-             IT_CODE, TR_CODE, ES_CODE, PL_CODE, PT_CODE, HU_CODE, CZ_CODE]
+             IT_CODE, TR_CODE, ES_CODE, PL_CODE, PT_CODE, HU_CODE, CZ_CODE, JP_CODE]
 
 pattern_ru_orig = re.compile(r'[a-zA-Z\(\)\[\]\/\<\>•\'\n]+')
 double_spaces = re.compile(r'[\s]+')
@@ -28,6 +30,8 @@ double_dash = re.compile(r'[-—]+')
 german_quotes = re.compile(r'[»«“„]+')
 pattern_zh = re.compile(
     r'[」「“”„‟\x1a⓪①②③④⑤⑥⑦⑧⑨⑩⑴⑵⑶⑷⑸⑹⑺⑻⑼⑽*a-zA-Zа-яА-Я\(\)\[\]\s\n\/\-\:•＂＃＄％＆＇（）＊＋－／：；＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､、〃》【】〔〕〖〗〘〙〜〟〰〾〿–—‘’‛‧﹏〉]+')
+pattern_jp = re.compile(
+    r'[“”„‟\x1a⓪①②③④⑤⑥⑦⑧⑨⑩⑴⑵⑶⑷⑸⑹⑺⑻⑼⑽*a-zA-Zа-яА-Я\(\)\[\]\s\n\/\-\:•＂＃＄％＆＇（）＊＋－／：；＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､、〃》【】〔〕〖〗〘〙〜〟〰〾〿–—‘’‛‧﹏〉]+')
 pat_comma = re.compile(r'[\.]+')
 first_numbers = re.compile(r'^[0-9,\.]+')
 last_punct = re.compile(r'[,\.]+$')
@@ -55,6 +59,17 @@ def split_by_razdel(line):
 def split_zh(line):
     """Split line in Chinese"""
     return list(re.findall(r'[^!?。！？\.\!\?]+[!?。！？\.\!\?]?', line, flags=re.U))
+
+
+def split_jp(line):
+    """Split line in Japanese"""
+    return list(re.findall(r'[^!?。！？\.\!\?・]+[!?。！？\.\!\?・]?', line, flags=re.U))
+
+
+def split_jp_konoha(line):
+    """Split line in Japanese with konoha"""
+    tokenizer = SentenceTokenizer()
+    return tokenizer.tokenize(line)
 
 
 def preprocess(line, re_list, splitter):
@@ -87,6 +102,13 @@ def split_by_sentences(lines, langcode):
             (pattern_zh, '')
         ],
             split_zh)
+        return sentences
+    if langcode == JP_CODE:
+        sentences = preprocess(line, [
+            (pat_comma, '。'),
+            (pattern_jp, '')
+        ],
+            split_jp_konoha)
         return sentences
 
     # apply default splitting

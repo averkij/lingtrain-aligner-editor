@@ -1,15 +1,11 @@
 <template>
-<v-dialog
-    v-model="show"
-    max-width="500px"
-  >
+  <v-dialog v-model="show" max-width="500px">
     <v-card>
       <v-card-title>
         Go to page
       </v-card-title>
-      <v-card-text class="mt-5">        
-        <v-text-field label="Page number"
-          v-model="pageNumber">
+      <v-card-text class="mt-5">
+        <v-text-field label="Page number" v-model="pageNumber">
         </v-text-field>
       </v-card-text>
       <v-card-actions>
@@ -17,8 +13,7 @@
           Close
         </v-btn>
         <v-spacer></v-spacer>
-        <v-btn color="primary" dark width="80px"
-          @click="goToPage">
+        <v-btn color="primary" dark width="80px" @click="goToPage">
           Go
         </v-btn>
       </v-card-actions>
@@ -27,36 +22,36 @@
 </template>
 
 <script>
-export default {
-  name: "GoToDialog",
-  props: {
-    value: Boolean
-  },
-  data () {
-    return {
-      pageNumber: ""
-    }
-  },
-  methods: {      
-    goToPage() {
-      let num = parseInt(this.pageNumber)
-      if (num) {      
-        this.show = false;
-        this.$emit('goToPage', num)
-      } else {
-        alert("Enter a valid number");
+  export default {
+    name: "GoToDialog",
+    props: {
+      value: Boolean
+    },
+    data() {
+      return {
+        pageNumber: ""
       }
-    }
-  },
-  computed: {
-    show: {
-      get () {
-        return this.value
-      },
-      set(value) {
-        this.$emit('input', value)
+    },
+    methods: {
+      goToPage() {
+        let num = parseInt(this.pageNumber)
+        if (num) {
+          this.show = false;
+          this.$emit('goToPage', num)
+        } else {
+          alert("Enter a valid number");
+        }
+      }
+    },
+    computed: {
+      show: {
+        get() {
+          return this.value
+        },
+        set(value) {
+          this.$emit('input', value)
+        }
       }
     }
   }
-}
 </script>

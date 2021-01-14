@@ -10,7 +10,9 @@
       </div>
     </div> -->
 
-    <div class="text-h4 mt-10 font-weight-bold">💾 Documents</div>
+    <div class="text-h4 mt-10 font-weight-bold">
+      <v-icon color="blue">mdi-text-box-multiple</v-icon> Documents
+    </div>
     <v-alert type="info" class="mt-6" v-show="showAlert">
       There are no uploaded documents yet. Please upload some using the form
       below.
@@ -18,84 +20,57 @@
     <div class="mt-6">
       <v-row>
         <v-col cols="12" sm="6">
-          <RawPanel
-            @uploadFile="uploadFile"
-            @onFileChange="onFileChange"
-            @selectAndLoadPreview="selectAndLoadPreview"
-            :info="LANGUAGES[langCodeFrom]"
-            :items=items
-            :isLoading=isLoading>
+          <RawPanel @uploadFile="uploadFile" @onFileChange="onFileChange" @selectAndLoadPreview="selectAndLoadPreview"
+            :info="LANGUAGES[langCodeFrom]" :items=items :isLoading=isLoading>
           </RawPanel>
         </v-col>
         <v-col cols="12" sm="6">
-          <RawPanel
-            @uploadFile="uploadFile"
-            @onFileChange="onFileChange"
-            @selectAndLoadPreview="selectAndLoadPreview"
-            :info="LANGUAGES[langCodeTo]"
-            :items=items
-            :isLoading=isLoading>
+          <RawPanel @uploadFile="uploadFile" @onFileChange="onFileChange" @selectAndLoadPreview="selectAndLoadPreview"
+            :info="LANGUAGES[langCodeTo]" :items=items :isLoading=isLoading>
           </RawPanel>
         </v-col>
       </v-row>
     </div>
 
-    <div class="text-h4 mt-10 font-weight-bold">🔍 Preview</div>
+    <div class="text-h4 mt-10 font-weight-bold">
+      <v-icon color="blue">mdi-file-find</v-icon> Preview
+    </div>
     <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2">
       Documents are splitted by sentences using language specific rules.
     </v-alert>
     <v-row>
       <v-col cols="12" sm="6">
-        <SplittedPanel
-          @onPreviewPageChange="onPreviewPageChange"
-          @onProxyFileChange="onProxyFileChange"
-          @downloadSplitted="downloadSplitted"
-          @uploadProxyFile="uploadProxyFile"
-          :info="LANGUAGES[langCodeFrom]"
-          :splitted=splitted
-          :selected=selected
-          :isLoading=isLoading
-          :showUploadProxyBtn=true>
+        <SplittedPanel @onPreviewPageChange="onPreviewPageChange" @onProxyFileChange="onProxyFileChange"
+          @downloadSplitted="downloadSplitted" @uploadProxyFile="uploadProxyFile" :info="LANGUAGES[langCodeFrom]"
+          :splitted=splitted :selected=selected :isLoading=isLoading :showUploadProxyBtn=true>
         </SplittedPanel>
       </v-col>
       <v-col cols="12" sm="6">
-        <SplittedPanel
-          @onPreviewPageChange="onPreviewPageChange"
-          @onProxyFileChange="onProxyFileChange"
-          @downloadSplitted="downloadSplitted"
-          @uploadProxyFile="uploadProxyFile"
-          :info="LANGUAGES[langCodeTo]"
-          :splitted=splitted
-          :selected=selected
-          :isLoading=isLoading
-          :showUploadProxyBtn=true>
+        <SplittedPanel @onPreviewPageChange="onPreviewPageChange" @onProxyFileChange="onProxyFileChange"
+          @downloadSplitted="downloadSplitted" @uploadProxyFile="uploadProxyFile" :info="LANGUAGES[langCodeTo]"
+          :splitted=splitted :selected=selected :isLoading=isLoading :showUploadProxyBtn=true>
         </SplittedPanel>
       </v-col>
     </v-row>
 
-    <div class="text-h4 mt-10 font-weight-bold">⚖️ Alignment</div>
+    <div class="text-h4 mt-10 font-weight-bold">
+      <v-icon color="blue">mdi-align-horizontal-center</v-icon> Alignment
+    </div>
     <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2">
       This is a test version. Only {{TEST_LIMIT}} lines will be aligned.
     </v-alert>
     <v-row class="mt-6">
       <v-col cols="12" sm="6">
-        <InfoPanel
-          :info="LANGUAGES[langCodeFrom]"
-          :splitted=splitted
-          :selected=selected>
+        <InfoPanel :info="LANGUAGES[langCodeFrom]" :splitted=splitted :selected=selected>
         </InfoPanel>
       </v-col>
       <v-col cols="12" sm="6">
-        <InfoPanel
-          :info="LANGUAGES[langCodeTo]"
-          :splitted=splitted
-          :selected=selected>
+        <InfoPanel :info="LANGUAGES[langCodeTo]" :splitted=splitted :selected=selected>
         </InfoPanel>
       </v-col>
     </v-row>
     <v-btn v-if="!userAlignInProgress" v-show="selected[langCodeFrom] && selected[langCodeTo]" class="success mt-6"
-      :loading="isLoading.align || isLoading.alignStopping"
-      :disabled="isLoading.align || isLoading.alignStopping"
+      :loading="isLoading.align || isLoading.alignStopping" :disabled="isLoading.align || isLoading.alignStopping"
       @click="align()">
       Align documents
     </v-btn>
@@ -103,7 +78,9 @@
       Stop alignment
     </v-btn>
 
-    <div class="text-h4 mt-10 font-weight-bold">✒️ Result</div>
+    <div class="text-h4 mt-10 font-weight-bold">
+      <v-icon color="blue">mdi-pencil</v-icon> Result
+    </div>
 
     <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2"
       v-if="!itemsProcessing || !itemsProcessing[langCodeFrom] || (itemsProcessing[langCodeFrom].length == 0)">
@@ -121,7 +98,7 @@
         <v-list class="pa-0">
           <v-list-item-group mandatory color="gray" v-model="selectedListItem">
             <v-list-item v-for="(item, i) in itemsProcessing[langCodeFrom]" :key="i"
-                        @change="selectProcessing(item, i)">
+              @change="selectProcessing(item, i)">
               <v-list-item-icon>
                 <v-icon v-if="item.state[0]==PROC_INIT || item.state[0]==PROC_IN_PROGRESS" color="blue">
                   mdi-clock-outline</v-icon>
@@ -208,20 +185,12 @@
 
         <!-- items -->
         <div v-for="(line, i) in processing.items" :key="i">
-          <EditItem @editProcessing="editProcessing"
-                    @editAddUpEnd="editAddUpEnd"
-                    @editAddDownEnd="editAddDownEnd"
-                    @editDeleteLine="editDeleteLine"
-                    @editAddEmptyLineBefore="editAddEmptyLineBefore"
-                    @editAddEmptyLineAfter="editAddEmptyLineAfter"
-                    @editClearLine="editClearLine"
-                    @getCandidates="getCandidates"
-                    @editAddCandidateEnd="editAddCandidateEnd"
-                    :item="line"
-                    :prevItem="i == 0 ? processing.items[0] : processing.items[i-1]"
-                    :collapse="triggerCollapseEditItem"
-                    :clearCandidates="triggerClearCandidates"
-                    :showProxyTo="showProxyTo">
+          <EditItem @editProcessing="editProcessing" @editAddUpEnd="editAddUpEnd" @editAddDownEnd="editAddDownEnd"
+            @editDeleteLine="editDeleteLine" @editAddEmptyLineBefore="editAddEmptyLineBefore"
+            @editAddEmptyLineAfter="editAddEmptyLineAfter" @editClearLine="editClearLine" @getCandidates="getCandidates"
+            @editAddCandidateEnd="editAddCandidateEnd" :item="line"
+            :prevItem="i == 0 ? processing.items[0] : processing.items[i-1]" :collapse="triggerCollapseEditItem"
+            :clearCandidates="triggerClearCandidates" :showProxyTo="showProxyTo">
           </EditItem>
           <v-divider></v-divider>
         </div>
@@ -231,30 +200,33 @@
           <v-col cols="12" sm="2"></v-col>
           <v-col cols="12" sm="8">
             <v-pagination v-model="processing.meta.page" :length="processing.meta.total_pages" total-visible="10"
-            @input="onProcessingPageChange(processing.meta.page)">
-          </v-pagination>
+              @input="onProcessingPageChange(processing.meta.page)">
+            </v-pagination>
           </v-col>
           <v-col cols="12" sm="2" class="text-right">
-            <v-btn width="100" class="mt-1"
-              @click="showGoToDialog=true">
-              Go To
-            </v-btn>
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on, attrs }">
+                <v-btn class="mt-1" v-bind="attrs" v-on="on" @click="showGoToDialog=true">
+                  <v-icon>mdi-arrow-right</v-icon>
+                </v-btn>
+              </template>
+              <span>Go to the specific page.</span>
+            </v-tooltip>
+
           </v-col>
-          <GoToDialog v-model="showGoToDialog"
-            @goToPage="goToPage" />
+          <GoToDialog v-model="showGoToDialog" @goToPage="goToPage" />
         </v-row>
       </v-card>
 
-      <!-- <div class="text-h4 mt-10 font-weight-bold">🧩 Unused strings</div>
+      <div class="text-h4 mt-10 font-weight-bold">🧩 Unused strings</div>
 
       <v-alert v-if="!processing || !processing.items || processing.items.length == 0" type="info" border="left"
         colored-border color="info" class="mt-6" elevation="2">
         Please, wait. Alignment is in progress.
       </v-alert>
       <div v-else>
-        <div></div>
-        {{docIndex}}
-      </div> -->
+        <div class="mt-10">{{docIndex}}</div>
+      </div>
 
       <div class="text-h4 mt-10 font-weight-bold">🍍 Corpora</div>
 
@@ -389,7 +361,7 @@
           processing: false
         },
         triggerCollapseEditItem: false,
-        triggerClearCandidates:false ,
+        triggerClearCandidates: false,
         userAlignInProgress: false,
         satisfactionEmojis: ['😍', '😄', '😁', '😊', '🙂', '😐', '🙁', '☹️', '😢', '😭'],
         downloadThreshold: 9,
@@ -460,14 +432,14 @@
       },
       getCandidates(indexId, textType, countBefore, countAfter, callback) {
         this.$store.dispatch(GET_CANDIDATES, {
-            username: this.$route.params.username,
-            langCodeFrom: this.langCodeFrom,
-            langCodeTo: this.langCodeTo,
-            indexId: indexId,
-            fileId: this.selectedProcessingId,
-            textType: textType,
-            countBefore: countBefore,
-            countAfter: countAfter
+          username: this.$route.params.username,
+          langCodeFrom: this.langCodeFrom,
+          langCodeTo: this.langCodeTo,
+          indexId: indexId,
+          fileId: this.selectedProcessingId,
+          textType: textType,
+          countBefore: countBefore,
+          countAfter: countAfter
         }).then(function (response) {
           callback(RESULT_OK, response.data)
         }).catch(() => {
@@ -550,109 +522,109 @@
       },
       refreshProcessingPage() {
         this.$store.dispatch(GET_PROCESSING, {
-            username: this.$route.params.username,
-            langCodeFrom: this.langCodeFrom,
-            langCodeTo: this.langCodeTo,
-            fileId: this.selectedProcessingId,
-            linesCount: 10,
-            page: this.processing.meta.page
-          });
+          username: this.$route.params.username,
+          langCodeFrom: this.langCodeFrom,
+          langCodeTo: this.langCodeTo,
+          fileId: this.selectedProcessingId,
+          linesCount: 10,
+          page: this.processing.meta.page
+        });
       },
       editAddCandidateEnd(indexId, textType, candidateLineId, candidateText) {
         this.$store.dispatch(EDIT_PROCESSING, {
-            username: this.$route.params.username,
-            fileId: this.selectedProcessingId,
-            langCodeFrom: this.langCodeFrom,
-            langCodeTo: this.langCodeTo,
-            indexId: indexId,
-            candidateLineId: candidateLineId,
-            candidateText: candidateText,
-            text_type: textType,
-            operation: EDIT_ADD_CANDIDATE_END,
-            target: "previous"
-          }).then(() => {
-            this.refreshProcessingPage();
-          });
+          username: this.$route.params.username,
+          fileId: this.selectedProcessingId,
+          langCodeFrom: this.langCodeFrom,
+          langCodeTo: this.langCodeTo,
+          indexId: indexId,
+          candidateLineId: candidateLineId,
+          candidateText: candidateText,
+          text_type: textType,
+          operation: EDIT_ADD_CANDIDATE_END,
+          target: "previous"
+        }).then(() => {
+          this.refreshProcessingPage();
+        });
       },
       editAddUpEnd(indexId, editItemToText, textType) {
         this.$store.dispatch(EDIT_PROCESSING, {
-            username: this.$route.params.username,
-            fileId: this.selectedProcessingId,
-            langCodeFrom: this.langCodeFrom,
-            langCodeTo: this.langCodeTo,
-            indexId: indexId,
-            text: editItemToText,
-            text_type: textType,
-            operation: EDIT_ADD_PREV_END,
-            target: "previous"
-          }).then(() => {
-            this.refreshProcessingPage();
-          });
+          username: this.$route.params.username,
+          fileId: this.selectedProcessingId,
+          langCodeFrom: this.langCodeFrom,
+          langCodeTo: this.langCodeTo,
+          indexId: indexId,
+          text: editItemToText,
+          text_type: textType,
+          operation: EDIT_ADD_PREV_END,
+          target: "previous"
+        }).then(() => {
+          this.refreshProcessingPage();
+        });
       },
       editAddDownEnd(indexId, editItemText, textType) {
         console.log("textType", textType)
         this.$store.dispatch(EDIT_PROCESSING, {
-            username: this.$route.params.username,
-            fileId: this.selectedProcessingId,
-            langCodeFrom: this.langCodeFrom,
-            langCodeTo: this.langCodeTo,
-            indexId: indexId,
-            text: editItemText,
-            text_type: textType,
-            operation: EDIT_ADD_NEXT_END,
-            target: "next"
-          }).then(() => {
-            this.refreshProcessingPage();
-          });
+          username: this.$route.params.username,
+          fileId: this.selectedProcessingId,
+          langCodeFrom: this.langCodeFrom,
+          langCodeTo: this.langCodeTo,
+          indexId: indexId,
+          text: editItemText,
+          text_type: textType,
+          operation: EDIT_ADD_NEXT_END,
+          target: "next"
+        }).then(() => {
+          this.refreshProcessingPage();
+        });
       },
       editAddEmptyLineBefore(indexId) {
         this.$store.dispatch(EDIT_PROCESSING, {
-            username: this.$route.params.username,
-            fileId: this.selectedProcessingId,
-            langCodeFrom: this.langCodeFrom,
-            langCodeTo: this.langCodeTo,
-            indexId: indexId,
-            operation: ADD_EMPTY_LINE_BEFORE
-          }).then(() => {
-            this.refreshProcessingPage()
-          });
+          username: this.$route.params.username,
+          fileId: this.selectedProcessingId,
+          langCodeFrom: this.langCodeFrom,
+          langCodeTo: this.langCodeTo,
+          indexId: indexId,
+          operation: ADD_EMPTY_LINE_BEFORE
+        }).then(() => {
+          this.refreshProcessingPage()
+        });
       },
       editAddEmptyLineAfter(indexId) {
         this.$store.dispatch(EDIT_PROCESSING, {
-            username: this.$route.params.username,
-            fileId: this.selectedProcessingId,
-            langCodeFrom: this.langCodeFrom,
-            langCodeTo: this.langCodeTo,
-            indexId: indexId,
-            operation: ADD_EMPTY_LINE_AFTER
-          }).then(() => {
-            this.refreshProcessingPage()
-          });
+          username: this.$route.params.username,
+          fileId: this.selectedProcessingId,
+          langCodeFrom: this.langCodeFrom,
+          langCodeTo: this.langCodeTo,
+          indexId: indexId,
+          operation: ADD_EMPTY_LINE_AFTER
+        }).then(() => {
+          this.refreshProcessingPage()
+        });
       },
       editDeleteLine(indexId) {
         this.$store.dispatch(EDIT_PROCESSING, {
-            username: this.$route.params.username,
-            fileId: this.selectedProcessingId,
-            langCodeFrom: this.langCodeFrom,
-            langCodeTo: this.langCodeTo,
-            indexId: indexId,
-            operation: EDIT_DELETE_LINE
-          }).then(() => {
-            this.refreshProcessingPage()
-          });
+          username: this.$route.params.username,
+          fileId: this.selectedProcessingId,
+          langCodeFrom: this.langCodeFrom,
+          langCodeTo: this.langCodeTo,
+          indexId: indexId,
+          operation: EDIT_DELETE_LINE
+        }).then(() => {
+          this.refreshProcessingPage()
+        });
       },
       editClearLine(indexId, textType) {
         this.$store.dispatch(EDIT_PROCESSING, {
-            username: this.$route.params.username,
-            fileId: this.selectedProcessingId,
-            langCodeFrom: this.langCodeFrom,
-            langCodeTo: this.langCodeTo,
-            indexId: indexId,
-            text_type: textType,
-            operation: EDIT_CLEAR_LINE
-          }).then(() => {
-            this.refreshProcessingPage()
-          });
+          username: this.$route.params.username,
+          fileId: this.selectedProcessingId,
+          langCodeFrom: this.langCodeFrom,
+          langCodeTo: this.langCodeTo,
+          indexId: indexId,
+          text_type: textType,
+          operation: EDIT_CLEAR_LINE
+        }).then(() => {
+          this.refreshProcessingPage()
+        });
       },
       editProcessing(indexId, editItemText, textType, callback) {
         this.$store
@@ -772,8 +744,11 @@
       selectCurrentlyProcessingDocument() {
         if (this.itemsProcessingNotEmpty(this.langCodeFrom)) {
           if (this.currentlyProcessingId >= 0) {
-            console.log("selecting current processing", this.itemsProcessing[this.langCodeFrom][this.currentlyProcessingId]);
-            this.selectProcessing(this.itemsProcessing[this.langCodeFrom][this.currentlyProcessingId], this.currentlyProcessingId);
+            console.log("selecting current processing", this.itemsProcessing[this.langCodeFrom][this
+              .currentlyProcessingId
+            ]);
+            this.selectProcessing(this.itemsProcessing[this.langCodeFrom][this.currentlyProcessingId], this
+              .currentlyProcessingId);
           }
         }
       },
@@ -787,7 +762,8 @@
             langCodeFrom: this.langCodeFrom,
             langCodeTo: this.langCodeTo
           }).then(() => {
-            let in_progress_items = this.itemsProcessing[this.langCodeFrom].filter(x => x.state[0] == 0 || x.state[0] == 1)
+            let in_progress_items = this.itemsProcessing[this.langCodeFrom].filter(x => x.state[0] == 0 || x
+              .state[0] == 1)
             if (in_progress_items.length > 0) {
               let item_index = this.itemsProcessing[this.langCodeFrom].indexOf(in_progress_items[0])
               this.currentlyProcessingId = item_index
@@ -795,8 +771,7 @@
               this.fetchItemsProcessingTimer();
 
               this.selectCurrentlyProcessingDocument();
-            }
-            else {
+            } else {
               this.userAlignInProgress = false;
               this.isLoading.alignStopping = false;
               this.selectFirstProcessingDocument();
@@ -823,7 +798,8 @@
         langCodeFrom: this.langCodeFrom,
         langCodeTo: this.langCodeTo
       }).then(() => {
-        let in_progress_items = this.itemsProcessing[this.langCodeFrom].filter(x => x.state[0] == 0 || x.state[0] == 1)
+        let in_progress_items = this.itemsProcessing[this.langCodeFrom].filter(x => x.state[0] == 0 || x.state[0] ==
+          1)
         if (in_progress_items.length > 0) {
           let item_index = this.itemsProcessing[this.langCodeFrom].indexOf(in_progress_items[0])
           this.currentlyProcessingId = item_index
@@ -831,8 +807,7 @@
           this.fetchItemsProcessingTimer();
 
           this.selectCurrentlyProcessingDocument();
-        }
-        else {
+        } else {
           this.selectFirstProcessingDocument();
         }
       });
