@@ -136,6 +136,7 @@ export const ItemsService = {
     form.append("lang_to", params.langCodeTo);
     form.append("id_from", params.fileIds[params.langCodeFrom]);
     form.append("id_to", params.fileIds[params.langCodeTo]);
+    form.append("batch_ids", JSON.stringify(params.batchIds))
 
     return ApiService.post(
       "items",

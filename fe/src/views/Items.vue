@@ -668,12 +668,12 @@
             username: this.$route.params.username,
             fileIds: this.selectedIds,
             langCodeFrom: this.langCodeFrom,
-            langCodeTo: this.langCodeTo
+            langCodeTo: this.langCodeTo,
+            batchIds: [0,1]
           })
           .then(() => {
             this.userAlignInProgress = true;
             this.isLoading.align = false;
-
             this.$store.dispatch(FETCH_ITEMS_PROCESSING, {
               username: this.$route.params.username,
               langCodeFrom: this.langCodeFrom,
@@ -681,7 +681,6 @@
             }).then(() => {
               this.selectCurrentlyProcessingDocument();
             });
-
             this.fetchItemsProcessingTimer();
           });
       },
