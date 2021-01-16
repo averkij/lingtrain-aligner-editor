@@ -102,9 +102,9 @@ def init_db(db_path):
             'create table proxy_from(id integer primary key, text nvarchar)')
         db.execute('create table proxy_to(id integer primary key, text nvarchar)')
         db.execute(
-            'create table processing_from(id integer primary key, text_ids varchar, initial_id integer, text nvarchar)')
+            'create table processing_from(id integer primary key, batch_id integer, text_ids varchar, initial_id integer, text nvarchar)')
         db.execute(
-            'create table processing_to(id integer primary key, text_ids varchar, initial_id integer, text nvarchar)')
+            'create table processing_to(id integer primary key, batch_id integer, text_ids varchar, initial_id integer, text nvarchar)')
         db.execute(
             'create table doc_index(id integer primary key, contents varchar)')
 
@@ -116,57 +116,96 @@ def fill_db(db_path, splitted_from, splitted_to, proxy_from, proxy_to):
         with open(splitted_from, mode="r", encoding="utf-8") as input_path:
             lines = input_path.readlines()
         with sqlite3.connect(db_path) as db:
-            db.executemany(f"insert into splitted_from(text) values (?)", [
+            db.executemany("insert into splitted_from(text) values (?)", [
                            (x.strip(),) for x in lines])
 
     if os.path.isfile(splitted_to):
         with open(splitted_to, mode="r", encoding="utf-8") as input_path:
             lines = input_path.readlines()
         with sqlite3.connect(db_path) as db:
-            db.executemany(f"insert into splitted_to(text) values (?)", [
+            db.executemany("insert into splitted_to(text) values (?)", [
                            (x.strip(),) for x in lines])
 
     if os.path.isfile(proxy_from):
         with open(proxy_from, mode="r", encoding="utf-8") as input_path:
             lines = input_path.readlines()
         with sqlite3.connect(db_path) as db:
-            db.executemany(f"insert into proxy_from(text) values (?)", [
+            db.executemany("insert into proxy_from(text) values (?)", [
                            (x.strip(),) for x in lines])
 
     if os.path.isfile(proxy_to):
         with open(proxy_to, mode="r", encoding="utf-8") as input_path:
             lines = input_path.readlines()
         with sqlite3.connect(db_path) as db:
-            db.executemany(f"insert into proxy_to(text) values (?)", [
+            db.executemany("insert into proxy_to(text) values (?)", [
                            (x.strip(),) for x in lines])
 
 
-def create_doc_index(db):
-    """Create document index in database in the end of alignment"""
-    doc_index = []
-    for x in db.execute('SELECT f.id, f.text_ids, t.id, t.text_ids FROM processing_from f join processing_to t on f.id=t.id order by f.id'):
-        doc_index.append(x)
+def create_doc_index(db, data):
+    """Create document index in database"""
+    batch_ids = [batch_id for batch_id, x, y in data]
 
-    db.execute('insert into doc_index(contents) values (?)',
-               [json.dumps(doc_index)])
+    max_batch_id = max(batch_ids)
+    doc_index = get_doc_index(db)
+
+    if not doc_index:
+        doc_index = [[] for _ in range(max_batch_id+1)]
+    else:
+        while len(doc_index) < max_batch_id+1:
+            doc_index.append([])
+
+    for batch_id in batch_ids:
+        doc_index[batch_id] = []
+        for batch_id, a, b, c, d in db.execute('SELECT f.batch_id, f.id, f.text_ids, t.id, t.text_ids FROM processing_from f join processing_to t on f.id=t.id where f.batch_id = :batch_id order by f.id', {"batch_id": batch_id}):
+            doc_index[batch_id].append((a, b, c, d))
+
+    update_doc_index(db, doc_index)
 
 
-def get_doc_index(db_path):
+def update_doc_index(db, index):
+    """Insert or update document index"""
+    index = json.dumps(index)
+    print("UPDATE INDEX 3 IN DB", index)
+    db.execute(
+        'insert or replace into doc_index (id, contents) values ((select id from doc_index limit 1),?)', (index,))
+
+
+def get_doc_index_flatten(db_path):
     """Get document index"""
     res = []
     try:
         with sqlite3.connect(db_path) as db:
             cur = db.execute('SELECT contents FROM doc_index')
-            res = json.loads(cur.fetchone()[0])
+            data = json.loads(cur.fetchone()[0])
+        for _, sub_index in enumerate(data):
+            res.extend(list(zip(sub_index, range(len(sub_index)))))
     except:
-        logging.warning("can not fetch index")
+        logging.warning("can not fetch flatten index")
     return res
 
 
-def update_doc_index(db, index):
-    """Update document index"""
-    index = json.dumps(index)
-    db.execute('update doc_index set contents = ?', [index])
+def get_doc_index(db):
+    """Get document index"""
+    res = []
+    try:
+        cur = db.execute('SELECT contents FROM doc_index')
+        res = json.loads(cur.fetchone()[0])
+    except:
+        logging.warning("can not fetch index db")
+    return res
+
+
+def rewrite_processing_batches(db, data):
+    """Insert or rewrite batched data"""
+    for batch_id, texts_from, texts_to in data:
+        db.execute("delete from processing_from where batch_id=:batch_id", {
+                   "batch_id": batch_id})
+        db.executemany(
+            f"insert into processing_from(batch_id, text_ids, initial_id, text) values (?,?,?,?)", [(batch_id, a, b, c) for a, b, c in texts_from])
+        db.execute("delete from processing_to where batch_id=:batch_id", {
+                   "batch_id": batch_id})
+        db.executemany(
+            f"insert into processing_to(batch_id, text_ids, initial_id, text) values (?,?,?,?)", [(batch_id, a, b, c) for a, b, c in texts_to])
 
 
 def get_processing_text(db_path, text_type, processing_id):
@@ -238,12 +277,12 @@ def clear_processing(db, text_type, processing_id):
                    {"id": processing_id})
 
 
-def add_empty_processing_line(db):
+def add_empty_processing_line(db, batch_id):
     """Add empty processing line"""
-    from_id = db.execute('insert into processing_from(text_ids, text) values (:text_ids, :text) ', {
-                         "text_ids": "[]", "text": ''}).lastrowid
-    to_id = db.execute('insert into processing_to(text_ids, text) values (:text_ids, :text) ', {
-                       "text_ids": "[]", "text": ''}).lastrowid
+    from_id = db.execute('insert into processing_from(batch_id, text_ids, text) values (:batch_id, :text_ids, :text) ', {
+                         "batch_id": batch_id, "text_ids": "[]", "text": ''}).lastrowid
+    to_id = db.execute('insert into processing_to(batch_id, text_ids, text) values (:batch_id, :text_ids, :text) ', {
+                       "batch_id": batch_id, "text_ids": "[]", "text": ''}).lastrowid
     return (from_id, to_id)
 
 
@@ -255,10 +294,10 @@ def get_doc_page(db_path, page):
         db.execute(
             'CREATE TEMP TABLE text_ids(rank integer primary key, id integer)')
         db.executemany('insert into temp.text_ids(id) values(?)', [
-                       (x[0],) for x in page])
-        for text_from, text_to, proxy_from, proxy_to in db.execute(
+                       (x[0][0],) for x in page])
+        for batch_id, text_from, text_to, proxy_from, proxy_to in db.execute(
             '''SELECT
-                f.text, t.text, pf.text, pt.text
+                f.batch_id, f.text, t.text, pf.text, pt.text
             FROM
                 processing_from f
                 join
@@ -277,7 +316,7 @@ def get_doc_page(db_path, page):
                 ti.rank
             '''
         ):
-            res.append((text_from, text_to, proxy_from, proxy_to))
+            res.append((text_from, text_to, proxy_from, proxy_to, batch_id))
     return res
 
 
@@ -325,7 +364,7 @@ def get_batch(iter1, iter2, iter3, n):
         yield iter1[ndx:min(ndx + n, l1)], iter2[kdx:min(kdx + k, l3)], iter3[kdx:min(kdx + k, l3)]
 
 
-def get_batch_intersected(iter1, iter2, n=config.DEFAULT_BATCHSIZE, window=config.DEFAULT_WINDOW):
+def get_batch_intersected(iter1, iter2, batch_ids, n=config.DEFAULT_BATCHSIZE, window=config.DEFAULT_WINDOW):
     """Get batch with an additional window"""
     l1 = len(iter1)
     l2 = len(iter2)
@@ -337,12 +376,16 @@ def get_batch_intersected(iter1, iter2, n=config.DEFAULT_BATCHSIZE, window=confi
         logging.warning(
             f"Batch for the second language is too small. k = {k}, window = {window}")
 
+    counter = 0
     for ndx in range(0, l1, n):
         kdx += k
-        yield iter1[ndx:min(ndx + n, l1)], \
-            iter2[max(0, kdx - window):min(kdx + k + window, l2)], \
-            list(range(ndx, min(ndx + n, l1))), \
-            list(range(max(0, kdx - window), min(kdx + k + window, l2)))
+        if counter in batch_ids:
+            yield iter1[ndx:min(ndx + n, l1)], \
+                iter2[max(0, kdx - window):min(kdx + k + window, l2)], \
+                list(range(ndx, min(ndx + n, l1))), \
+                list(range(max(0, kdx - window), min(kdx + k + window, l2))), \
+                counter
+        counter += 1
 
 
 def get_culture(lang_code):

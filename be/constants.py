@@ -18,8 +18,9 @@ TYPE_TO = "to"
 
 PROC_INIT = 0
 PROC_IN_PROGRESS = 1
-PROC_DONE = 2
-PROC_ERROR = 3
+PROC_IN_PROGRESS_DONE = 2
+PROC_DONE = 3
+PROC_ERROR = 4
 
 EMPTY_LINES = {"items": {"ru": [], "zh": []}}
 EMPTY_SIMS = {"items": {"ru": [], "zh": [], "sim": []}}

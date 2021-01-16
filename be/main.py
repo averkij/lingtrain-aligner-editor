@@ -114,9 +114,24 @@ def splitted(username, lang, id, count, page):
     return {"items": {lang: lines}, "meta": {lang: meta}}
 
 
-@app.route("/items/<username>/align/<lang_from>/<lang_to>/<int:id_from>/<int:id_to>", methods=["GET"])
-def align(username, lang_from, lang_to, id_from, id_to):
+@app.route("/items/<username>/align", methods=["POST"])
+def align(username):
     """Align two splitted documents"""
+
+    # get parameters
+    lang_from = request.form.get("lang_from", '')
+    lang_to = request.form.get("lang_to", '')
+    id_from, id_from_is_int = helper.try_parse_int(
+        request.form.get("id_from", -1))
+    id_to, id_to_is_int = helper.try_parse_int(
+        request.form.get("id_to", -1))
+    align_all = request.form.get("align_all", '')
+    batch_ids = helper.parse_json_array(request.form.get("batch_ids", "[2]"))
+
+    print("alignment params:", lang_from, lang_to, id_from, id_to, batch_ids)
+
+    if not lang_from or not lang_to or not id_to_is_int or not id_from_is_int:
+        abort(400)
 
     batch_size = config.DEFAULT_BATCHSIZE
     files_from = helper.get_files_list(os.path.join(
@@ -125,7 +140,7 @@ def align(username, lang_from, lang_to, id_from, id_to):
         con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_to))
     logging.info(
         f"[{username}]. Aligning documents. {files_from[id_from]}, {files_to[id_to]}.")
-    if len(files_from) < id_from+1 or len(files_to) < id_to+1:
+    if len(files_from) < id_from+1 or len(files_to) < id_to+1 or id_from < 0 or id_to < 0:
         logging.info(f"[{username}]. Documents not found.")
         return con.EMPTY_SIMS
 
@@ -153,15 +168,20 @@ def align(username, lang_from, lang_to, id_from, id_to):
     # TODO refactor to queues (!)
     # init
 
-    print("adding splitted and proxy texts to database")
     db_folder = os.path.join(con.UPLOAD_FOLDER, username,
                              con.DB_FOLDER, lang_from, lang_to)
     db_path = os.path.join(db_folder, f'{files_from[id_from]}.db')
     helper.check_folder(db_folder)
-    helper.init_db(db_path)
-    helper.fill_db(db_path, splitted_from, splitted_to, proxy_from, proxy_to)
 
-    logging.info(f"{username}: initializing state")
+    print("DB_PATH", db_path)
+
+    # init database if needed
+    if not os.path.isfile(db_path) or align_all:
+        logging.info(f"Initializing database ${db_path}")
+        helper.init_db(db_path)
+        helper.fill_db(db_path, splitted_from,
+                       splitted_to, proxy_from, proxy_to)
+
     len_from, _ = helper.get_texts_length(db_path)
 
     if config.TEST_RESTRICTION_MAX_BATCHES > 0:
@@ -170,7 +190,15 @@ def align(username, lang_from, lang_to, id_from, id_to):
         is_last = len_from % batch_size > 0
         total_batches = len_from//batch_size + 1 if is_last else 0
 
+    if align_all:
+        batch_ids = [range(0, total_batches)]
+
+    batch_ids = batch_ids[:total_batches]
+
     logging.info(f"{username}: total_batches: {total_batches}")
+
+    # init state if needed
+    # if not os.path.isfile(db_path) or align_all:
     state.init_processing(db_path, (con.PROC_INIT, total_batches, 0))
 
     # parallel processing
@@ -180,13 +208,15 @@ def align(username, lang_from, lang_to, id_from, id_to):
     res_img_best = os.path.join(
         con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{files_from[id_from]}.db.best.png")
 
-    task_list = [(lines_from_batch, lines_to_batch, line_ids_from, line_ids_to) for lines_from_batch, lines_to_batch,
-                 line_ids_from, line_ids_to in helper.get_batch_intersected(lines_from, lines_to)][:total_batches]
+    task_list = [(lines_from_batch, lines_to_batch, line_ids_from, line_ids_to, batch_id)
+                 for lines_from_batch, lines_to_batch,
+                 line_ids_from, line_ids_to, batch_id
+                 in helper.get_batch_intersected(lines_from, lines_to, batch_ids)]
 
     proc_count = config.PROCESSORS_COUNT
 
-    proc = AlignmentProcessor(proc_count, db_path, res_img,
-                              res_img_best, lang_from, lang_to)
+    proc = AlignmentProcessor(
+        proc_count, db_path, res_img, res_img_best, lang_from, lang_to)
     proc.add_tasks(task_list)
     proc.start()
 
@@ -203,7 +233,7 @@ def get_doc_index(username, lang_from, lang_to, file_id):
     if not os.path.isfile(db_path):
         abort(404)
 
-    index = helper.get_doc_index(db_path)
+    index = helper.get_doc_index_flatten(db_path)
 
     return {"items": index}
 
@@ -218,7 +248,9 @@ def get_processing(username, lang_from, lang_to, file_id, count, page):
     if not os.path.isfile(db_path):
         abort(404)
 
-    index = helper.get_doc_index(db_path)
+    # index = helper.get_doc_index(db_path)
+    index = helper.get_doc_index_flatten(db_path)
+
     shift = (page-1)*count
     pages = index[shift:shift+count]
     res = []
@@ -229,15 +261,18 @@ def get_processing(username, lang_from, lang_to, file_id, count, page):
         res.append({
             "index_id": shift + i,  # absolute position in index
             # from
+            "batch_id": texts[4],
+            "batch_index_id": data[1],    # relative position in index batch
             "text_from": texts[0],
-            "line_id_from": data[1],  # array with ids
+            "line_id_from": data[0][1],  # array with ids
             # primary key in DB (processing_from)
-            "processing_from_id": data[0],
+            "processing_from_id": data[0][0],
             "proxy_from": texts[2],
             # to
             "text_to": texts[1],
-            "line_id_to": data[3],  # array with ids
-            "processing_to_id": data[2],  # primary key in DB (processing_to)
+            "line_id_to": data[0][3],  # array with ids
+            # primary key in DB (processing_to)
+            "processing_to_id": data[0][2],
             "proxy_to": texts[3],
         })
 
@@ -261,7 +296,9 @@ def get_processing_candidates(username, lang_from, lang_to, file_id, text_type, 
     if not os.path.isfile(db_path):
         abort(404)
 
-    index = helper.get_doc_index(db_path)
+    with sqlite3.connect(db_path) as db:
+        index = helper.get_doc_index(db)
+
     if index_id < 0 or index_id >= len(index):
         return
 
@@ -313,13 +350,17 @@ def edit_processing(username, lang_from, lang_to, file_id):
     candidate_line_id, _ = helper.try_parse_int(
         request.form.get("candidate_line_id", -1))
     candidate_text = request.form.get("candidate_text", '')
+    batch_id, _ = helper.try_parse_int(
+        request.form.get("batch_id", -1))
+    batch_index_id, _ = helper.try_parse_int(
+        request.form.get("batch_index_id", -1))
 
     print("OPERATION:", operation, "text_type:", text_type)
 
     # TODO перенести в edit_doc, там чекать валидность необходимых параметров
     if index_id_is_int:
         editor.edit_doc(db_path, index_id, text, operation,
-                        target, candidate_line_id, candidate_text, text_type)
+                        target, candidate_line_id, candidate_text, batch_id, batch_index_id, text_type)
     else:
         abort(400)
     return ('', 200)

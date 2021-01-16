@@ -40,7 +40,7 @@
               <v-icon>mdi-translate</v-icon>
             </v-btn>
           </template>
-          <span>Add a translation hint.</span>
+          <span>Add translation hint</span>
         </v-tooltip>
       </v-card-actions>
     </v-card>

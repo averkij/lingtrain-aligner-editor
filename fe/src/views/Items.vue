@@ -11,7 +11,7 @@
     </div> -->
 
     <div class="text-h4 mt-10 font-weight-bold">
-      <v-icon color="blue">mdi-text-box-multiple</v-icon> Documents
+      <v-icon color="blue" large>mdi-text-box-multiple</v-icon> Documents
     </div>
     <v-alert type="info" class="mt-6" v-show="showAlert">
       There are no uploaded documents yet. Please upload some using the form
@@ -33,7 +33,7 @@
     </div>
 
     <div class="text-h4 mt-10 font-weight-bold">
-      <v-icon color="blue">mdi-file-find</v-icon> Preview
+      <v-icon color="blue" large>mdi-file-find</v-icon> Preview
     </div>
     <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2">
       Documents are splitted by sentences using language specific rules.
@@ -54,7 +54,7 @@
     </v-row>
 
     <div class="text-h4 mt-10 font-weight-bold">
-      <v-icon color="blue">mdi-align-horizontal-center</v-icon> Alignment
+      <v-icon color="blue" large>mdi-align-horizontal-center</v-icon> Alignment
     </div>
     <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2">
       This is a test version. Only {{TEST_LIMIT}} lines will be aligned.
@@ -79,7 +79,7 @@
     </v-btn>
 
     <div class="text-h4 mt-10 font-weight-bold">
-      <v-icon color="blue">mdi-pencil</v-icon> Result
+      <v-icon color="blue" large>mdi-pencil</v-icon> Result
     </div>
 
     <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2"
@@ -210,7 +210,7 @@
                   <v-icon>mdi-arrow-right</v-icon>
                 </v-btn>
               </template>
-              <span>Go to the specific page.</span>
+              <span>Go to the specific page</span>
             </v-tooltip>
 
           </v-col>
@@ -218,7 +218,7 @@
         </v-row>
       </v-card>
 
-      <div class="text-h4 mt-10 font-weight-bold">🧩 Unused strings</div>
+      <div class="text-h4 mt-10 font-weight-bold"><v-icon color="blue" large>mdi-puzzle</v-icon> Unused strings</div>
 
       <v-alert v-if="!processing || !processing.items || processing.items.length == 0" type="info" border="left"
         colored-border color="info" class="mt-6" elevation="2">
@@ -228,7 +228,7 @@
         <div class="mt-10">{{docIndex}}</div>
       </div>
 
-      <div class="text-h4 mt-10 font-weight-bold">🍍 Corpora</div>
+      <div class="text-h4 mt-10 font-weight-bold"><v-icon color="blue" large>mdi-cloud-download</v-icon> Corpora</div>
 
       <v-alert v-if="!processing || !processing.items || processing.items.length == 0" type="info" border="left"
         colored-border color="info" class="mt-6" elevation="2">
@@ -589,25 +589,29 @@
           this.refreshProcessingPage()
         });
       },
-      editAddEmptyLineAfter(indexId) {
+      editAddEmptyLineAfter(indexId, batchId, batchIndexId) {
         this.$store.dispatch(EDIT_PROCESSING, {
           username: this.$route.params.username,
           fileId: this.selectedProcessingId,
           langCodeFrom: this.langCodeFrom,
           langCodeTo: this.langCodeTo,
-          indexId: indexId,
+          indexId,
+          batchId,
+          batchIndexId,
           operation: ADD_EMPTY_LINE_AFTER
         }).then(() => {
           this.refreshProcessingPage()
         });
       },
-      editDeleteLine(indexId) {
+      editDeleteLine(indexId, batchId, batchIndexId) {
         this.$store.dispatch(EDIT_PROCESSING, {
           username: this.$route.params.username,
           fileId: this.selectedProcessingId,
           langCodeFrom: this.langCodeFrom,
           langCodeTo: this.langCodeTo,
           indexId: indexId,
+          batchId,
+          batchIndexId,
           operation: EDIT_DELETE_LINE
         }).then(() => {
           this.refreshProcessingPage()

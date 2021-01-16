@@ -1,16 +1,16 @@
 """Editor query handlers"""
 
 import json
+import logging
 import sqlite3
 
 import constants as con
 import helper
 
 
-def edit_doc(db_path, index_id, text, operation, target, candidate_line_id, candidate_text, text_type=con.TYPE_TO):
+def edit_doc(db_path, index_id, text, operation, target, candidate_line_id, candidate_text, batch_id, batch_index_id, text_type=con.TYPE_TO):
     """Manipulate with document lines"""
 
-    index = helper.get_doc_index(db_path)
     print("starting operation", operation, index_id)
 
     if target == "next":
@@ -21,12 +21,17 @@ def edit_doc(db_path, index_id, text, operation, target, candidate_line_id, cand
     update_index = True
 
     with sqlite3.connect(db_path) as db:
-        if index_id < 0 or index_id >= len(index):
+        index = helper.get_doc_index(db)
+
+        if batch_id < 0 or batch_id >= len(index) or batch_index_id < 0 or batch_index_id > len(index[batch_id]):
+            logging.info(
+                f"Invalid index coordinates while editing. batch_id: ${batch_id}, batch_index_id: ${batch_index_id}.")
             return
 
         # [3] column in index is processing_to.text_ids
         direction = 3 if text_type == con.TYPE_TO else 1
-        line_ids = helper.parse_json_array(index[index_id][direction])
+        line_ids = helper.parse_json_array(
+            index[batch_id][batch_index_id][direction])
 
         if operation in (con.EDIT_ADD_PREV_END, con.EDIT_ADD_NEXT_END):
             if index_target_id < 0 or index_target_id >= len(index):
@@ -35,7 +40,6 @@ def edit_doc(db_path, index_id, text, operation, target, candidate_line_id, cand
             text_to_edit = helper.get_processing_text(
                 db_path, text_type, processing_target_id)[0]
             text_to_update = text_to_edit + text
-            # print(index)
 
             processing_text_ids = helper.parse_json_array(
                 index[index_target_id][direction])
@@ -65,14 +69,15 @@ def edit_doc(db_path, index_id, text, operation, target, candidate_line_id, cand
                 db, text_type, processing_target_id, new_ids, text_to_update)
 
         elif operation == con.ADD_EMPTY_LINE_BEFORE:
-            from_id, to_id = helper.add_empty_processing_line(db)
+            from_id, to_id = helper.add_empty_processing_line(db, batch_id)
             print("from_id", from_id, "to_id", to_id)
             index.insert(index_id, (from_id, "[]", to_id, "[]"))
 
         elif operation == con.ADD_EMPTY_LINE_AFTER:
-            from_id, to_id = helper.add_empty_processing_line(db)
+            from_id, to_id = helper.add_empty_processing_line(db, batch_id)
             print("from_id", from_id, "to_id", to_id)
-            index.insert(index_id+1, (from_id, "[]", to_id, "[]"))
+            index[batch_id].insert(
+                batch_index_id+1, (from_id, "[]", to_id, "[]"))
 
         elif operation == con.EDIT_LINE:
             processing_target_id = index[index_id][0]
@@ -86,7 +91,7 @@ def edit_doc(db_path, index_id, text, operation, target, candidate_line_id, cand
             helper.clear_processing(db, text_type, processing_target_id)
 
         elif operation == con.EDIT_DELETE_LINE:
-            index.pop(index_id)
+            index[batch_id].pop(batch_index_id)
             # TODO should we leave data in processing tables?
         else:
             return

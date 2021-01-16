@@ -27,7 +27,7 @@
           <div class="d-table-cell green lighten-5 cell-edit-index text-center">
             <div class="fill-height d-flex cell-edit-index-cont fix-height flex-column justify-space-between">
               <div class="pa-2 font-weight-medium line-num">
-                {{ lineIdFrom }}
+                {{ lineIdFrom }} [{{item.batch_id}}] [{{item.batch_index_id}}]
               </div>
               <div class="cell-edit-action-panel colored">
                 <div class="cell-edit-button" @click="editAddUpEnd('from')">
@@ -299,13 +299,13 @@
         this.$emit('editAddCandidateEnd', this.item.index_id, textType, lineId, text);
       },
       editDeleteLine() {
-        this.$emit('editDeleteLine', this.item.index_id);
+        this.$emit('editDeleteLine', this.item.index_id, this.item.batch_id, this.item.batch_index_id);
       },
       editAddEmptyLineBefore() {
         this.$emit('editAddEmptyLineBefore', this.item.index_id);
       },
       editAddEmptyLineAfter() {
-        this.$emit('editAddEmptyLineAfter', this.item.index_id);
+        this.$emit('editAddEmptyLineAfter', this.item.index_id, this.item.batch_id, this.item.batch_index_id);
       },
       editClearLine(textType) {
         this.$emit('editClearLine', this.item.index_id, textType);
