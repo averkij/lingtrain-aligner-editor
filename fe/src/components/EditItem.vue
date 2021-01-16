@@ -280,35 +280,35 @@
       editAddUpEnd(textType) {
         if (textType == "from") {
           let newText = this.editedFromText ? this.editedFromText : this.item.text_from;
-          this.$emit('editAddUpEnd', this.item.index_id, newText, textType);
+          this.$emit('editAddUpEnd', this.item.index_id, newText, textType, this.item.batch_id, this.item.batch_index_id);
         } else if (textType == "to") {
           let newText = this.editedToText ? this.editedToText : this.item.text_to;
-          this.$emit('editAddUpEnd', this.item.index_id, newText, textType);
+          this.$emit('editAddUpEnd', this.item.index_id, newText, textType, this.item.batch_id, this.item.batch_index_id);
         }
       },
       editAddDownEnd(textType) {
         if (textType == "from") {
           let newText = this.editedFromText ? this.editedFromText : this.item.text_from;
-          this.$emit('editAddDownEnd', this.item.index_id, newText, textType);
+          this.$emit('editAddDownEnd', this.item.index_id, newText, textType, this.item.batch_id, this.item.batch_index_id);
         } else if (textType == "to") {
           let newText = this.editedToText ? this.editedToText : this.item.text_to;
-          this.$emit('editAddDownEnd', this.item.index_id, newText, textType);
+          this.$emit('editAddDownEnd', this.item.index_id, newText, textType, this.item.batch_id, this.item.batch_index_id);
         }
       },
       editAddCandidateEnd(textType, lineId, text) {
-        this.$emit('editAddCandidateEnd', this.item.index_id, textType, lineId, text);
+        this.$emit('editAddCandidateEnd', this.item.index_id, textType, lineId, text, this.item.batch_id, this.item.batch_index_id);
       },
       editDeleteLine() {
         this.$emit('editDeleteLine', this.item.index_id, this.item.batch_id, this.item.batch_index_id);
       },
       editAddEmptyLineBefore() {
-        this.$emit('editAddEmptyLineBefore', this.item.index_id);
+        this.$emit('editAddEmptyLineBefore', this.item.index_id, this.item.batch_id, this.item.batch_index_id);
       },
       editAddEmptyLineAfter() {
         this.$emit('editAddEmptyLineAfter', this.item.index_id, this.item.batch_id, this.item.batch_index_id);
       },
       editClearLine(textType) {
-        this.$emit('editClearLine', this.item.index_id, textType);
+        this.$emit('editClearLine', this.item.index_id, textType, this.item.batch_id, this.item.batch_index_id);
       },
       editProcessing(event, textType) {
         // event.target.value = event.target.value .replace(/(\r\n|\n|\r)/gm, "")
@@ -316,7 +316,7 @@
         // #Не сохранять, если не изменилось
         let newText = event.target.value;
         if (Helper.trim(newText) != Helper.trim(this.uneditedText)) {
-          this.$emit('editProcessing', this.item.index_id, newText, textType, (res) => {
+          this.$emit('editProcessing', this.item.index_id, newText, textType, this.item.batch_id, this.item.batch_index_id, (res) => {
             console.log("edit result:", res)
             if (res == RESULT_OK) {
               this.state = STATE_SAVED;

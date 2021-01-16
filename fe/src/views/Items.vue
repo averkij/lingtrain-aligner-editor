@@ -530,13 +530,15 @@
           page: this.processing.meta.page
         });
       },
-      editAddCandidateEnd(indexId, textType, candidateLineId, candidateText) {
+      editAddCandidateEnd(indexId, textType, candidateLineId, candidateText, batchId, batchIndexId) {
         this.$store.dispatch(EDIT_PROCESSING, {
           username: this.$route.params.username,
           fileId: this.selectedProcessingId,
           langCodeFrom: this.langCodeFrom,
           langCodeTo: this.langCodeTo,
-          indexId: indexId,
+          indexId,
+          batchId,
+          batchIndexId,
           candidateLineId: candidateLineId,
           candidateText: candidateText,
           text_type: textType,
@@ -546,13 +548,15 @@
           this.refreshProcessingPage();
         });
       },
-      editAddUpEnd(indexId, editItemToText, textType) {
+      editAddUpEnd(indexId, editItemToText, textType, batchId, batchIndexId) {
         this.$store.dispatch(EDIT_PROCESSING, {
           username: this.$route.params.username,
           fileId: this.selectedProcessingId,
           langCodeFrom: this.langCodeFrom,
           langCodeTo: this.langCodeTo,
-          indexId: indexId,
+          indexId,
+          batchId,
+          batchIndexId,
           text: editItemToText,
           text_type: textType,
           operation: EDIT_ADD_PREV_END,
@@ -561,14 +565,16 @@
           this.refreshProcessingPage();
         });
       },
-      editAddDownEnd(indexId, editItemText, textType) {
+      editAddDownEnd(indexId, editItemText, textType, batchId, batchIndexId) {
         console.log("textType", textType)
         this.$store.dispatch(EDIT_PROCESSING, {
           username: this.$route.params.username,
           fileId: this.selectedProcessingId,
           langCodeFrom: this.langCodeFrom,
           langCodeTo: this.langCodeTo,
-          indexId: indexId,
+          indexId,
+          batchId,
+          batchIndexId,
           text: editItemText,
           text_type: textType,
           operation: EDIT_ADD_NEXT_END,
@@ -577,13 +583,15 @@
           this.refreshProcessingPage();
         });
       },
-      editAddEmptyLineBefore(indexId) {
+      editAddEmptyLineBefore(indexId, batchId, batchIndexId) {
         this.$store.dispatch(EDIT_PROCESSING, {
           username: this.$route.params.username,
           fileId: this.selectedProcessingId,
           langCodeFrom: this.langCodeFrom,
           langCodeTo: this.langCodeTo,
-          indexId: indexId,
+          indexId,
+          batchId,
+          batchIndexId,
           operation: ADD_EMPTY_LINE_BEFORE
         }).then(() => {
           this.refreshProcessingPage()
@@ -609,7 +617,7 @@
           fileId: this.selectedProcessingId,
           langCodeFrom: this.langCodeFrom,
           langCodeTo: this.langCodeTo,
-          indexId: indexId,
+          indexId,
           batchId,
           batchIndexId,
           operation: EDIT_DELETE_LINE
@@ -617,27 +625,31 @@
           this.refreshProcessingPage()
         });
       },
-      editClearLine(indexId, textType) {
+      editClearLine(indexId, textType, batchId, batchIndexId) {
         this.$store.dispatch(EDIT_PROCESSING, {
           username: this.$route.params.username,
           fileId: this.selectedProcessingId,
           langCodeFrom: this.langCodeFrom,
           langCodeTo: this.langCodeTo,
-          indexId: indexId,
+          indexId,
+          batchId,
+          batchIndexId,
           text_type: textType,
           operation: EDIT_CLEAR_LINE
         }).then(() => {
           this.refreshProcessingPage()
         });
       },
-      editProcessing(indexId, editItemText, textType, callback) {
+      editProcessing(indexId, editItemText, textType, batchId, batchIndexId, callback) {
         this.$store
           .dispatch(EDIT_PROCESSING, {
             username: this.$route.params.username,
             fileId: this.selectedProcessingId,
             langCodeFrom: this.langCodeFrom,
             langCodeTo: this.langCodeTo,
-            indexId: indexId,
+            indexId,
+            batchId,
+            batchIndexId,
             text: editItemText,
             text_type: textType,
             operation: EDIT_LINE

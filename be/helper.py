@@ -165,7 +165,6 @@ def create_doc_index(db, data):
 def update_doc_index(db, index):
     """Insert or update document index"""
     index = json.dumps(index)
-    print("UPDATE INDEX 3 IN DB", index)
     db.execute(
         'insert or replace into doc_index (id, contents) values ((select id from doc_index limit 1),?)', (index,))
 
