@@ -170,7 +170,7 @@ def update_doc_index(db, index):
         'insert or replace into doc_index (id, contents) values ((select id from doc_index limit 1),?)', (index,))
 
 
-def get_doc_index_flatten(db_path):
+def get_flatten_doc_index(db_path):
     """Get document index"""
     res = []
     try:
@@ -179,6 +179,20 @@ def get_doc_index_flatten(db_path):
             data = json.loads(cur.fetchone()[0])
         for _, sub_index in enumerate(data):
             res.extend(list(zip(sub_index, range(len(sub_index)))))
+    except:
+        logging.warning("can not fetch flatten index")
+    return res
+
+
+def get_clear_flatten_doc_index(db_path):
+    """Get document index"""
+    res = []
+    try:
+        with sqlite3.connect(db_path) as db:
+            cur = db.execute('SELECT contents FROM doc_index')
+            data = json.loads(cur.fetchone()[0])
+        for _, sub_index in enumerate(data):
+            res.extend(sub_index)
     except:
         logging.warning("can not fetch flatten index")
     return res

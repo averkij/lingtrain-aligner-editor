@@ -126,7 +126,7 @@ def align(username):
     id_to, id_to_is_int = helper.try_parse_int(
         request.form.get("id_to", -1))
     align_all = request.form.get("align_all", '')
-    batch_ids = helper.parse_json_array(request.form.get("batch_ids", "[2]"))
+    batch_ids = helper.parse_json_array(request.form.get("batch_ids", "[1]"))
 
     print("alignment params:", lang_from, lang_to, id_from, id_to, batch_ids)
 
@@ -233,7 +233,7 @@ def get_doc_index(username, lang_from, lang_to, file_id):
     if not os.path.isfile(db_path):
         abort(404)
 
-    index = helper.get_doc_index_flatten(db_path)
+    index = helper.get_flatten_doc_index(db_path)
 
     return {"items": index}
 
@@ -249,7 +249,7 @@ def get_processing(username, lang_from, lang_to, file_id, count, page):
         abort(404)
 
     # index = helper.get_doc_index(db_path)
-    index = helper.get_doc_index_flatten(db_path)
+    index = helper.get_flatten_doc_index(db_path)
 
     shift = (page-1)*count
     pages = index[shift:shift+count]
@@ -296,8 +296,9 @@ def get_processing_candidates(username, lang_from, lang_to, file_id, text_type, 
     if not os.path.isfile(db_path):
         abort(404)
 
-    with sqlite3.connect(db_path) as db:
-        index = helper.get_doc_index(db)
+    index = helper.get_clear_flatten_doc_index(db_path)
+
+    print("candidates", index)
 
     if index_id < 0 or index_id >= len(index):
         return
