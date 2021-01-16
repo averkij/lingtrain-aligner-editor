@@ -131,14 +131,21 @@ export const ItemsService = {
     );
   },
   alignSplitted(params) {
-    return ApiService.get(
+    let form = new FormData();
+    form.append("lang_from", params.langCodeFrom);
+    form.append("lang_to", params.langCodeTo);
+    form.append("id_from", params.fileIds[params.langCodeFrom]);
+    form.append("id_to", params.fileIds[params.langCodeTo]);
+    form.append("batch_ids", JSON.stringify(params.batchIds))
+
+    return ApiService.post(
       "items",
-      `${params.username}/align/${params.langCodeFrom}/${params.langCodeTo}/${params.fileIds[params.langCodeFrom]}/${params.fileIds[params.langCodeTo]}`
+      `${params.username}/align`,
+      form
     );
   },
   editProcessing(params) {
     let form = new FormData();
-    
     form.append("text", params.text);
     form.append("text_type", params.text_type);
     form.append("operation", params.operation);
@@ -146,6 +153,8 @@ export const ItemsService = {
     form.append("target", params.target);
     form.append("candidate_line_id", params.candidateLineId);
     form.append("candidate_text", params.candidateText);
+    form.append("batch_id", params.batchId);
+    form.append("batch_index_id", params.batchIndexId);
 
     return ApiService.post(
       "items",

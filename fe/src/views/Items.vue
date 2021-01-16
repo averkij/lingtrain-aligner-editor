@@ -11,7 +11,7 @@
     </div> -->
 
     <div class="text-h4 mt-10 font-weight-bold">
-      <v-icon color="blue">mdi-text-box-multiple</v-icon> Documents
+      <v-icon color="blue" large>mdi-text-box-multiple</v-icon> Documents
     </div>
     <v-alert type="info" class="mt-6" v-show="showAlert">
       There are no uploaded documents yet. Please upload some using the form
@@ -33,7 +33,7 @@
     </div>
 
     <div class="text-h4 mt-10 font-weight-bold">
-      <v-icon color="blue">mdi-file-find</v-icon> Preview
+      <v-icon color="blue" large>mdi-file-find</v-icon> Preview
     </div>
     <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2">
       Documents are splitted by sentences using language specific rules.
@@ -54,7 +54,7 @@
     </v-row>
 
     <div class="text-h4 mt-10 font-weight-bold">
-      <v-icon color="blue">mdi-align-horizontal-center</v-icon> Alignment
+      <v-icon color="blue" large>mdi-align-horizontal-center</v-icon> Alignment
     </div>
     <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2">
       This is a test version. Only {{TEST_LIMIT}} lines will be aligned.
@@ -79,7 +79,7 @@
     </v-btn>
 
     <div class="text-h4 mt-10 font-weight-bold">
-      <v-icon color="blue">mdi-pencil</v-icon> Result
+      <v-icon color="blue" large>mdi-pencil</v-icon> Result
     </div>
 
     <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2"
@@ -210,7 +210,7 @@
                   <v-icon>mdi-arrow-right</v-icon>
                 </v-btn>
               </template>
-              <span>Go to the specific page.</span>
+              <span>Go to the specific page</span>
             </v-tooltip>
 
           </v-col>
@@ -218,7 +218,7 @@
         </v-row>
       </v-card>
 
-      <div class="text-h4 mt-10 font-weight-bold">🧩 Unused strings</div>
+      <div class="text-h4 mt-10 font-weight-bold"><v-icon color="blue" large>mdi-puzzle</v-icon> Unused strings</div>
 
       <v-alert v-if="!processing || !processing.items || processing.items.length == 0" type="info" border="left"
         colored-border color="info" class="mt-6" elevation="2">
@@ -228,7 +228,7 @@
         <div class="mt-10">{{docIndex}}</div>
       </div>
 
-      <div class="text-h4 mt-10 font-weight-bold">🍍 Corpora</div>
+      <div class="text-h4 mt-10 font-weight-bold"><v-icon color="blue" large>mdi-cloud-download</v-icon> Corpora</div>
 
       <v-alert v-if="!processing || !processing.items || processing.items.length == 0" type="info" border="left"
         colored-border color="info" class="mt-6" elevation="2">
@@ -530,13 +530,15 @@
           page: this.processing.meta.page
         });
       },
-      editAddCandidateEnd(indexId, textType, candidateLineId, candidateText) {
+      editAddCandidateEnd(indexId, textType, candidateLineId, candidateText, batchId, batchIndexId) {
         this.$store.dispatch(EDIT_PROCESSING, {
           username: this.$route.params.username,
           fileId: this.selectedProcessingId,
           langCodeFrom: this.langCodeFrom,
           langCodeTo: this.langCodeTo,
-          indexId: indexId,
+          indexId,
+          batchId,
+          batchIndexId,
           candidateLineId: candidateLineId,
           candidateText: candidateText,
           text_type: textType,
@@ -546,13 +548,15 @@
           this.refreshProcessingPage();
         });
       },
-      editAddUpEnd(indexId, editItemToText, textType) {
+      editAddUpEnd(indexId, editItemToText, textType, batchId, batchIndexId) {
         this.$store.dispatch(EDIT_PROCESSING, {
           username: this.$route.params.username,
           fileId: this.selectedProcessingId,
           langCodeFrom: this.langCodeFrom,
           langCodeTo: this.langCodeTo,
-          indexId: indexId,
+          indexId,
+          batchId,
+          batchIndexId,
           text: editItemToText,
           text_type: textType,
           operation: EDIT_ADD_PREV_END,
@@ -561,14 +565,16 @@
           this.refreshProcessingPage();
         });
       },
-      editAddDownEnd(indexId, editItemText, textType) {
+      editAddDownEnd(indexId, editItemText, textType, batchId, batchIndexId) {
         console.log("textType", textType)
         this.$store.dispatch(EDIT_PROCESSING, {
           username: this.$route.params.username,
           fileId: this.selectedProcessingId,
           langCodeFrom: this.langCodeFrom,
           langCodeTo: this.langCodeTo,
-          indexId: indexId,
+          indexId,
+          batchId,
+          batchIndexId,
           text: editItemText,
           text_type: textType,
           operation: EDIT_ADD_NEXT_END,
@@ -577,63 +583,73 @@
           this.refreshProcessingPage();
         });
       },
-      editAddEmptyLineBefore(indexId) {
+      editAddEmptyLineBefore(indexId, batchId, batchIndexId) {
         this.$store.dispatch(EDIT_PROCESSING, {
           username: this.$route.params.username,
           fileId: this.selectedProcessingId,
           langCodeFrom: this.langCodeFrom,
           langCodeTo: this.langCodeTo,
-          indexId: indexId,
+          indexId,
+          batchId,
+          batchIndexId,
           operation: ADD_EMPTY_LINE_BEFORE
         }).then(() => {
           this.refreshProcessingPage()
         });
       },
-      editAddEmptyLineAfter(indexId) {
+      editAddEmptyLineAfter(indexId, batchId, batchIndexId) {
         this.$store.dispatch(EDIT_PROCESSING, {
           username: this.$route.params.username,
           fileId: this.selectedProcessingId,
           langCodeFrom: this.langCodeFrom,
           langCodeTo: this.langCodeTo,
-          indexId: indexId,
+          indexId,
+          batchId,
+          batchIndexId,
           operation: ADD_EMPTY_LINE_AFTER
         }).then(() => {
           this.refreshProcessingPage()
         });
       },
-      editDeleteLine(indexId) {
+      editDeleteLine(indexId, batchId, batchIndexId) {
         this.$store.dispatch(EDIT_PROCESSING, {
           username: this.$route.params.username,
           fileId: this.selectedProcessingId,
           langCodeFrom: this.langCodeFrom,
           langCodeTo: this.langCodeTo,
-          indexId: indexId,
+          indexId,
+          batchId,
+          batchIndexId,
           operation: EDIT_DELETE_LINE
         }).then(() => {
           this.refreshProcessingPage()
         });
       },
-      editClearLine(indexId, textType) {
+      editClearLine(indexId, textType, batchId, batchIndexId) {
         this.$store.dispatch(EDIT_PROCESSING, {
           username: this.$route.params.username,
           fileId: this.selectedProcessingId,
           langCodeFrom: this.langCodeFrom,
           langCodeTo: this.langCodeTo,
-          indexId: indexId,
+          indexId,
+          batchId,
+          batchIndexId,
           text_type: textType,
           operation: EDIT_CLEAR_LINE
         }).then(() => {
           this.refreshProcessingPage()
         });
       },
-      editProcessing(indexId, editItemText, textType, callback) {
+      editProcessing(indexId, editItemText, textType, batchId, batchIndexId, callback) {
         this.$store
           .dispatch(EDIT_PROCESSING, {
             username: this.$route.params.username,
             fileId: this.selectedProcessingId,
             langCodeFrom: this.langCodeFrom,
             langCodeTo: this.langCodeTo,
-            indexId: indexId,
+            indexId,
+            batchId,
+            batchIndexId,
             text: editItemText,
             text_type: textType,
             operation: EDIT_LINE
@@ -652,12 +668,12 @@
             username: this.$route.params.username,
             fileIds: this.selectedIds,
             langCodeFrom: this.langCodeFrom,
-            langCodeTo: this.langCodeTo
+            langCodeTo: this.langCodeTo,
+            batchIds: [0,1]
           })
           .then(() => {
             this.userAlignInProgress = true;
             this.isLoading.align = false;
-
             this.$store.dispatch(FETCH_ITEMS_PROCESSING, {
               username: this.$route.params.username,
               langCodeFrom: this.langCodeFrom,
@@ -665,7 +681,6 @@
             }).then(() => {
               this.selectCurrentlyProcessingDocument();
             });
-
             this.fetchItemsProcessingTimer();
           });
       },

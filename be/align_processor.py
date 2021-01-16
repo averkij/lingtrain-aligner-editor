@@ -66,7 +66,7 @@ class AlignmentProcessor:
 
                     print("task_index", task_index)
 
-                    self.process_batch(task_index, *task)
+                    self.process_batch(*task)
 
                 except Exception as e:
                     print('task failed. ' + str(e))
@@ -99,14 +99,10 @@ class AlignmentProcessor:
         result.sort()
         with sqlite3.connect(self.db_path) as db:
             logging.info(f"writing {len(result)} batches to {self.db_path}")
-            for i, texts_from, texts_to in result:
-                db.executemany(
-                    "insert into processing_from(text_ids, initial_id, text) values (?,?,?)", texts_from)
-                db.executemany(
-                    "insert into processing_to(text_ids, initial_id, text) values (?,?,?)", texts_to)
+            helper.rewrite_processing_batches(db, result)
 
             logging.info(f"creating index for {self.db_path}")
-            helper.create_doc_index(db)
+            helper.create_doc_index(db, result)
 
         logging.info(f"Alignment is finished. Removing state. {self.db_path}")
 
@@ -130,7 +126,7 @@ class AlignmentProcessor:
         for w in workers:
             w.start()
 
-    def process_batch(self, batch_number, lines_from_batch, lines_to_batch, line_ids_from, line_ids_to):
+    def process_batch(self, lines_from_batch, lines_to_batch, line_ids_from, line_ids_to, batch_number):
         """Do the actual alignment process logic"""
         zero_treshold = 0
         sims = []
