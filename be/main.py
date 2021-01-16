@@ -126,7 +126,7 @@ def align(username):
     id_to, id_to_is_int = helper.try_parse_int(
         request.form.get("id_to", -1))
     align_all = request.form.get("align_all", '')
-    batch_ids = helper.parse_json_array(request.form.get("batch_ids", "[1]"))
+    batch_ids = helper.parse_json_array(request.form.get("batch_ids", "[0]"))
 
     print("alignment params:", lang_from, lang_to, id_from, id_to, batch_ids)
 

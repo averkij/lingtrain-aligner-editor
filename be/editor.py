@@ -69,26 +69,26 @@ def edit_doc(db_path, index_id, text, operation, target, candidate_line_id, cand
                 db, text_type, processing_target_id, new_ids, text_to_update)
 
         elif operation == con.EDIT_ADD_CANDIDATE_END:
-            processing_target_id = index[index_id][0]
+            processing_target_id = index[batch_id][batch_index_id][0]
             text_to_edit = helper.get_processing_text(
                 db_path, text_type, processing_target_id)[0]
             text_to_update = text_to_edit + candidate_text
 
             processing_text_ids = helper.parse_json_array(
-                index[index_id][direction])
-            print("index[index_id]", index[index_id])
+                index[batch_id][batch_index_id][direction])
 
             new_ids = processing_text_ids + [candidate_line_id]
             new_ids = json.dumps(sorted(list(set(new_ids))))
 
-            index[index_id][direction] = new_ids
+            index[batch_id][batch_index_id][direction] = new_ids
             helper.update_processing(
                 db, text_type, processing_target_id, new_ids, text_to_update)
 
         elif operation == con.ADD_EMPTY_LINE_BEFORE:
             from_id, to_id = helper.add_empty_processing_line(db, batch_id)
             print("from_id", from_id, "to_id", to_id)
-            index.insert(index_id, (from_id, "[]", to_id, "[]"))
+            index[batch_id].insert(
+                batch_index_id, (from_id, "[]", to_id, "[]"))
 
         elif operation == con.ADD_EMPTY_LINE_AFTER:
             from_id, to_id = helper.add_empty_processing_line(db, batch_id)
