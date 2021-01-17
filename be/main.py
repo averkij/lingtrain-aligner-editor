@@ -128,6 +128,8 @@ def align(username):
     align_all = request.form.get("align_all", '')
     batch_ids = helper.parse_json_array(request.form.get("batch_ids", "[0]"))
 
+    align_all = True
+
     print("alignment params:", lang_from, lang_to, id_from, id_to, batch_ids)
 
     if not lang_from or not lang_to or not id_to_is_int or not id_from_is_int:
@@ -191,9 +193,12 @@ def align(username):
         total_batches = len_from//batch_size + 1 if is_last else 0
 
     if align_all:
-        batch_ids = [range(0, total_batches)]
+        batch_ids = list(range(total_batches))
 
+    print("batch_ids", batch_ids)
     batch_ids = batch_ids[:total_batches]
+
+    print("batch_ids", batch_ids)
 
     logging.info(f"{username}: total_batches: {total_batches}")
 
@@ -420,7 +425,7 @@ def list_processing(username, lang_from, lang_to):
     files = {
         "items": {
             lang_from: helper.get_processing_list_with_state(os.path.join(
-                con.UPLOAD_FOLDER, username, con.DB_FOLDER, lang_from, lang_to), username)
+                con.UPLOAD_FOLDER, username, con.DB_FOLDER, lang_from, lang_to), username, lang_from, lang_to)
         }
     }
     return files

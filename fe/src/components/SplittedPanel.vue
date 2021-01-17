@@ -8,7 +8,7 @@
       Select file to preview.
     </v-alert>
     <v-card v-else>
-      <div class="yellow lighten-5">
+      <div class="blue lighten-5">
         <v-card-title>{{ selected[info.langCode] }}</v-card-title>
         <v-card-text>{{
             splitted[info.langCode].meta.lines_count | separator

@@ -57,8 +57,12 @@
       <v-icon color="blue" large>mdi-align-horizontal-center</v-icon> Alignment
     </div>
     <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2">
-      This is a test version. Only {{TEST_LIMIT}} lines will be aligned.
+      Alignment process is going step by step. Calculate the first batch, observe it, edit and confirm the quality. Than go
+      to the next batch. You can also recalculate the batch with different settings.
     </v-alert>
+
+    <div class="text-h5 mt-10 font-weight-bold">Documents to align</div>
+
     <v-row class="mt-6">
       <v-col cols="12" sm="6">
         <InfoPanel :info="LANGUAGES[langCodeFrom]" :splitted=splitted :selected=selected>
@@ -69,17 +73,21 @@
         </InfoPanel>
       </v-col>
     </v-row>
+
+    <div class="mt-5">Selected documents were not aligned yet. Press the button to start.</div>
+    <div v-if="processingExists">asd</div>
+
     <v-btn v-if="!userAlignInProgress" v-show="selected[langCodeFrom] && selected[langCodeTo]" class="success mt-6"
       :loading="isLoading.align || isLoading.alignStopping" :disabled="isLoading.align || isLoading.alignStopping"
       @click="align()">
-      Align documents
+      Begin alignment
     </v-btn>
     <v-btn v-else v-show="selected[langCodeFrom] && selected[langCodeTo]" class="error mt-6" @click="stopAlignment()">
       Stop alignment
     </v-btn>
 
     <div class="text-h4 mt-10 font-weight-bold">
-      <v-icon color="blue" large>mdi-pencil</v-icon> Result
+      <v-icon color="blue" large>mdi-pencil</v-icon> Work area
     </div>
 
     <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2"
@@ -93,6 +101,7 @@
         <div class="green lighten-5" dark>
           <v-card-title>Documents</v-card-title>
           <v-card-text>List of previosly aligned documents</v-card-text>
+          {{itemsProcessing}}
         </div>
         <v-divider></v-divider>
         <v-list class="pa-0">
@@ -218,7 +227,9 @@
         </v-row>
       </v-card>
 
-      <div class="text-h4 mt-10 font-weight-bold"><v-icon color="blue" large>mdi-puzzle</v-icon> Unused strings</div>
+      <div class="text-h4 mt-10 font-weight-bold">
+        <v-icon color="blue" large>mdi-puzzle</v-icon> Unused strings
+      </div>
 
       <v-alert v-if="!processing || !processing.items || processing.items.length == 0" type="info" border="left"
         colored-border color="info" class="mt-6" elevation="2">
@@ -228,7 +239,9 @@
         <div class="mt-10">{{docIndex}}</div>
       </div>
 
-      <div class="text-h4 mt-10 font-weight-bold"><v-icon color="blue" large>mdi-cloud-download</v-icon> Corpora</div>
+      <div class="text-h4 mt-10 font-weight-bold">
+        <v-icon color="blue" large>mdi-cloud-download</v-icon> Corpora
+      </div>
 
       <v-alert v-if="!processing || !processing.items || processing.items.length == 0" type="info" border="left"
         colored-border color="info" class="mt-6" elevation="2">
@@ -669,7 +682,7 @@
             fileIds: this.selectedIds,
             langCodeFrom: this.langCodeFrom,
             langCodeTo: this.langCodeTo,
-            batchIds: [0,1]
+            batchIds: [0, 1]
           })
           .then(() => {
             this.userAlignInProgress = true;
@@ -867,6 +880,13 @@
           return "realy?";
         }
         return (this.downloadThreshold / 100).toFixed(2);
+      },
+      processingExists() {
+        let selected_progress_item = this.itemsProcessing[this.langCodeFrom].filter(x => x.lang_to == this.langCodeTo);
+        if (selected_progress_item.length > 0) {
+          return true;
+        }
+        return false;
       },
       corporaSizeRelative() {
         return 5;

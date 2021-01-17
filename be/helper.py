@@ -27,14 +27,16 @@ def get_files_list_with_path(folder, mask="*.txt"):
     return glob.glob("{0}/{1}".format(folder, mask))
 
 
-def get_processing_list_with_state(folder, username):
+def get_processing_list_with_state(folder, username, lang_from, lang_to):
     """Get processing docs list with states"""
     res = []
     for file in get_files_list_with_path(folder, mask="*.db"):
         res.append({
-            "name": os.path.basename(file),
+            "name": os.path.basename(file)[:-3],
             "state": state.get_processing_state(file, (con.PROC_DONE, 0, 0)),
             "imgs": get_files_list(os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username), mask=f"{os.path.basename(file)}.best_*.png"),
+            "lang_from": lang_from,
+            "lang_to": lang_to
             # "sim_grades": get_sim_grades(file)
         })
     return res
