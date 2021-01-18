@@ -12,24 +12,24 @@ const ApiService = {
   },
   query(resource, params) {
     return Vue.axios.get(resource, params).catch(error => {
-      throw new Error(`[TAP] ApiService ${error}`);
+      throw new Error(`ApiService ${error}`);
     });
   },
   get(resource, slug = "") {
     return Vue.axios.get(`${resource}/${slug}`).catch(error => {
-      throw new Error(`[TAP] ApiService ${error}`);
+      throw new Error(`ApiService ${error}`);
     });
   },
   download(resource, slug = "") {
     return Vue.axios.get(`${resource}/${slug}`, {
       responseType: 'blob'
     }).catch(error => {
-      throw new Error(`[TAP] ApiService ${error}`);
+      throw new Error(`ApiService ${error}`);
     });
   },
   post(resource, slug, params) {
     return Vue.axios.post(`${resource}/${slug}`, params).catch(error => {
-      throw new Error(`[TAP] ApiService ${error}`);
+      throw new Error(`ApiService ${error}`);
     });
   },
   update(resource, slug, params) {
@@ -40,7 +40,7 @@ const ApiService = {
   },
   delete(resource) {
     return Vue.axios.delete(resource).catch(error => {
-      throw new Error(`[TAP] ApiService ${error}`);
+      throw new Error(`ApiService ${error}`);
     });
   }
 };
@@ -132,20 +132,28 @@ export const ItemsService = {
   stopAlignment(params) {
     return ApiService.post(
       "items",
-      `${params.username}/align/stop/${params.langCodeFrom}/${params.langCodeTo}/${params.fileIdFrom}/${params.fileIdTo}`
+      `${params.username}/align/stop/${params.langCodeFrom}/${params.langCodeTo}/${params.alignId}`
     );
   },
-  alignSplitted(params) {
+  startAlignment(params) {
     let form = new FormData();
-    form.append("lang_from", params.langCodeFrom);
-    form.append("lang_to", params.langCodeTo);
-    form.append("id_from", params.fileIds[params.langCodeFrom]);
-    form.append("id_to", params.fileIds[params.langCodeTo]);
+    form.append("id", params.id);
+    form.append("align_all", params.alignAll);
     form.append("batch_ids", JSON.stringify(params.batchIds))
-
     return ApiService.post(
       "items",
-      `${params.username}/align`,
+      `${params.username}/alignment/align`,
+      form
+    );
+  },
+  createAlignment(params) {
+    let form = new FormData();
+    form.append("id_from", params.idFrom);
+    form.append("id_to", params.idTo);
+    form.append("name", params.name);
+    return ApiService.post(
+      "items",
+      `${params.username}/alignment/create`,
       form
     );
   },

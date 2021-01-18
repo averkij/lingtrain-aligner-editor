@@ -19,7 +19,8 @@ import {
   GET_CANDIDATES,
   EDIT_PROCESSING,
   STOP_ALIGNMENT,
-  ALIGN_SPLITTED
+  ALIGN_SPLITTED,
+  CREATE_ALIGNMENT
 } from "./actions.type";
 
 import {
@@ -68,7 +69,15 @@ export const actions = {
   },
   // params {file, username, langCode}
   async [UPLOAD_FILES](context, params) {
-    await ItemsService.upload(params);
+    await ItemsService.upload(params).then(
+      function () {
+      },
+      function (error) {
+        alert('File already exists')
+        console.log(error);
+        return;
+      }
+    );
   },
   // params {fileId, username, langCode, fileName}
   async [DOWNLOAD_SPLITTED](context, params) {
@@ -137,10 +146,17 @@ export const actions = {
     return;
   },
   async [ALIGN_SPLITTED](context, params) {
-    await ItemsService.alignSplitted(params).then(() => {
+    await ItemsService.startAlignment(params).then(() => {
     },
     () => {
       console.log("alignment error")
+    });
+  },
+  async [CREATE_ALIGNMENT](context, params) {
+    await ItemsService.createAlignment(params).then(() => {
+    },
+    () => {
+      console.log("alignment creation error")
     });
   }
 };

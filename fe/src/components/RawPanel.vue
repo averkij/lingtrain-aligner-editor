@@ -17,7 +17,7 @@
           </v-list-item-icon>
           <v-list-item-content>
             <v-list-item-title v-text="item.name"></v-list-item-title>
-            {{item.guid}}
+            <!-- {{item.guid}} -->
           </v-list-item-content>
           <v-icon v-if="item.has_proxy">mdi-translate</v-icon>
         </v-list-item>

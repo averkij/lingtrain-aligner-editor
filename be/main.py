@@ -4,6 +4,7 @@ import datetime
 import logging
 import os
 import tempfile
+import uuid
 
 import config
 import constants as con
@@ -37,7 +38,6 @@ def items(username, lang):
     """Get uploaded user raw documents"""
 
     # TODO add language code validation
-
     helper.create_folders(username, lang)
     # load documents
     if request.method == "POST":
@@ -46,20 +46,25 @@ def items(username, lang):
             upload_folder = con.RAW_FOLDER
             filename = file.filename
 
+            if helper.file_exists(username, lang, filename):
+                return ('File already exists', 400)
+
             if request.form["type"] == "proxy":
                 upload_folder = con.PROXY_FOLDER
                 filename = request.form["rawFileName"]
+            else:
+                helper.register_file(username, lang, filename)
 
-            logging.debug(
+            logging.info(
                 f"[{username}]. Loading document {file.filename}.")
             upload_path = os.path.join(
                 con.UPLOAD_FOLDER, username, upload_folder, lang, filename)
             file.save(upload_path)
+
             if request.form["type"] == "raw":
                 language_helper.split_by_sentences_and_save(
                     filename, lang, username)
-            helper.register_file(username, lang, filename)
-            logging.debug(f"[{username}]. Success. {filename} is loaded.")
+            logging.info(f"[{username}]. Success. {filename} is loaded.")
         return ('', 200)
     # return documents list
     files = {
@@ -122,40 +127,19 @@ def splitted(username, lang, guid, count, page):
     return {"items": {lang: lines}, "meta": {lang: meta}}
 
 
-@app.route("/items/<username>/align", methods=["POST"])
-def align(username):
-    """Align two splitted documents"""
-
-    # get parameters
-    lang_from = request.form.get("lang_from", '')
-    lang_to = request.form.get("lang_to", '')
-    align_all = request.form.get("align_all", '')
-    batch_ids = helper.parse_json_array(request.form.get("batch_ids", "[0]"))
+@app.route("/items/<username>/alignment/create", methods=["POST"])
+def create_alignment(username):
+    """Register new alignment"""
     id_from = request.form.get("id_from", '')
     id_to = request.form.get("id_to", '')
+    name = request.form.get("name", '')
 
-    print("alignment params:", lang_from, lang_to, id_from, id_to, batch_ids)
-
-    if not lang_from or not lang_to or not id_from or not id_to:
-        abort(400)
+    if helper.alignment_exists(username, id_from, id_to):
+        return ('', 200)
 
     batch_size = config.DEFAULT_BATCHSIZE
-    file_from = helper.get_filename(username, id_from)
-    file_to = helper.get_filename(username, id_to)
-    if not helper.alignment_exists(username, id_from, id_to):
-        align_guid = helper.register_alignment(username, id_from, id_to)
-    else:
-        align_guid = helper.get_alignment_id(username, id_from, id_to)
-
-    files_from = helper.get_files_list(os.path.join(
-        con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_from))
-    files_to = helper.get_files_list(os.path.join(
-        con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_to))
-    logging.info(
-        f"[{username}]. Aligning documents. {file_from}, {file_to}.")
-    if not file_from or not file_to:
-        logging.info(f"[{username}]. Documents not found.")
-        return con.EMPTY_SIMS
+    file_from, lang_from = helper.get_fileinfo(username, id_from)
+    file_to, lang_to = helper.get_fileinfo(username, id_to)
 
     splitted_from = os.path.join(
         con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_from, file_from)
@@ -166,29 +150,14 @@ def align(username):
     proxy_from = os.path.join(
         con.UPLOAD_FOLDER, username, con.PROXY_FOLDER, lang_from, file_from)
 
-    logging.info(f"[{username}]. Cleaning images.")
-    helper.clean_img_user_foler(username, file_from)
-
-    logging.debug(
-        f"[{username}]. Preparing for alignment. {splitted_from}, {splitted_to}.")
-    with open(splitted_from, mode="r", encoding="utf-8") as input_from, \
-            open(splitted_to, mode="r", encoding="utf-8") as input_to:
-        #  ,open(ngramed_proxy_ru, mode="r", encoding="utf-8") as input_proxy:
-        lines_from = input_from.readlines()
-        lines_to = input_to.readlines()
-        #lines_ru_proxy = input_proxy.readlines()
-
-    # TODO refactor to queues (!)
-    # init
-
+    align_guid = uuid.uuid4().hex
     db_folder = os.path.join(con.UPLOAD_FOLDER, username,
                              con.DB_FOLDER, lang_from, lang_to)
     db_path = os.path.join(db_folder, f"{align_guid}.db")
-    user_db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
 
     helper.check_folder(db_folder)
-    # init database if needed
-    if not os.path.isfile(db_path) or align_all:
+
+    if not os.path.isfile(db_path):
         logging.info(f"Initializing database {db_path}")
         helper.init_document_db(db_path)
         helper.fill_document_db(db_path, splitted_from,
@@ -198,26 +167,59 @@ def align(username):
 
     is_last = len_from % batch_size > 0
     total_batches = len_from//batch_size + 1 if is_last else 0
-
     if config.TEST_RESTRICTION_MAX_BATCHES > 0:
         total_batches = min(config.TEST_RESTRICTION_MAX_BATCHES, total_batches)
 
+    helper.register_alignment(username, align_guid,
+                              id_from, id_to, name, total_batches)
+
+    return ('', 200)
+
+
+@app.route("/items/<username>/alignment/align", methods=["POST"])
+def align(username):
+    """Align two splitted documents"""
+
+    align_guid = request.form.get("id", '')
+    align_all = request.form.get("align_all", '')
+    batch_ids = helper.parse_json_array(request.form.get("batch_ids", "[0]"))
+
+    name, guid_from, guid_to, state, curr_batches, total_batches = helper.get_alignment_info(
+        username, align_guid)
+    file_from, lang_from = helper.get_fileinfo(username, guid_from)
+    file_to, lang_to = helper.get_fileinfo(username, guid_to)
+
+    db_folder = os.path.join(con.UPLOAD_FOLDER, username,
+                             con.DB_FOLDER, lang_from, lang_to)
+    db_path = os.path.join(db_folder, f"{align_guid}.db")
+    user_db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
+
+    splitted_from = os.path.join(
+        con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_from, file_from)
+    splitted_to = os.path.join(
+        con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_to, file_to)
+
+    with open(splitted_from, mode="r", encoding="utf-8") as input_from, \
+            open(splitted_to, mode="r", encoding="utf-8") as input_to:
+        lines_from = input_from.readlines()
+        lines_to = input_to.readlines()
+
+    logging.info(f"[{username}]. Cleaning images.")
+    helper.clean_img_user_foler(username, file_from)
+
     if align_all:
-        batch_ids = [range(0, total_batches)]
+        batch_ids = list(range(total_batches))
 
     # exit if batch ids is empty
     batch_ids = [x for x in batch_ids if x < total_batches][:total_batches]
     if not batch_ids:
         abort(404)
+    if align_all:
+        helper.update_alignment_state(
+            user_db_path, guid_from, guid_to, con.PROC_INIT, 0, total_batches)
 
-    logging.info(f"{username}: total_batches: {total_batches}")
-
-    # init state if needed
-    # if not os.path.isfile(db_path) or align_all:
-    state.init_processing(db_path, (con.PROC_INIT, total_batches, 0))
-
-    helper.update_alignment_state(
-        user_db_path, id_from, id_to, con.PROC_INIT, 0, total_batches)
+    helper.update_alignment_state_by_align_id(
+        user_db_path, align_guid, con.PROC_IN_PROGRESS)
 
     # parallel processing
     logging.info(f"{username}: aligning started")
@@ -234,7 +236,7 @@ def align(username):
     proc_count = config.PROCESSORS_COUNT
 
     proc = AlignmentProcessor(
-        proc_count, db_path, user_db_path, res_img, res_img_best, lang_from, lang_to, id_from, id_to)
+        proc_count, db_path, user_db_path, res_img, res_img_best, lang_from, lang_to, guid_from, guid_to)
     proc.add_tasks(task_list)
     proc.start()
 
@@ -427,14 +429,14 @@ def list_processing(username, lang_from, lang_to):
     return files
 
 
-@app.route("/items/<username>/align/stop/<lang_from>/<lang_to>/<guid_from>/<guid_to>", methods=["POST"])
-def stop_alignment(username, lang_from, lang_to, file_id, guid_from, guid_to):
+@app.route("/items/<username>/align/stop/<lang_from>/<lang_to>/<aling_id>", methods=["POST"])
+def stop_alignment(username, lang_from, lang_to, aling_id):
     """Stop alignment process"""
-    logging.debug(
-        f"[{username}]. Stopping alignment for {lang_from}-{lang_to} {guid_from} {guid_to}.")
+    logging.info(
+        f"[{username}]. Stopping alignment for {lang_from}-{lang_to}.")
     user_db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
-    helper.update_alignment_state(
-        user_db_path, guid_from, guid_to, con.PROC_IN_PROGRESS_DONE)
+    helper.update_alignment_state_by_align_id(
+        user_db_path, aling_id, con.PROC_IN_PROGRESS_DONE)
     return ('', 200)
 
 

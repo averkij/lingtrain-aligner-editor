@@ -11,6 +11,8 @@ export const GET_SPLITTED = "get_splitted";
 export const GET_PROCESSING = "get_processing";
 export const GET_CANDIDATES = "get_candidates";
 export const GET_DOC_INDEX = "get_doc_index";
+
+export const CREATE_ALIGNMENT = "create_alignment"
 export const STOP_ALIGNMENT = "stop_alignment";
 
 export const EDIT_PROCESSING = "edit_processing";

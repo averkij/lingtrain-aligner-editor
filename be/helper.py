@@ -47,7 +47,7 @@ def get_processing_list_with_state(username, lang_from, lang_to):
 def get_raw_files(username, lang_code):
     """Get uploaded raw files list"""
     res = []
-    for file, guid in get_documents_list(username, lang_code):
+    for file, guid, _ in get_documents_list(username, lang_code):
         res.append({
             "name": file,
             "guid": guid,
@@ -372,15 +372,14 @@ def alignment_exists(username, guid_from, guid_to):
         return bool(cur.fetchone())
 
 
-def register_alignment(username, guid_from, guid_to):
+def register_alignment(username, guid, guid_from, guid_to, name, total_batches):
     """Register new alignment in database"""
     db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
-    guid = uuid.uuid4().hex
     if not alignment_exists(username,  guid_from, guid_to):
         with sqlite3.connect(db_path) as db:
-            db.execute('insert into alignments(guid, guid_from, guid_to, name, state, curr_batches, total_batches) values (:guid, :guid_from, :guid_to, "My alignment", 0, 0, 10) ', {
-                       "guid": guid, "guid_from": guid_from, "guid_to": guid_to})
-    return guid
+            db.execute('insert into alignments(guid, guid_from, guid_to, name, state, curr_batches, total_batches) values (:guid, :guid_from, :guid_to, :name, 2, 0, :total_batches) ', {
+                       "guid": guid, "guid_from": guid_from, "guid_to": guid_to, "name": name, "total_batches": total_batches})
+    return
 
 
 def get_alignment_id(username, guid_from, guid_to):
@@ -395,8 +394,10 @@ def get_alignment_id(username, guid_from, guid_to):
 def update_alignment_state(user_db_path, guid_from, guid_to, state, curr_batches=None, total_batches=None):
     """Update alignment state"""
     with sqlite3.connect(user_db_path) as db:
-        if curr_batches and total_batches:
-            db.execute('update alignments set state=:state, curr_batches=:curr_batches, total_batches:total_batches where guid_from=:guid_from and guid_to=:guid_to', {
+        if curr_batches and curr_batches >= 0 and total_batches:
+            logging.info(
+                f"updating alignment state total_batches {total_batches} curr_batches {curr_batches} state {state}")
+            db.execute('update alignments set state=:state, curr_batches=:curr_batches, total_batches=:total_batches where guid_from=:guid_from and guid_to=:guid_to', {
                 "guid_from": guid_from, "guid_to": guid_to, "state": state, "curr_batches": curr_batches, "total_batches": total_batches})
         else:
             db.execute('update alignments set state=:state where guid_from=:guid_from and guid_to=:guid_to', {
@@ -406,7 +407,6 @@ def update_alignment_state(user_db_path, guid_from, guid_to, state, curr_batches
 def increment_alignment_state(user_db_path, guid_from, guid_to, state):
     """Increment alignment progress"""
     with sqlite3.connect(user_db_path) as db:
-
         curr_batches, total_batches = db.execute("select curr_batches, total_batches from alignments where guid_from=:guid_from and guid_to=:guid_to", {
             "guid_from": guid_from, "guid_to": guid_to}).fetchone()
 
@@ -415,6 +415,22 @@ def increment_alignment_state(user_db_path, guid_from, guid_to, state):
 
         db.execute('update alignments set state=:state, curr_batches=:curr_batches where guid_from=:guid_from and guid_to=:guid_to', {
             "guid_from": guid_from, "guid_to": guid_to, "state": state, "curr_batches": curr_batches})
+
+
+def update_alignment_state_by_align_id(user_db_path, align_id, state):
+    """Update alignment state"""
+    with sqlite3.connect(user_db_path) as db:
+        db.execute('update alignments set state=:state where guid=:guid', {
+            "guid": align_id, "state": state})
+
+
+def file_exists(username, lang, name):
+    """Check if file already exists"""
+    db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
+    with sqlite3.connect(db_path) as db:
+        cur = db.execute("select * from documents where lang=:lang and name=:name", {
+                         "lang": lang, "name": name})
+        return bool(cur.fetchone())
 
 
 def register_file(username, lang, name):
@@ -431,9 +447,9 @@ def get_documents_list(username, lang=None):
     db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
     with sqlite3.connect(db_path) as db:
         if not lang:
-            return db.execute("select name, guid from documents").fetchall()
+            return db.execute("select name, guid, lang from documents").fetchall()
         else:
-            return db.execute("select name, guid from documents where lang=:lang", {
+            return db.execute("select name, guid, lang from documents where lang=:lang", {
                 "lang": lang}).fetchall()
 
 
@@ -442,6 +458,20 @@ def get_filename(username, guid):
     filename = [x[0] for x in get_documents_list(
         username) if x[1] == guid]
     return filename[0] if filename else None
+
+
+def get_fileinfo(username, guid):
+    """Get file info by id"""
+    filename = [(x[0], x[2]) for x in get_documents_list(
+        username) if x[1] == guid]
+    return filename[0] if filename else None
+
+
+def get_alignment_info(username, guid):
+    """Get alignment info by id"""
+    db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
+    with sqlite3.connect(db_path) as db:
+        return db.execute("select name, guid_from, guid_to, state, curr_batches, total_batches from alignments where guid=:guid", {"guid": guid}).fetchone()
 
 
 def get_alignments_list(username, lang_from, lang_to):
