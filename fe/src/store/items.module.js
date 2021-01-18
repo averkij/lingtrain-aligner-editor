@@ -19,7 +19,8 @@ import {
   GET_CANDIDATES,
   EDIT_PROCESSING,
   STOP_ALIGNMENT,
-  ALIGN_SPLITTED
+  ALIGN_SPLITTED,
+  CREATE_ALIGNMENT
 } from "./actions.type";
 
 import {
@@ -145,10 +146,17 @@ export const actions = {
     return;
   },
   async [ALIGN_SPLITTED](context, params) {
-    await ItemsService.alignSplitted(params).then(() => {
+    await ItemsService.startAlignment(params).then(() => {
     },
     () => {
       console.log("alignment error")
+    });
+  },
+  async [CREATE_ALIGNMENT](context, params) {
+    await ItemsService.createAlignment(params).then(() => {
+    },
+    () => {
+      console.log("alignment creation error")
     });
   }
 };

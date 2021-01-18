@@ -135,17 +135,25 @@ export const ItemsService = {
       `${params.username}/align/stop/${params.langCodeFrom}/${params.langCodeTo}/${params.alignId}`
     );
   },
-  alignSplitted(params) {
+  startAlignment(params) {
     let form = new FormData();
-    form.append("lang_from", params.langCodeFrom);
-    form.append("lang_to", params.langCodeTo);
-    form.append("id_from", params.fileIds[params.langCodeFrom]);
-    form.append("id_to", params.fileIds[params.langCodeTo]);
+    form.append("id", params.id);
+    form.append("align_all", params.alignAll);
     form.append("batch_ids", JSON.stringify(params.batchIds))
-
     return ApiService.post(
       "items",
-      `${params.username}/align`,
+      `${params.username}/alignment/align`,
+      form
+    );
+  },
+  createAlignment(params) {
+    let form = new FormData();
+    form.append("id_from", params.idFrom);
+    form.append("id_to", params.idTo);
+    form.append("name", params.name);
+    return ApiService.post(
+      "items",
+      `${params.username}/alignment/create`,
       form
     );
   },
