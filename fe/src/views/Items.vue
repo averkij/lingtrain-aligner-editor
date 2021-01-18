@@ -57,8 +57,7 @@
       <v-icon color="blue" large>mdi-align-horizontal-center</v-icon> Alignment
     </div>
     <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2">
-      Alignment process is going step by step. Calculate the first batch, observe it, edit and confirm the quality. Than go
-      to the next batch. You can also recalculate the batch with different settings.
+      Alignment process is going step by step. Create the alignment with choosen parameters and start working with it in the work area section.
     </v-alert>
 
     <div class="text-h5 mt-10 font-weight-bold">Documents to align</div>
@@ -574,7 +573,6 @@
         });
       },
       editAddDownEnd(indexId, editItemText, textType, batchId, batchIndexId) {
-        console.log("textType", textType)
         this.$store.dispatch(EDIT_PROCESSING, {
           username: this.$route.params.username,
           fileId: this.selectedProcessingId,
@@ -693,15 +691,13 @@
           });
       },
       stopAlignment() {
-        console.log("currentlyProcessing", this.currentlyProcessing)
         this.userAlignInProgress = false;
         this.isLoading.alignStopping = true;
         this.$store.dispatch(STOP_ALIGNMENT, {
           username: this.$route.params.username,
           langCodeFrom: this.langCodeFrom,
           langCodeTo: this.langCodeTo,
-          fileIdFrom: this.currentlyProcessingId,
-          fileIdTo: this.currentlyProcessingId
+          alignId: this.currentlyProcessingId,
         });
       },
       initProcessingDocument() {
@@ -747,32 +743,19 @@
         return this.itemsProcessing[langCode].length != 0;
       },
       selectFirstDocument(langCode) {
-
-        console.log("this.items[langCode]", this.items[langCode])
-
-        console.log("!this.selected[langCode]", !this.selected[langCode])
-        console.log("this.itemsNotEmpty(langCode)", this.itemsNotEmpty(langCode))
-
         if (this.itemsNotEmpty(langCode) & !this.selected[langCode]) {
-          console.log("selectAndLoadPreview", langCode)
-
           this.selectAndLoadPreview(langCode, this.items[langCode][0].name, this.items[langCode][0].guid);
         }
       },
       selectFirstProcessingDocument() {
-        console.log("this.itemsProcessing", this.itemsProcessing)
         if (this.itemsProcessingNotEmpty(this.langCodeFrom)) {
           this.selectProcessing(this.itemsProcessing[this.langCodeFrom][0], this.itemsProcessing[this.langCodeFrom][0].guid);
         }
       },
-      selectCurrentlyProcessingDocument() {
+      selectCurrentlyProcessingDocument(item) {
         if (this.itemsProcessingNotEmpty(this.langCodeFrom)) {
-          if (this.currentlyProcessingId >= 0) {
-            console.log("selecting current processing", this.itemsProcessing[this.langCodeFrom][this
-              .currentlyProcessingId
-            ]);
-            this.selectProcessing(this.itemsProcessing[this.langCodeFrom][this.currentlyProcessingId], this
-              .currentlyProcessingId);
+          if (this.currentlyProcessingId) {
+            this.selectProcessing(item, this.currentlyProcessingId);
           }
         }
       },
@@ -790,11 +773,11 @@
               .state[0] == 1)
             if (in_progress_items.length > 0) {
               let item_index = this.itemsProcessing[this.langCodeFrom].indexOf(in_progress_items[0])
-              this.currentlyProcessingId = item_index
+              this.currentlyProcessingId = this.itemsProcessing[this.langCodeFrom][item_index].guid
               this.userAlignInProgress = true;
               this.fetchItemsProcessingTimer();
 
-              this.selectCurrentlyProcessingDocument();
+              this.selectCurrentlyProcessingDocument(this.itemsProcessing[this.langCodeFrom][item_index]);
             } else {
               this.userAlignInProgress = false;
               this.isLoading.alignStopping = false;
@@ -802,12 +785,8 @@
             }
           });
         }, 5000)
-      }
-    },
-    mounted() {
-      this.$store.dispatch(INIT_USERSPACE, {
-        username: this.$route.params.username
-      }).then(() => {
+      },
+      fetchAll() {
         this.$store.dispatch(FETCH_ITEMS, {
           username: this.$route.params.username,
           langCode: this.langCodeFrom
@@ -829,15 +808,21 @@
             1)
           if (in_progress_items.length > 0) {
             let item_index = this.itemsProcessing[this.langCodeFrom].indexOf(in_progress_items[0])
-            this.currentlyProcessingId = item_index
+            this.currentlyProcessingId = this.itemsProcessing[this.langCodeFrom][item_index].guid
             this.userAlignInProgress = true;
             this.fetchItemsProcessingTimer();
-
-            this.selectCurrentlyProcessingDocument();
+            this.selectCurrentlyProcessingDocument(this.itemsProcessing[this.langCodeFrom][item_index]);
           } else {
             this.selectFirstProcessingDocument();
           }
         });
+      }
+    },
+    mounted() {
+      this.$store.dispatch(INIT_USERSPACE, {
+        username: this.$route.params.username
+      }).then(() => {
+        this.fetchAll();
       });
       if (localStorage.showProxyTo) {
         this.showProxyTo = localStorage.showProxyTo;
@@ -846,6 +831,12 @@
     watch: {
       showProxyTo(value) {
         localStorage.showProxyTo = value
+      },
+      langCodeFrom() {
+        this.fetchAll();
+      },
+      langCodeTo() {
+        this.fetchAll();
       }
     },
     computed: {

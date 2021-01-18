@@ -12,24 +12,24 @@ const ApiService = {
   },
   query(resource, params) {
     return Vue.axios.get(resource, params).catch(error => {
-      throw new Error(`[TAP] ApiService ${error}`);
+      throw new Error(`ApiService ${error}`);
     });
   },
   get(resource, slug = "") {
     return Vue.axios.get(`${resource}/${slug}`).catch(error => {
-      throw new Error(`[TAP] ApiService ${error}`);
+      throw new Error(`ApiService ${error}`);
     });
   },
   download(resource, slug = "") {
     return Vue.axios.get(`${resource}/${slug}`, {
       responseType: 'blob'
     }).catch(error => {
-      throw new Error(`[TAP] ApiService ${error}`);
+      throw new Error(`ApiService ${error}`);
     });
   },
   post(resource, slug, params) {
     return Vue.axios.post(`${resource}/${slug}`, params).catch(error => {
-      throw new Error(`[TAP] ApiService ${error}`);
+      throw new Error(`ApiService ${error}`);
     });
   },
   update(resource, slug, params) {
@@ -40,7 +40,7 @@ const ApiService = {
   },
   delete(resource) {
     return Vue.axios.delete(resource).catch(error => {
-      throw new Error(`[TAP] ApiService ${error}`);
+      throw new Error(`ApiService ${error}`);
     });
   }
 };
@@ -132,7 +132,7 @@ export const ItemsService = {
   stopAlignment(params) {
     return ApiService.post(
       "items",
-      `${params.username}/align/stop/${params.langCodeFrom}/${params.langCodeTo}/${params.fileIdFrom}/${params.fileIdTo}`
+      `${params.username}/align/stop/${params.langCodeFrom}/${params.langCodeTo}/${params.alignId}`
     );
   },
   alignSplitted(params) {

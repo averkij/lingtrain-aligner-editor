@@ -68,7 +68,15 @@ export const actions = {
   },
   // params {file, username, langCode}
   async [UPLOAD_FILES](context, params) {
-    await ItemsService.upload(params);
+    await ItemsService.upload(params).then(
+      function () {
+      },
+      function (error) {
+        alert('File already exists')
+        console.log(error);
+        return;
+      }
+    );
   },
   // params {fileId, username, langCode, fileName}
   async [DOWNLOAD_SPLITTED](context, params) {

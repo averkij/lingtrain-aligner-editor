@@ -395,8 +395,10 @@ def get_alignment_id(username, guid_from, guid_to):
 def update_alignment_state(user_db_path, guid_from, guid_to, state, curr_batches=None, total_batches=None):
     """Update alignment state"""
     with sqlite3.connect(user_db_path) as db:
-        if curr_batches and total_batches:
-            db.execute('update alignments set state=:state, curr_batches=:curr_batches, total_batches:total_batches where guid_from=:guid_from and guid_to=:guid_to', {
+        if curr_batches and curr_batches >= 0 and total_batches:
+            logging.info(
+                f"updating alignment state total_batches {total_batches} curr_batches {curr_batches} state {state}")
+            db.execute('update alignments set state=:state, curr_batches=:curr_batches, total_batches=:total_batches where guid_from=:guid_from and guid_to=:guid_to', {
                 "guid_from": guid_from, "guid_to": guid_to, "state": state, "curr_batches": curr_batches, "total_batches": total_batches})
         else:
             db.execute('update alignments set state=:state where guid_from=:guid_from and guid_to=:guid_to', {
@@ -415,6 +417,22 @@ def increment_alignment_state(user_db_path, guid_from, guid_to, state):
 
         db.execute('update alignments set state=:state, curr_batches=:curr_batches where guid_from=:guid_from and guid_to=:guid_to', {
             "guid_from": guid_from, "guid_to": guid_to, "state": state, "curr_batches": curr_batches})
+
+
+def update_alignment_state_by_align_id(user_db_path, align_id, state):
+    """Update alignment state"""
+    with sqlite3.connect(user_db_path) as db:
+        db.execute('update alignments set state=:state where guid=:guid', {
+            "guid": align_id, "state": state})
+
+
+def file_exists(username, lang, name):
+    """Check if file already exists"""
+    db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
+    with sqlite3.connect(db_path) as db:
+        cur = db.execute("select * from documents where lang=:lang and name=:name", {
+                         "lang": lang, "name": name})
+        return bool(cur.fetchone())
 
 
 def register_file(username, lang, name):

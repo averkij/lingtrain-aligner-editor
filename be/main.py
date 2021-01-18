@@ -37,7 +37,6 @@ def items(username, lang):
     """Get uploaded user raw documents"""
 
     # TODO add language code validation
-
     helper.create_folders(username, lang)
     # load documents
     if request.method == "POST":
@@ -46,20 +45,25 @@ def items(username, lang):
             upload_folder = con.RAW_FOLDER
             filename = file.filename
 
+            if helper.file_exists(username, lang, filename):
+                return ('File already exists', 400)
+
             if request.form["type"] == "proxy":
                 upload_folder = con.PROXY_FOLDER
                 filename = request.form["rawFileName"]
+            else:
+                helper.register_file(username, lang, filename)
 
-            logging.debug(
+            logging.info(
                 f"[{username}]. Loading document {file.filename}.")
             upload_path = os.path.join(
                 con.UPLOAD_FOLDER, username, upload_folder, lang, filename)
             file.save(upload_path)
+
             if request.form["type"] == "raw":
                 language_helper.split_by_sentences_and_save(
                     filename, lang, username)
-            helper.register_file(username, lang, filename)
-            logging.debug(f"[{username}]. Success. {filename} is loaded.")
+            logging.info(f"[{username}]. Success. {filename} is loaded.")
         return ('', 200)
     # return documents list
     files = {
@@ -134,7 +138,7 @@ def align(username):
     id_from = request.form.get("id_from", '')
     id_to = request.form.get("id_to", '')
 
-    align_all = True
+    # align_all = True
 
     print("alignment params:", lang_from, lang_to, id_from, id_to, batch_ids)
 
@@ -200,10 +204,8 @@ def align(username):
 
     is_last = len_from % batch_size > 0
     total_batches = len_from//batch_size + 1 if is_last else 0
-
     if config.TEST_RESTRICTION_MAX_BATCHES > 0:
         total_batches = min(config.TEST_RESTRICTION_MAX_BATCHES, total_batches)
-
     if align_all:
         batch_ids = list(range(total_batches))
 
@@ -212,16 +214,12 @@ def align(username):
     if not batch_ids:
         abort(404)
 
-    print("batch_ids", batch_ids)
-
     logging.info(f"{username}: total_batches: {total_batches}")
 
     # init state if needed
-    # if not os.path.isfile(db_path) or align_all:
-    state.init_processing(db_path, (con.PROC_INIT, total_batches, 0))
-
-    helper.update_alignment_state(
-        user_db_path, id_from, id_to, con.PROC_INIT, 0, total_batches)
+    if not os.path.isfile(db_path) or align_all:
+        helper.update_alignment_state(
+            user_db_path, id_from, id_to, con.PROC_INIT, 0, total_batches)
 
     # parallel processing
     logging.info(f"{username}: aligning started")
@@ -431,14 +429,14 @@ def list_processing(username, lang_from, lang_to):
     return files
 
 
-@app.route("/items/<username>/align/stop/<lang_from>/<lang_to>/<guid_from>/<guid_to>", methods=["POST"])
-def stop_alignment(username, lang_from, lang_to, file_id, guid_from, guid_to):
+@app.route("/items/<username>/align/stop/<lang_from>/<lang_to>/<aling_id>", methods=["POST"])
+def stop_alignment(username, lang_from, lang_to, aling_id):
     """Stop alignment process"""
-    logging.debug(
-        f"[{username}]. Stopping alignment for {lang_from}-{lang_to} {guid_from} {guid_to}.")
+    logging.info(
+        f"[{username}]. Stopping alignment for {lang_from}-{lang_to}.")
     user_db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
-    helper.update_alignment_state(
-        user_db_path, guid_from, guid_to, con.PROC_IN_PROGRESS_DONE)
+    helper.update_alignment_state_by_align_id(
+        user_db_path, aling_id, con.PROC_IN_PROGRESS_DONE)
     return ('', 200)
 
 
