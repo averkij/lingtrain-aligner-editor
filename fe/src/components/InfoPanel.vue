@@ -4,7 +4,7 @@
     Select file to align.
   </v-alert>
   <v-card v-else>
-    <div class="purple lighten-5">
+    <div class="yellow lighten-5">
       <v-card-title>{{ selected[info.langCode] }}</v-card-title>
       <v-card-text>{{ splitted[info.langCode].meta.lines_count | separator }}
         lines</v-card-text>
