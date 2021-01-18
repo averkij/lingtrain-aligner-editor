@@ -107,7 +107,7 @@
         <v-list class="pa-0">
           <v-list-item-group mandatory color="gray" v-model="selectedListItem">
             <v-list-item v-for="(item, i) in itemsProcessing[langCodeFrom]" :key="i"
-              @change="selectProcessing(item, i)">
+              @change="selectProcessing(item, item.guid)">
               <v-list-item-icon>
                 <v-icon v-if="item.state[0]==PROC_INIT || item.state[0]==PROC_IN_PROGRESS" color="blue">
                   mdi-clock-outline</v-icon>
@@ -116,6 +116,7 @@
               </v-list-item-icon>
               <v-list-item-content>
                 <v-list-item-title v-text="item.name"></v-list-item-title>
+                {{item.state}} ---{{item.guid}}--- {{item.guid_from}} {{item.guid_to}}
               </v-list-item-content>
 
               <!-- progress bar -->
@@ -328,6 +329,7 @@
     ADD_EMPTY_LINE_AFTER
   } from "@/common/constants"
   import {
+    INIT_USERSPACE,
     FETCH_ITEMS,
     FETCH_ITEMS_PROCESSING,
     UPLOAD_FILES,
@@ -508,18 +510,12 @@
         this.selectedProcessing = item;
         this.selectedProcessingId = fileId;
 
-        console.log("select processing file", item)
-
-        console.log("aaaa")
-
         this.$store.dispatch(GET_DOC_INDEX, {
           username: this.$route.params.username,
           langCodeFrom: this.langCodeFrom,
           langCodeTo: this.langCodeTo,
           fileId
         }).then(() => {
-          // console.log("document index", this.docIndex)
-
           this.$store.dispatch(GET_PROCESSING, {
             username: this.$route.params.username,
             langCodeFrom: this.langCodeFrom,
@@ -528,7 +524,6 @@
             linesCount: 10,
             page: 1
           }).then(() => {
-            // console.log("processing", this.processing)
             this.isLoading.processing = false;
           });
         });
@@ -705,7 +700,8 @@
           username: this.$route.params.username,
           langCodeFrom: this.langCodeFrom,
           langCodeTo: this.langCodeTo,
-          fileId: this.currentlyProcessingId
+          fileIdFrom: this.currentlyProcessingId,
+          fileIdTo: this.currentlyProcessingId
         });
       },
       initProcessingDocument() {
@@ -760,13 +756,13 @@
         if (this.itemsNotEmpty(langCode) & !this.selected[langCode]) {
           console.log("selectAndLoadPreview", langCode)
 
-          this.selectAndLoadPreview(langCode, this.items[langCode][0].name, 0);
+          this.selectAndLoadPreview(langCode, this.items[langCode][0].name, this.items[langCode][0].guid);
         }
       },
       selectFirstProcessingDocument() {
         console.log("this.itemsProcessing", this.itemsProcessing)
         if (this.itemsProcessingNotEmpty(this.langCodeFrom)) {
-          this.selectProcessing(this.itemsProcessing[this.langCodeFrom][0], 0);
+          this.selectProcessing(this.itemsProcessing[this.langCodeFrom][0], this.itemsProcessing[this.langCodeFrom][0].guid);
         }
       },
       selectCurrentlyProcessingDocument() {
@@ -809,35 +805,39 @@
       }
     },
     mounted() {
-      this.$store.dispatch(FETCH_ITEMS, {
-        username: this.$route.params.username,
-        langCode: this.langCodeFrom
+      this.$store.dispatch(INIT_USERSPACE, {
+        username: this.$route.params.username
       }).then(() => {
-        this.selectFirstDocument(this.langCodeFrom);
-      });
-      this.$store.dispatch(FETCH_ITEMS, {
-        username: this.$route.params.username,
-        langCode: this.langCodeTo
-      }).then(() => {
-        this.selectFirstDocument(this.langCodeTo);
-      });
-      this.$store.dispatch(FETCH_ITEMS_PROCESSING, {
-        username: this.$route.params.username,
-        langCodeFrom: this.langCodeFrom,
-        langCodeTo: this.langCodeTo
-      }).then(() => {
-        let in_progress_items = this.itemsProcessing[this.langCodeFrom].filter(x => x.state[0] == 0 || x.state[0] ==
-          1)
-        if (in_progress_items.length > 0) {
-          let item_index = this.itemsProcessing[this.langCodeFrom].indexOf(in_progress_items[0])
-          this.currentlyProcessingId = item_index
-          this.userAlignInProgress = true;
-          this.fetchItemsProcessingTimer();
+        this.$store.dispatch(FETCH_ITEMS, {
+          username: this.$route.params.username,
+          langCode: this.langCodeFrom
+        }).then(() => {
+          this.selectFirstDocument(this.langCodeFrom);
+        });
+        this.$store.dispatch(FETCH_ITEMS, {
+          username: this.$route.params.username,
+          langCode: this.langCodeTo
+        }).then(() => {
+          this.selectFirstDocument(this.langCodeTo);
+        });
+        this.$store.dispatch(FETCH_ITEMS_PROCESSING, {
+          username: this.$route.params.username,
+          langCodeFrom: this.langCodeFrom,
+          langCodeTo: this.langCodeTo
+        }).then(() => {
+          let in_progress_items = this.itemsProcessing[this.langCodeFrom].filter(x => x.state[0] == 0 || x.state[0] ==
+            1)
+          if (in_progress_items.length > 0) {
+            let item_index = this.itemsProcessing[this.langCodeFrom].indexOf(in_progress_items[0])
+            this.currentlyProcessingId = item_index
+            this.userAlignInProgress = true;
+            this.fetchItemsProcessingTimer();
 
-          this.selectCurrentlyProcessingDocument();
-        } else {
-          this.selectFirstProcessingDocument();
-        }
+            this.selectCurrentlyProcessingDocument();
+          } else {
+            this.selectFirstProcessingDocument();
+          }
+        });
       });
       if (localStorage.showProxyTo) {
         this.showProxyTo = localStorage.showProxyTo;

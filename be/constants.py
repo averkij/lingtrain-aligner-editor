@@ -16,6 +16,8 @@ FORMAT_TMX = "tmx"
 TYPE_FROM = "from"
 TYPE_TO = "to"
 
+USER_DB_NAME = "user.db"
+
 PROC_INIT = 0
 PROC_IN_PROGRESS = 1
 PROC_IN_PROGRESS_DONE = 2

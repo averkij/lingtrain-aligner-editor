@@ -3,6 +3,7 @@ export const LOGOUT = "logout";
 
 export const UPLOAD_FILES = "upload_files";
 
+export const INIT_USERSPACE = "init_userspace";
 export const FETCH_ITEMS = "fetch_items";
 export const FETCH_ITEMS_PROCESSING = "fetch_items_processing";
 

@@ -25,6 +25,13 @@ app = Flask(__name__)
 CORS(app)
 
 
+@app.route("/items/<username>/init", methods=["GET"])
+def init_userspace(username):
+    """Prepare user workspace"""
+    helper.init_user_db(username)
+    return ('', 200)
+
+
 @app.route("/items/<username>/raw/<lang>", methods=["GET", "POST"])
 def items(username, lang):
     """Get uploaded user raw documents"""
@@ -44,20 +51,20 @@ def items(username, lang):
                 filename = request.form["rawFileName"]
 
             logging.debug(
-                f"[{username}]. Loading lang document {file.filename}.")
+                f"[{username}]. Loading document {file.filename}.")
             upload_path = os.path.join(
                 con.UPLOAD_FOLDER, username, upload_folder, lang, filename)
             file.save(upload_path)
             if request.form["type"] == "raw":
                 language_helper.split_by_sentences_and_save(
                     filename, lang, username)
+            helper.register_file(username, lang, filename)
             logging.debug(f"[{username}]. Success. {filename} is loaded.")
         return ('', 200)
     # return documents list
     files = {
         "items": {
-            lang: helper.get_raw_files(os.path.join(
-                con.UPLOAD_FOLDER, username, con.RAW_FOLDER, lang), username, lang)
+            lang: helper.get_raw_files(username, lang)
         }
     }
     return files
@@ -80,15 +87,16 @@ def download_splitted(username, lang, id):
     return send_file(path, as_attachment=True)
 
 
-@app.route("/items/<username>/splitted/<lang>/<int:id>/<int:count>/<int:page>", methods=["GET"])
-def splitted(username, lang, id, count, page):
+@app.route("/items/<username>/splitted/<lang>/<guid>/<int:count>/<int:page>", methods=["GET"])
+def splitted(username, lang, guid, count, page):
     """Get splitted document page"""
     files = helper.get_files_list(os.path.join(
         con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang))
-    if len(files) < id+1:
-        return con.EMPTY_LINES
+    filename = helper.get_filename(username, guid)
+    if not filename:
+        return {"items": {lang: []}}
     path = os.path.join(con.UPLOAD_FOLDER, username,
-                        con.SPLITTED_FOLDER, lang, files[id])
+                        con.SPLITTED_FOLDER, lang, filename)
     if not os.path.isfile(path):
         return {"items": {lang: []}}
 
@@ -121,42 +129,47 @@ def align(username):
     # get parameters
     lang_from = request.form.get("lang_from", '')
     lang_to = request.form.get("lang_to", '')
-    id_from, id_from_is_int = helper.try_parse_int(
-        request.form.get("id_from", -1))
-    id_to, id_to_is_int = helper.try_parse_int(
-        request.form.get("id_to", -1))
     align_all = request.form.get("align_all", '')
     batch_ids = helper.parse_json_array(request.form.get("batch_ids", "[0]"))
+    id_from = request.form.get("id_from", '')
+    id_to = request.form.get("id_to", '')
 
     align_all = True
 
     print("alignment params:", lang_from, lang_to, id_from, id_to, batch_ids)
 
-    if not lang_from or not lang_to or not id_to_is_int or not id_from_is_int:
+    if not lang_from or not lang_to or not id_from or not id_to:
         abort(400)
 
     batch_size = config.DEFAULT_BATCHSIZE
+    file_from = helper.get_filename(username, id_from)
+    file_to = helper.get_filename(username, id_to)
+    if not helper.alignment_exists(username, id_from, id_to):
+        align_guid = helper.register_alignment(username, id_from, id_to)
+    else:
+        align_guid = helper.get_alignment_id(username, id_from, id_to)
+
     files_from = helper.get_files_list(os.path.join(
         con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_from))
     files_to = helper.get_files_list(os.path.join(
         con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_to))
     logging.info(
-        f"[{username}]. Aligning documents. {files_from[id_from]}, {files_to[id_to]}.")
-    if len(files_from) < id_from+1 or len(files_to) < id_to+1 or id_from < 0 or id_to < 0:
+        f"[{username}]. Aligning documents. {file_from}, {file_to}.")
+    if not file_from or not file_to:
         logging.info(f"[{username}]. Documents not found.")
         return con.EMPTY_SIMS
 
     splitted_from = os.path.join(
-        con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_from, files_from[id_from])
+        con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_from, file_from)
     splitted_to = os.path.join(
-        con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_to, files_to[id_to])
+        con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_to, file_to)
     proxy_to = os.path.join(con.UPLOAD_FOLDER, username,
-                            con.PROXY_FOLDER, lang_to, files_to[id_to])
+                            con.PROXY_FOLDER, lang_to, file_to)
     proxy_from = os.path.join(
-        con.UPLOAD_FOLDER, username, con.PROXY_FOLDER, lang_from, files_from[id_from])
+        con.UPLOAD_FOLDER, username, con.PROXY_FOLDER, lang_from, file_from)
 
     logging.info(f"[{username}]. Cleaning images.")
-    helper.clean_img_user_foler(username, files_from[id_from])
+    helper.clean_img_user_foler(username, file_from)
 
     logging.debug(
         f"[{username}]. Preparing for alignment. {splitted_from}, {splitted_to}.")
@@ -172,31 +185,32 @@ def align(username):
 
     db_folder = os.path.join(con.UPLOAD_FOLDER, username,
                              con.DB_FOLDER, lang_from, lang_to)
-    db_path = os.path.join(db_folder, f'{files_from[id_from]}.db')
+    db_path = os.path.join(db_folder, f"{align_guid}.db")
+    user_db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
+
     helper.check_folder(db_folder)
-
-    print("DB_PATH", db_path)
-
     # init database if needed
     if not os.path.isfile(db_path) or align_all:
-        logging.info(f"Initializing database ${db_path}")
-        helper.init_db(db_path)
-        helper.fill_db(db_path, splitted_from,
-                       splitted_to, proxy_from, proxy_to)
+        logging.info(f"Initializing database {db_path}")
+        helper.init_document_db(db_path)
+        helper.fill_document_db(db_path, splitted_from,
+                                splitted_to, proxy_from, proxy_to)
 
     len_from, _ = helper.get_texts_length(db_path)
 
+    is_last = len_from % batch_size > 0
+    total_batches = len_from//batch_size + 1 if is_last else 0
+
     if config.TEST_RESTRICTION_MAX_BATCHES > 0:
-        total_batches = config.TEST_RESTRICTION_MAX_BATCHES
-    else:
-        is_last = len_from % batch_size > 0
-        total_batches = len_from//batch_size + 1 if is_last else 0
+        total_batches = min(config.TEST_RESTRICTION_MAX_BATCHES, total_batches)
 
     if align_all:
         batch_ids = list(range(total_batches))
 
-    print("batch_ids", batch_ids)
-    batch_ids = batch_ids[:total_batches]
+    # exit if batch ids is empty
+    batch_ids = [x for x in batch_ids if x < total_batches][:total_batches]
+    if not batch_ids:
+        abort(404)
 
     print("batch_ids", batch_ids)
 
@@ -206,12 +220,15 @@ def align(username):
     # if not os.path.isfile(db_path) or align_all:
     state.init_processing(db_path, (con.PROC_INIT, total_batches, 0))
 
+    helper.update_alignment_state(
+        user_db_path, id_from, id_to, con.PROC_INIT, 0, total_batches)
+
     # parallel processing
     logging.info(f"{username}: aligning started")
     res_img = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER,
-                           username, f"{files_from[id_from]}.db.png")
+                           username, f"{align_guid}.png")
     res_img_best = os.path.join(
-        con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{files_from[id_from]}.db.best.png")
+        con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{align_guid}.best.png")
 
     task_list = [(lines_from_batch, lines_to_batch, line_ids_from, line_ids_to, batch_id)
                  for lines_from_batch, lines_to_batch,
@@ -221,39 +238,33 @@ def align(username):
     proc_count = config.PROCESSORS_COUNT
 
     proc = AlignmentProcessor(
-        proc_count, db_path, res_img, res_img_best, lang_from, lang_to)
+        proc_count, db_path, user_db_path, res_img, res_img_best, lang_from, lang_to, id_from, id_to)
     proc.add_tasks(task_list)
     proc.start()
 
     return con.EMPTY_LINES
 
 
-@app.route("/items/<username>/processing/<lang_from>/<lang_to>/<int:file_id>/index")
-def get_doc_index(username, lang_from, lang_to, file_id):
+@app.route("/items/<username>/processing/<lang_from>/<lang_to>/<align_guid>/index")
+def get_doc_index(username, lang_from, lang_to, align_guid):
     """Get aligned document index"""
     db_folder = os.path.join(con.UPLOAD_FOLDER, username,
                              con.DB_FOLDER, lang_from, lang_to)
-    files = helper.get_files_list(db_folder, mask="*.db")
-    db_path = os.path.join(db_folder, f'{files[file_id]}')
+    db_path = os.path.join(db_folder, f'{align_guid}.db')
     if not os.path.isfile(db_path):
         abort(404)
-
     index = helper.get_flatten_doc_index(db_path)
-
     return {"items": index}
 
 
-@app.route("/items/<username>/processing/<lang_from>/<lang_to>/<int:file_id>/<int:count>/<int:page>", methods=["GET"])
-def get_processing(username, lang_from, lang_to, file_id, count, page):
+@app.route("/items/<username>/processing/<lang_from>/<lang_to>/<align_guid>/<int:count>/<int:page>", methods=["GET"])
+def get_processing(username, lang_from, lang_to, align_guid, count, page):
     """Get processing (aligned) document page"""
     db_folder = os.path.join(con.UPLOAD_FOLDER, username,
                              con.DB_FOLDER, lang_from, lang_to)
-    files = helper.get_files_list(db_folder, mask="*.db")
-    db_path = os.path.join(db_folder, f'{files[file_id]}')
+    db_path = os.path.join(db_folder, f'{align_guid}.db')
     if not os.path.isfile(db_path):
         abort(404)
-
-    # index = helper.get_doc_index(db_path)
     index = helper.get_flatten_doc_index(db_path)
 
     shift = (page-1)*count
@@ -284,27 +295,21 @@ def get_processing(username, lang_from, lang_to, file_id, count, page):
     lines_count = len(index)
     total_pages = (lines_count//count) + (1 if lines_count % count != 0 else 0)
     meta = {"page": page, "total_pages": total_pages}
-
     return {"items": res, "meta": meta}
 
 
-@app.route("/items/<username>/processing/<lang_from>/<lang_to>/<int:file_id>/candidates/<text_type>/<int:index_id>/<int:count_before>/<int:count_after>", methods=["GET"])
-def get_processing_candidates(username, lang_from, lang_to, file_id, text_type, index_id, count_before, count_after):
+@app.route("/items/<username>/processing/<lang_from>/<lang_to>/<align_guid>/candidates/<text_type>/<int:index_id>/<int:count_before>/<int:count_after>", methods=["GET"])
+def get_processing_candidates(username, lang_from, lang_to, align_guid, text_type, index_id, count_before, count_after):
     """Get splitted lines by some interval"""
-
     if text_type not in (con.TYPE_FROM, con.TYPE_TO):
         abort(404)
     db_folder = os.path.join(con.UPLOAD_FOLDER, username,
                              con.DB_FOLDER, lang_from, lang_to)
-    files = helper.get_files_list(db_folder, mask="*.db")
-    db_path = os.path.join(db_folder, f'{files[file_id]}')
+    db_path = os.path.join(db_folder, f'{align_guid}.db')
     if not os.path.isfile(db_path):
         abort(404)
 
     index = helper.get_clear_flatten_doc_index(db_path)
-
-    print("candidates", index)
-
     if index_id < 0 or index_id >= len(index):
         return
 
@@ -336,14 +341,12 @@ def get_processing_candidates(username, lang_from, lang_to, file_id, text_type, 
     return {"items": candidates}
 
 
-@app.route("/items/<username>/processing/<lang_from>/<lang_to>/<int:file_id>/edit", methods=["POST"])
-def edit_processing(username, lang_from, lang_to, file_id):
+@app.route("/items/<username>/processing/<lang_from>/<lang_to>/<align_guid>/edit", methods=["POST"])
+def edit_processing(username, lang_from, lang_to, align_guid):
     """Edit processing document"""
-
     db_folder = os.path.join(con.UPLOAD_FOLDER, username,
                              con.DB_FOLDER, lang_from, lang_to)
-    files = helper.get_files_list(db_folder, mask="*.db")
-    db_path = os.path.join(db_folder, f'{files[file_id]}')
+    db_path = os.path.join(db_folder, f'{align_guid}.db')
     if not os.path.isfile(db_path):
         abort(404)
 
@@ -410,13 +413,10 @@ def download_processsing(username, lang_from, lang_to, file_id, lang, file_forma
 @app.route("/items/<username>/processing/list/<lang_from>/<lang_to>", methods=["GET"])
 def list_processing(username, lang_from, lang_to):
     """Get processing documents list"""
-
-    # TODO add language validation
-
     logging.debug(
         f"[{username}]. Processing list. Language code lang_from: {lang_from}. Language code lang_to: {lang_to}.")
     if not lang_from or not lang_to:
-        logging.debug(
+        logging.warning(
             f"[{username}]. Wrong language code: {lang_from}-{lang_to}.")
         return con.EMPTY_FILES
     processing_folder = os.path.join(
@@ -424,26 +424,21 @@ def list_processing(username, lang_from, lang_to):
     helper.check_folder(processing_folder)
     files = {
         "items": {
-            lang_from: helper.get_processing_list_with_state(os.path.join(
-                con.UPLOAD_FOLDER, username, con.DB_FOLDER, lang_from, lang_to), username, lang_from, lang_to)
+            lang_from: helper.get_processing_list_with_state(
+                username, lang_from, lang_to)
         }
     }
     return files
 
 
-@app.route("/items/<username>/align/stop/<lang_from>/<lang_to>/<int:file_id>", methods=["POST"])
-def stop_alignment(username, lang_from, lang_to, file_id):
+@app.route("/items/<username>/align/stop/<lang_from>/<lang_to>/<guid_from>/<guid_to>", methods=["POST"])
+def stop_alignment(username, lang_from, lang_to, file_id, guid_from, guid_to):
     """Stop alignment process"""
-
     logging.debug(
-        f"[{username}]. Stopping alignment for {lang_from}-{lang_to} {file_id}.")
-    processing_folder = os.path.join(
-        con.UPLOAD_FOLDER, username, con.DB_FOLDER, lang_from, lang_to)
-    files = helper.get_files_list(processing_folder, mask="*.db")
-    processing_file = os.path.join(processing_folder, files[file_id])
-    if not helper.check_file(processing_folder, files, file_id):
-        abort(404)
-    state.destroy_processing_state(processing_file)
+        f"[{username}]. Stopping alignment for {lang_from}-{lang_to} {guid_from} {guid_to}.")
+    user_db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
+    helper.update_alignment_state(
+        user_db_path, guid_from, guid_to, con.PROC_IN_PROGRESS_DONE)
     return ('', 200)
 
 
