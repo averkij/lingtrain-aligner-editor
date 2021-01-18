@@ -29,17 +29,20 @@ FINISH_PROCESS = "finish_process"
 class AlignmentProcessor:
     """Processor with parallel texts alignment logic"""
 
-    def __init__(self, proc_count, db_path, res_img, res_img_best, lang_name_from, lang_name_to):
+    def __init__(self, proc_count, db_path, user_db_path, res_img, res_img_best, lang_name_from, lang_name_to, guid_from, guid_to):
         self.proc_count = proc_count
         self.queue_in = Queue()
         self.queue_out = Queue()
         self.db_path = db_path
+        self.user_db_path = user_db_path
         self.res_img = res_img
         self.res_img_best = res_img_best
         # self.lines_proxy_to = lines_proxy_to
         self.lang_name_from = lang_name_from
         self.lang_name_to = lang_name_to
         self.tasks_count = 0
+        self.guid_from = guid_from
+        self.guid_to = guid_to
 
     def add_tasks(self, task_list):
         """Add batches with string arrays for the further processing"""
@@ -87,10 +90,17 @@ class AlignmentProcessor:
                 state.set_processing_state(
                     self.db_path, (con.PROC_IN_PROGRESS, self.tasks_count, counter+1))
 
+                helper.increment_alignment_state(
+                    self.user_db_path, self.guid_from, self.guid_to, con.PROC_IN_PROGRESS)
+
             elif result_code == con.PROC_ERROR:
                 error_occured = True
                 state.set_processing_state(
                     self.db_path, (con.PROC_ERROR, self.tasks_count, counter+1))
+
+                helper.increment_alignment_state(
+                    self.user_db_path, self.guid_from, self.guid_to, con.PROC_ERROR)
+
                 break
 
             counter += 1
@@ -108,7 +118,8 @@ class AlignmentProcessor:
 
         if not error_occured:
             print("finishing. no error occured")
-            state.destroy_processing_state(self.db_path)
+            helper.update_alignment_state(
+                self.user_db_path, self.guid_from, self.guid_to, con.PROC_IN_PROGRESS_DONE)
         else:
             print("finishing with error")
 
@@ -137,13 +148,6 @@ class AlignmentProcessor:
 
         logging.info(f"Aligning started for {self.db_path}.")
         try:
-            # test version restriction
-            # if (config.TEST_RESTRICTION_MAX_BATCHES > 0 and batch_number > config.TEST_RESTRICTION_MAX_BATCHES) \
-            #         or not state.processing_state_exist(self.db_path):
-            #     logging.info(f"[Test restriction]. Finishing and removing state. {self.db_path}")
-            #     state.destroy_processing_state(self.db_path)
-            #     break
-
             print("batch:", batch_number)
             logging.info(f"Batch {batch_number}. Calculating vectors.")
 

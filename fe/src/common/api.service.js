@@ -28,7 +28,9 @@ const ApiService = {
     });
   },
   post(resource, slug, params) {
-    return Vue.axios.post(`${resource}/${slug}`, params);
+    return Vue.axios.post(`${resource}/${slug}`, params).catch(error => {
+      throw new Error(`[TAP] ApiService ${error}`);
+    });
   },
   update(resource, slug, params) {
     return Vue.axios.put(`${resource}/${slug}`, params);
@@ -46,9 +48,12 @@ const ApiService = {
 export default ApiService;
 
 export const ItemsService = {
+  initUserspace(params) {
+    return ApiService.get("items", `${params.username}/init`);
+  },
   fetchItems(params) {
     return ApiService.get("items",
-    `${params.username}/raw/${params.langCode}`);
+      `${params.username}/raw/${params.langCode}`);
   },
   fetchItemsProcessing(params) {
     return ApiService.get(
@@ -127,7 +132,7 @@ export const ItemsService = {
   stopAlignment(params) {
     return ApiService.post(
       "items",
-      `${params.username}/align/stop/${params.langCodeFrom}/${params.langCodeTo}/${params.fileId}`
+      `${params.username}/align/stop/${params.langCodeFrom}/${params.langCodeTo}/${params.fileIdFrom}/${params.fileIdTo}`
     );
   },
   alignSplitted(params) {
