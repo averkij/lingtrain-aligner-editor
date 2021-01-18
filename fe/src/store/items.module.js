@@ -7,6 +7,7 @@ import {
 } from "@/common/language.helper";
 
 import {
+  INIT_USERSPACE,
   FETCH_ITEMS,
   FETCH_ITEMS_PROCESSING,
   UPLOAD_FILES,
@@ -42,6 +43,9 @@ export const state = {
 };
 
 export const actions = {
+  async [INIT_USERSPACE](context, params) {
+    await ItemsService.initUserspace(params);
+  },
   async [FETCH_ITEMS](context, params) {
     const {
       data
@@ -133,7 +137,11 @@ export const actions = {
     return;
   },
   async [ALIGN_SPLITTED](context, params) {
-    await ItemsService.alignSplitted(params);
+    await ItemsService.alignSplitted(params).then(() => {
+    },
+    () => {
+      console.log("alignment error")
+    });
   }
 };
 
@@ -145,6 +153,7 @@ export const mutations = {
     state.itemsProcessing[params.langCode] = params.items;
   },
   [SET_SPLITTED](state, params) {
+    console.log("SET_SPLITTED", params)
     if (params.data.items[params.langCode]) {
       state.splitted[params.langCode].lines = params.data.items[params.langCode];
     }

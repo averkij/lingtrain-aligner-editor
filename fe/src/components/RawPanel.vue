@@ -11,12 +11,13 @@
     <v-list class="pa-0">
       <v-list-item-group mandatory color="gray">
         <v-list-item v-for="(item, i) in items[info.langCode]" :key="i"
-          @change="selectAndLoadPreview(info.langCode, item.name, i)">
+          @change="selectAndLoadPreview(info.langCode, item.name, item.guid)">
           <v-list-item-icon>
             <v-icon>mdi-text-box-outline</v-icon>
           </v-list-item-icon>
           <v-list-item-content>
             <v-list-item-title v-text="item.name"></v-list-item-title>
+            {{item.guid}}
           </v-list-item-content>
           <v-icon v-if="item.has_proxy">mdi-translate</v-icon>
         </v-list-item>
@@ -50,8 +51,8 @@
       uploadFile(langCode) {
         this.$emit('uploadFile', langCode)
       },
-      selectAndLoadPreview(langCode, item, index) {
-        this.$emit('selectAndLoadPreview', langCode, item, index)
+      selectAndLoadPreview(langCode, item, id) {
+        this.$emit('selectAndLoadPreview', langCode, item, id)
       }
     },
     computed: {}

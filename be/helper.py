@@ -8,6 +8,7 @@ import pathlib
 import pickle
 import sqlite3
 import sys
+import uuid
 from warnings import simplefilter
 
 import config
@@ -27,27 +28,29 @@ def get_files_list_with_path(folder, mask="*.txt"):
     return glob.glob("{0}/{1}".format(folder, mask))
 
 
-def get_processing_list_with_state(folder, username):
+def get_processing_list_with_state(username, lang_from, lang_to):
     """Get processing docs list with states"""
     res = []
-    for file in get_files_list_with_path(folder, mask="*.db"):
+    for guid, name, guid_from, guid_to, state_code, done_batches, total_batches in get_alignments_list(username, lang_from, lang_to):
         res.append({
-            "name": os.path.basename(file),
-            "state": state.get_processing_state(file, (con.PROC_DONE, 0, 0)),
-            "imgs": get_files_list(os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username), mask=f"{os.path.basename(file)}.best_*.png"),
+            "guid": guid,
+            "name": name,
+            "guid_from": guid_from,
+            "guid_to": guid_to,
+            "state": (state_code, total_batches, done_batches),
+            "imgs": get_files_list(os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username), mask=f"{guid}.best_*.png"),
             # "sim_grades": get_sim_grades(file)
         })
     return res
 
 
-def get_raw_files(folder, username, lang_code):
-    """Get files from the raw folder"""
+def get_raw_files(username, lang_code):
+    """Get uploaded raw files list"""
     res = []
-    for file in get_files_list(folder):
-        print(os.path.join(con.UPLOAD_FOLDER, username,
-                           con.PROXY_FOLDER, lang_code, file))
+    for file, guid in get_documents_list(username, lang_code):
         res.append({
             "name": file,
+            "guid": guid,
             "has_proxy": os.path.isfile(os.path.join(con.UPLOAD_FOLDER, username, con.PROXY_FOLDER, lang_code, file))
         })
     return res
@@ -87,10 +90,8 @@ def create_folders(username, lang):
                                   con.DONE_FOLDER, lang)).mkdir(parents=True, exist_ok=True)
 
 
-def init_db(db_path):
-    """Init database with tables structure"""
-
-    print("init database:", db_path)
+def init_document_db(db_path):
+    """Init document database (alignment) with tables structure"""
     if os.path.isfile(db_path):
         os.remove(db_path)
     with sqlite3.connect(db_path) as db:
@@ -109,8 +110,8 @@ def init_db(db_path):
             'create table doc_index(id integer primary key, contents varchar)')
 
 
-def fill_db(db_path, splitted_from, splitted_to, proxy_from, proxy_to):
-    """Fill database with prepared document lines"""
+def fill_document_db(db_path, splitted_from, splitted_to, proxy_from, proxy_to):
+    """Fill document database (alignment) with prepared document lines"""
     lines = []
     if os.path.isfile(splitted_from):
         with open(splitted_from, mode="r", encoding="utf-8") as input_path:
@@ -346,6 +347,118 @@ def get_texts_length(db_path):
         )
         res = (cur.fetchone())
     return res
+
+
+def init_user_db(username):
+    """Init user database with tables structure"""
+    pathlib.Path(os.path.join(con.UPLOAD_FOLDER, username)
+                 ).mkdir(parents=True, exist_ok=True)
+    db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
+    if not os.path.isfile(db_path):
+        logging.info(f"creating user db: {db_path}")
+        with sqlite3.connect(db_path) as db:
+            db.execute(
+                'create table documents(id integer primary key, guid varchar, lang varchar, name varchar)')
+            db.execute(
+                'create table alignments(id integer primary key, guid varchar, guid_from varchar, guid_to varchar, name varchar, state integer, curr_batches integer, total_batches integer)')
+
+
+def alignment_exists(username, guid_from, guid_to):
+    """Check if alignment already exists"""
+    db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
+    with sqlite3.connect(db_path) as db:
+        cur = db.execute("select * from alignments where guid_from=:guid_from and guid_to=:guid_to", {
+                         "guid_from": guid_from, "guid_to": guid_to})
+        return bool(cur.fetchone())
+
+
+def register_alignment(username, guid_from, guid_to):
+    """Register new alignment in database"""
+    db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
+    guid = uuid.uuid4().hex
+    if not alignment_exists(username,  guid_from, guid_to):
+        with sqlite3.connect(db_path) as db:
+            db.execute('insert into alignments(guid, guid_from, guid_to, name, state, curr_batches, total_batches) values (:guid, :guid_from, :guid_to, "My alignment", 0, 0, 10) ', {
+                       "guid": guid, "guid_from": guid_from, "guid_to": guid_to})
+    return guid
+
+
+def get_alignment_id(username, guid_from, guid_to):
+    """Return alignment id"""
+    db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
+    with sqlite3.connect(db_path) as db:
+        res = db.execute("select guid from alignments where guid_from=:guid_from and guid_to=:guid_to", {
+                         "guid_from": guid_from, "guid_to": guid_to}).fetchone()
+        return res[0] if res else None
+
+
+def update_alignment_state(user_db_path, guid_from, guid_to, state, curr_batches=None, total_batches=None):
+    """Update alignment state"""
+    with sqlite3.connect(user_db_path) as db:
+        if curr_batches and total_batches:
+            db.execute('update alignments set state=:state, curr_batches=:curr_batches, total_batches:total_batches where guid_from=:guid_from and guid_to=:guid_to', {
+                "guid_from": guid_from, "guid_to": guid_to, "state": state, "curr_batches": curr_batches, "total_batches": total_batches})
+        else:
+            db.execute('update alignments set state=:state where guid_from=:guid_from and guid_to=:guid_to', {
+                "guid_from": guid_from, "guid_to": guid_to, "state": state})
+
+
+def increment_alignment_state(user_db_path, guid_from, guid_to, state):
+    """Increment alignment progress"""
+    with sqlite3.connect(user_db_path) as db:
+
+        curr_batches, total_batches = db.execute("select curr_batches, total_batches from alignments where guid_from=:guid_from and guid_to=:guid_to", {
+            "guid_from": guid_from, "guid_to": guid_to}).fetchone()
+
+        print("curr_batches", curr_batches)
+        curr_batches += 1
+
+        db.execute('update alignments set state=:state, curr_batches=:curr_batches where guid_from=:guid_from and guid_to=:guid_to', {
+            "guid_from": guid_from, "guid_to": guid_to, "state": state, "curr_batches": curr_batches})
+
+
+def register_file(username, lang, name):
+    """Register new file in database"""
+    db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
+    guid = uuid.uuid4().hex
+    with sqlite3.connect(db_path) as db:
+        db.execute('insert into documents(guid, lang, name) values (:guid, :lang, :name) ', {
+            "guid": guid, "lang": lang, "name": name})
+
+
+def get_documents_list(username, lang=None):
+    """Get documents list by language code"""
+    db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
+    with sqlite3.connect(db_path) as db:
+        if not lang:
+            return db.execute("select name, guid from documents").fetchall()
+        else:
+            return db.execute("select name, guid from documents where lang=:lang", {
+                "lang": lang}).fetchall()
+
+
+def get_filename(username, guid):
+    """Get filename by id"""
+    filename = [x[0] for x in get_documents_list(
+        username) if x[1] == guid]
+    return filename[0] if filename else None
+
+
+def get_alignments_list(username, lang_from, lang_to):
+    """Get alignments list by language code"""
+    db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
+    print("fetching processing list", db_path)
+    with sqlite3.connect(db_path) as db:
+        res = db.execute("""select
+                                a.guid, a.name, a.guid_from, a.guid_to, a.state, a.curr_batches, a.total_batches
+                            from
+                                alignments a
+                                    join documents d_from on d_from.guid=a.guid_from
+                                    join documents d_to on d_to.guid=a.guid_to
+                            where
+                                d_from.lang=:lang_from and d_to.lang=:lang_to""", {
+                         "lang_from": lang_from, "lang_to": lang_to}).fetchall()
+        return res
 
 
 def check_folder(folder):
