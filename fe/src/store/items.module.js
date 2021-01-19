@@ -20,7 +20,9 @@ import {
   EDIT_PROCESSING,
   STOP_ALIGNMENT,
   ALIGN_SPLITTED,
-  CREATE_ALIGNMENT
+  CREATE_ALIGNMENT,
+  GET_CONFLICT_SPLITTED_FROM,
+  GET_CONFLICT_SPLITTED_TO
 } from "./actions.type";
 
 import {
@@ -28,7 +30,9 @@ import {
   SET_ITEMS_PROCESSING,
   SET_SPLITTED,
   SET_PROCESSING,
-  SET_DOC_INDEX
+  SET_DOC_INDEX,
+  SET_CONFLICT_SPLITTED_FROM,
+  SET_CONFLICT_SPLITTED_TO
 } from "./mutations.type";
 
 const initialState = {
@@ -36,7 +40,9 @@ const initialState = {
   itemsProcessing: LanguageHelper.initItems(),
   splitted: LanguageHelper.initSplitted(),
   processing: LanguageHelper.initProcessing(),
-  docIndex: []
+  docIndex: [],
+  conflictSplittedFrom: [],
+  conflictSplittedTo: []
 };
 
 export const state = {
@@ -120,6 +126,28 @@ export const actions = {
     );
     return;
   },
+  async [GET_CONFLICT_SPLITTED_FROM](context, params) {
+    await ItemsService.getSplittedByIds(params).then(
+      function (response) {
+        context.commit(SET_CONFLICT_SPLITTED_FROM, response.data);
+      },
+      function () {
+        console.log(`GET_CONFLICT_SPLITTED_FROM error.`);
+      }
+    );
+    return;
+  },
+  async [GET_CONFLICT_SPLITTED_TO](context, params) {
+    await ItemsService.getSplittedByIds(params).then(
+      function (response) {
+        context.commit(SET_CONFLICT_SPLITTED_TO, response.data);
+      },
+      function () {
+        console.log(`GET_CONFLICT_SPLITTED_TO error.`);
+      }
+    );
+    return;
+  },
   async [GET_CANDIDATES](context, params) {
     return await ItemsService.getCandidates(params);
   },
@@ -183,6 +211,13 @@ export const mutations = {
   [SET_DOC_INDEX](state, data) {
     // console.log("new index:", data.items)
     state.docIndex = data.items;
+  },
+  [SET_CONFLICT_SPLITTED_FROM](state, data) {
+    console.log("SET_CONFLICT_SPLITTED_FROM:", data.items)
+    state.conflictSplittedFrom = data.items;
+  },
+  [SET_CONFLICT_SPLITTED_TO](state, data) {
+    state.conflictSplittedTo = data.items;
   }
 };
 
@@ -201,6 +236,12 @@ const getters = {
   },
   docIndex(state) {
     return state.docIndex;
+  },
+  conflictSplittedFrom(state) {
+    return state.conflictSplittedFrom;
+  },
+  conflictSplittedTo(state) {
+    return state.conflictSplittedTo;
   },
 };
 

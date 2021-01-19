@@ -184,6 +184,9 @@ def align(username):
     align_all = request.form.get("align_all", '')
     batch_ids = helper.parse_json_array(request.form.get("batch_ids", "[0]"))
 
+    logging.info(
+        f"align parameters align_guid {align_guid} align_all {align_all} batch_ids {batch_ids}")
+
     name, guid_from, guid_to, state, curr_batches, total_batches = helper.get_alignment_info(
         username, align_guid)
     file_from, lang_from = helper.get_fileinfo(username, guid_from)
@@ -193,6 +196,9 @@ def align(username):
                              con.DB_FOLDER, lang_from, lang_to)
     db_path = os.path.join(db_folder, f"{align_guid}.db")
     user_db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
+
+    logging.info(
+        f"align parameters align_guid {align_guid} align_all {align_all} batch_ids {batch_ids} name {name} guid_from {guid_from} guid_to {guid_to} total_batches {total_batches}")
 
     splitted_from = os.path.join(
         con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_from, file_from)
@@ -243,7 +249,7 @@ def align(username):
     return con.EMPTY_LINES
 
 
-@app.route("/items/<username>/processing/<lang_from>/<lang_to>/<align_guid>/index")
+@app.route("/items/<username>/processing/<lang_from>/<lang_to>/<align_guid>/index", methods=["GET"])
 def get_doc_index(username, lang_from, lang_to, align_guid):
     """Get aligned document index"""
     db_folder = os.path.join(con.UPLOAD_FOLDER, username,
@@ -251,7 +257,7 @@ def get_doc_index(username, lang_from, lang_to, align_guid):
     db_path = os.path.join(db_folder, f'{align_guid}.db')
     if not os.path.isfile(db_path):
         abort(404)
-    index = helper.get_flatten_doc_index(db_path)
+    index = helper.get_clear_flatten_doc_index(db_path)
     return {"items": index}
 
 
@@ -269,7 +275,7 @@ def get_processing(username, lang_from, lang_to, align_guid, count, page):
     pages = index[shift:shift+count]
     res = []
 
-    for i, (data, texts) in enumerate(zip(pages, helper.get_doc_page(db_path, pages))):
+    for i, (data, texts) in enumerate(zip(pages, helper.get_doc_page(db_path, [x[0][0] for x in pages]))):
         print(shift + i)
         # print("data",data)
         res.append({
@@ -294,6 +300,45 @@ def get_processing(username, lang_from, lang_to, align_guid, count, page):
     total_pages = (lines_count//count) + (1 if lines_count % count != 0 else 0)
     meta = {"page": page, "total_pages": total_pages}
     return {"items": res, "meta": meta}
+
+
+@app.route("/items/<username>/splitted/from/<lang_from>/<lang_to>/<align_guid>", methods=["POST"])
+def get_splitted_from_by_ids(username, lang_from, lang_to, align_guid):
+    db_folder = os.path.join(con.UPLOAD_FOLDER, username,
+                             con.DB_FOLDER, lang_from, lang_to)
+    db_path = os.path.join(db_folder, f'{align_guid}.db')
+    if not os.path.isfile(db_path):
+        abort(404)
+    text_ids = helper.parse_json_array(request.form.get("ids", "[]"))
+
+    res = {}
+    if text_ids:
+        for id, text, proxy in helper.get_splitted_to_by_id(db_path, text_ids):
+            res[id] = {
+                "t": text,
+                "p": proxy if proxy else ''
+            }
+    return {"items": res}
+
+
+@app.route("/items/<username>/splitted/to/<lang_from>/<lang_to>/<align_guid>", methods=["POST"])
+def get_splitted_to_by_ids(username, lang_from, lang_to, align_guid):
+    db_folder = os.path.join(con.UPLOAD_FOLDER, username,
+                             con.DB_FOLDER, lang_from, lang_to)
+    db_path = os.path.join(db_folder, f'{align_guid}.db')
+    if not os.path.isfile(db_path):
+        abort(404)
+    text_ids = helper.parse_json_array(request.form.get("ids", "[]"))
+
+    res = {}
+    if text_ids:
+        for id, text, proxy in helper.get_splitted_to_by_id(db_path, text_ids):
+            res[id] = {
+                "t": text,
+                "p": proxy if proxy else ''
+            }
+
+    return {"items": res}
 
 
 @app.route("/items/<username>/processing/<lang_from>/<lang_to>/<align_guid>/candidates/<text_type>/<int:index_id>/<int:count_before>/<int:count_after>", methods=["GET"])

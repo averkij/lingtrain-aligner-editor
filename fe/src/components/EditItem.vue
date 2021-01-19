@@ -27,7 +27,8 @@
           <div class="d-table-cell green lighten-5 cell-edit-index text-center">
             <div class="fill-height d-flex cell-edit-index-cont fix-height flex-column justify-space-between">
               <div class="pa-2 font-weight-medium line-num">
-                {{ lineIdFrom }} [{{item.batch_id}}] [{{item.batch_index_id}}]
+                {{ lineIdFrom }}
+                <!-- [{{item.batch_id}}] [{{item.batch_index_id}}] -->
               </div>
               <div class="cell-edit-action-panel colored">
                 <div class="cell-edit-button" @click="editAddUpEnd('from')">

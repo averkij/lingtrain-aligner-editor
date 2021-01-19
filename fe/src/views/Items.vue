@@ -57,7 +57,8 @@
       <v-icon color="blue" large>mdi-align-horizontal-center</v-icon> Alignment
     </div>
     <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2">
-      Alignment process is going step by step. Create the alignment with choosen parameters and start working with it in the work area section.
+      Alignment process is going step by step. Create the alignment with choosen parameters and start working with it in
+      the work area section.
     </v-alert>
 
     <div class="text-h5 mt-10 font-weight-bold">Documents to align</div>
@@ -73,13 +74,14 @@
       </v-col>
     </v-row>
 
-    <v-alert type="info" border="left" colored-border color="blue" elevation="2" v-if="!selected[langCodeFrom] || !selected[langCodeTo]" class="mt-5">
+    <v-alert type="info" border="left" colored-border color="blue" elevation="2"
+      v-if="!selected[langCodeFrom] || !selected[langCodeTo]" class="mt-5">
       Please, select two items in the Documents section.
     </v-alert>
     <div v-else class="mt-5">
       <div v-if="!processingExists">
         <!-- <div>Selected documents were not aligned yet. Press the button to start.</div> -->
-        <v-btn class="success" @click="createAlignment()">
+        <v-btn class="primary" @click="createAlignment()">
           Create alignment
         </v-btn>
       </div>
@@ -88,13 +90,25 @@
       </v-alert>
     </div>
 
-    <div class="text-h5 mt-10 font-weight-bold">Alignments</div>
+
+    <!-- <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2"
+      v-if="!itemsProcessing || !itemsProcessing[langCodeFrom] || (itemsProcessing[langCodeFrom].length == 0)">
+      There are no previously aligned documents yet.
+    </v-alert> -->
+
+
+    <div class="text-h4 mt-10 font-weight-bold">
+      <v-icon color="blue" large>mdi-pencil</v-icon> Work area
+    </div>
 
     <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2"
       v-if="!itemsProcessing || !itemsProcessing[langCodeFrom] || (itemsProcessing[langCodeFrom].length == 0)">
       There are no previously aligned documents yet.
     </v-alert>
-    <v-card v-else class="mt-10">
+    <div v-else class="mt-5">
+
+      <div class="text-h5 mt-10 font-weight-bold">Alignments</div>
+      <v-card class="mt-6">
         <div class="green lighten-5" dark>
           <v-card-title>Alignments</v-card-title>
           <v-card-text>List of previosly aligned documents [{{langCodeFrom}}-{{langCodeTo}}]</v-card-text>
@@ -115,7 +129,7 @@
               <v-list-item-content>
                 <v-list-item-title v-text="item.name"></v-list-item-title>
                 {{item.state}}
-                <!-- ---{{item.guid}}--- {{item.guid_from}} {{item.guid_to}} -->
+                ---{{item.guid}}--- {{item.guid_from}} {{item.guid_to}}
               </v-list-item-content>
 
               <!-- progress bar -->
@@ -127,24 +141,14 @@
         </v-list>
       </v-card>
 
-    <div class="text-h4 mt-10 font-weight-bold">
-      <v-icon color="blue" large>mdi-pencil</v-icon> Work area
-    </div>
-
-    <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2"
-      v-if="!itemsProcessing || !itemsProcessing[langCodeFrom] || (itemsProcessing[langCodeFrom].length == 0)">
-      There are no previously aligned documents yet.
-    </v-alert>
-
-    <!-- PROCESSING DOCUMENTS LIST BLOCK -->
-    <div v-else class="mt-6">
+      <!-- PROCESSING DOCUMENTS LIST BLOCK -->
       <div class="text-h5 mt-10 font-weight-bold">Controls</div>
 
 
       <v-btn v-if="!userAlignInProgress" v-show="selected[langCodeFrom] && selected[langCodeTo]" class="success mt-6"
         :loading="isLoading.align || isLoading.alignStopping" :disabled="isLoading.align || isLoading.alignStopping"
         @click="startAlignment()">
-        Align batch
+        Align next batch
       </v-btn>
       <v-btn v-else v-show="selected[langCodeFrom] && selected[langCodeTo]" class="error mt-6" @click="stopAlignment()">
         Stop alignment
@@ -250,7 +254,7 @@
       </v-card>
 
       <div class="text-h4 mt-10 font-weight-bold">
-        <v-icon color="blue" large>mdi-puzzle</v-icon> Unused strings
+        <v-icon color="blue" large>mdi-puzzle</v-icon> Conflicts
       </div>
 
       <v-alert v-if="!processing || !processing.items || processing.items.length == 0" type="info" border="left"
@@ -258,7 +262,24 @@
         Please, wait. Alignment is in progress.
       </v-alert>
       <div v-else>
-        <div class="mt-10">{{docIndex}}</div>
+
+        <div class="text-h5 mt-10 font-weight-bold">Unused strings</div>
+
+        <div class="mt-6">
+          <div v-for="(line,i) in unusedLines" :key="i">
+            {{line}} {{conflictSplittedTo[line].t}} {{conflictSplittedTo[line].p}}
+          </div>
+        </div>
+
+        <div class="text-h5 mt-10 font-weight-bold">Flow breaks</div>
+
+        <div class="mt-6">
+          <div v-for="(line,i) in flowBreaks" :key="i">
+            line {{line[0]}} ➡ {{line[1]}}
+          </div>
+        </div>
+
+        <!-- <div class="mt-10">{{docIndex}}</div> -->
       </div>
 
       <div class="text-h4 mt-10 font-weight-bold">
@@ -359,6 +380,8 @@
     GET_DOC_INDEX,
     GET_PROCESSING,
     GET_CANDIDATES,
+    // GET_CONFLICT_SPLITTED_FROM,
+    GET_CONFLICT_SPLITTED_TO,
     STOP_ALIGNMENT,
     EDIT_PROCESSING,
     CREATE_ALIGNMENT,
@@ -408,9 +431,85 @@
         selectedListItem: 0,
         //dialogs
         showGoToDialog: false,
+        unusedLines: [],
+        flowBreaks: [],
+        usedFromLinesSet: new Set(),
+        usedToLinesSet: new Set(),
+        usedToLinesFlow: []
       };
     },
     methods: {
+      prepareUsedToLines() {
+        let foo = new Set();
+        let bar = [];
+
+        this.docIndex.forEach(function (ix, i) {
+          let arr = JSON.parse(ix[3]);
+          arr.forEach(to => {
+            foo.add(to);
+            bar.push([i + 1, to]);
+          });
+        });
+
+        this.usedToLinesSet = foo;
+        this.usedToLinesFlow = bar;
+      },
+      prepareUsedFromLines() {
+        let foo = new Set();
+        this.docIndex.forEach(function (ix) {
+          let arr = JSON.parse(ix[1]);
+          arr.forEach(from => {
+            foo.add(from);
+          });
+        });
+
+        this.usedFromLinesSet = foo;
+      },
+      updateUnusedLines() {
+        this.prepareUsedFromLines();
+        this.prepareUsedToLines();
+
+        let unusedLines = [];
+        let flowBreaks = [];
+
+        console.log(this.usedToLinesSet)
+
+        let lastLine = this.docIndex[this.docIndex.length - 1];
+        let lastLineToIndex = JSON.parse(lastLine[3]);
+
+        console.log("lastLineToIndex", lastLineToIndex)
+
+        for (let i = 1; i < lastLineToIndex[0]; i++) {
+          if (!this.usedToLinesSet.has(i)) {
+            unusedLines.push(i)
+          }
+        }
+
+        //calculate flow breaks
+        let counter = this.usedToLinesFlow[0][1];
+        this.usedToLinesFlow.forEach(item => {
+          if (item[1] != counter) {
+            flowBreaks.push(item);
+            counter = item[1];
+          }
+          counter = counter + 1;
+        });
+
+        console.log(lastLineToIndex)
+
+        this.flowBreaks = flowBreaks;
+        this.unusedLines = unusedLines;
+
+        this.$store
+          .dispatch(GET_CONFLICT_SPLITTED_TO, {
+            username: this.$route.params.username,
+            type: "to",
+            ids: JSON.stringify(unusedLines),
+            align_guid: this.selectedProcessingId,
+            langCodeFrom: this.langCodeFrom,
+            langCodeTo: this.langCodeTo
+          });
+      },
       createAlignment() {
         this.$store
           .dispatch(CREATE_ALIGNMENT, {
@@ -425,7 +524,7 @@
               langCodeFrom: this.langCodeFrom,
               langCodeTo: this.langCodeTo
             }).then(() => {
-              this.selectCurrentlyProcessingDocument();
+              this.selectFirstProcessingDocument();
             });
           });
       },
@@ -437,7 +536,7 @@
           .dispatch(ALIGN_SPLITTED, {
             username: this.$route.params.username,
             id: this.selectedProcessingId,
-            batchIds: [2],
+            batchIds: [0],
             alignAll: ''
           })
           .then(() => {
@@ -791,7 +890,8 @@
       },
       selectFirstProcessingDocument() {
         if (this.itemsProcessingNotEmpty(this.langCodeFrom)) {
-          this.selectProcessing(this.itemsProcessing[this.langCodeFrom][0], this.itemsProcessing[this.langCodeFrom][0].guid);
+          this.selectProcessing(this.itemsProcessing[this.langCodeFrom][0], this.itemsProcessing[this.langCodeFrom][0]
+            .guid);
         }
       },
       selectCurrentlyProcessingDocument(item) {
@@ -846,7 +946,8 @@
           langCodeFrom: this.langCodeFrom,
           langCodeTo: this.langCodeTo
         }).then(() => {
-          let in_progress_items = this.itemsProcessing[this.langCodeFrom].filter(x => x.state[0] == 0 || x.state[0] ==
+          let in_progress_items = this.itemsProcessing[this.langCodeFrom].filter(x => x.state[0] == 0 || x.state[
+              0] ==
             1)
           if (in_progress_items.length > 0) {
             let item_index = this.itemsProcessing[this.langCodeFrom].indexOf(in_progress_items[0])
@@ -879,10 +980,15 @@
       },
       langCodeTo() {
         this.fetchAll();
+      },
+      docIndex() {
+        this.updateUnusedLines();
       }
     },
     computed: {
-      ...mapGetters(["items", "itemsProcessing", "splitted", "processing", "docIndex"]),
+      ...mapGetters(["items", "itemsProcessing", "splitted", "processing", "docIndex", "conflictSplittedFrom",
+        "conflictSplittedTo"
+      ]),
       username() {
         return this.$route.params.username;
       },
@@ -915,13 +1021,8 @@
         return (this.downloadThreshold / 100).toFixed(2);
       },
       processingExists() {
-        // if (this.items && this.items[this.langCodeFrom] && this.items[this.langCodeFrom]) {
-
-        // }
-
-
-
-        let selected_progress_item = this.itemsProcessing[this.langCodeFrom].filter(x => x.guid_from == this.selectedIds[this.langCodeFrom] && x.guid_to == this.selectedIds[this.langCodeTo]);
+        let selected_progress_item = this.itemsProcessing[this.langCodeFrom].filter(x => x.guid_from == this
+          .selectedIds[this.langCodeFrom] && x.guid_to == this.selectedIds[this.langCodeTo]);
         if (selected_progress_item.length > 0) {
           return true;
         }

@@ -129,6 +129,16 @@ export const ItemsService = {
       `${params.username}/processing/${params.langCodeFrom}/${params.langCodeTo}/${params.fileId}/index`
     );
   },
+  getSplittedByIds(params) {
+    console.log("getSplittedByIds", params)
+    let form = new FormData();
+    form.append("ids", params.ids);
+    return ApiService.post(
+      "items",
+      `${params.username}/splitted/${params.type}/${params.langCodeFrom}/${params.langCodeTo}/${params.align_guid}`,
+      form
+    );
+  },
   stopAlignment(params) {
     return ApiService.post(
       "items",
