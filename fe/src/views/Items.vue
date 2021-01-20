@@ -129,7 +129,7 @@
               <v-list-item-content>
                 <v-list-item-title v-text="item.name"></v-list-item-title>
                 {{item.state}}
-                ---{{item.guid}}--- {{item.guid_from}} {{item.guid_to}}
+                <!-- ---{{item.guid}}--- {{item.guid_from}} {{item.guid_to}} -->
               </v-list-item-content>
 
               <!-- progress bar -->
@@ -536,7 +536,7 @@
           .dispatch(ALIGN_SPLITTED, {
             username: this.$route.params.username,
             id: this.selectedProcessingId,
-            batchIds: [0],
+            batchIds: [1],
             alignAll: ''
           })
           .then(() => {
@@ -547,9 +547,36 @@
               langCodeFrom: this.langCodeFrom,
               langCodeTo: this.langCodeTo
             }).then(() => {
-              this.selectCurrentlyProcessingDocument();
+              this.selectCurrentlyProcessingDocument(this.selectedProcessing);
             });
             this.fetchItemsProcessingTimer();
+          });
+      },
+      initProcessingDocument() {
+        let processingItems = JSON.parse(JSON.stringify(this.itemsProcessing[this.langCodeFrom]));
+        let currentIndex = -1;
+        if (this.itemsProcessingNotEmpty(this.langCodeFrom)) {
+          currentIndex = processingItems.findIndex(x => x.guid == this.selectedProcessingId);
+          console.log("currentIndex", currentIndex)
+          console.log("selected processing", this.selectedProcessing)
+        }
+        if (currentIndex >= 0) {
+          processingItems.splice(currentIndex, 1, {
+            "imgs": [],
+            "name": this.selectedProcessing.name,
+            "state": this.selectedProcessing.state
+          });
+        } else {
+          processingItems.push({
+            "imgs": [],
+            "name": this.selectedProcessing.name,
+            "state": this.selectedProcessing.state
+          });
+        }
+        this.$store
+          .commit(SET_ITEMS_PROCESSING, {
+            items: processingItems,
+            langCode: this.langCodeFrom
           });
       },
       stopAlignment() {
@@ -841,31 +868,6 @@
             callback(RESULT_ERROR)
           });
       },
-      initProcessingDocument() {
-        let processingItems = JSON.parse(JSON.stringify(this.itemsProcessing[this.langCodeFrom]));
-        let currentIndex = -1;
-        if (this.itemsProcessingNotEmpty(this.langCodeFrom)) {
-          currentIndex = processingItems.findIndex(x => x.name == this.selected[this.langCodeFrom]);
-        }
-        if (currentIndex >= 0) {
-          processingItems.splice(currentIndex, 1, {
-            "imgs": [],
-            "name": this.selected[this.langCodeFrom],
-            "state": [0, 3, 0]
-          });
-        } else {
-          processingItems.push({
-            "imgs": [],
-            "name": this.selected[this.langCodeFrom],
-            "state": [0, 3, 0]
-          });
-        }
-        this.$store
-          .commit(SET_ITEMS_PROCESSING, {
-            items: processingItems,
-            langCode: this.langCodeFrom
-          });
-      },
       //dialogs
       goToPage(pageNumber) {
         this.onProcessingPageChange(pageNumber);
@@ -911,19 +913,28 @@
             langCodeFrom: this.langCodeFrom,
             langCodeTo: this.langCodeTo
           }).then(() => {
+            // let in_progress_items = this.itemsProcessing[this.langCodeFrom].filter(x => x.state[0] == 0 || x
+            //   .state[0] == 1)
+            // if (in_progress_items.length > 0) {
+            //   let item_index = this.itemsProcessing[this.langCodeFrom].indexOf(in_progress_items[0])
+            //   this.currentlyProcessingId = this.itemsProcessing[this.langCodeFrom][item_index].guid
+            //   this.userAlignInProgress = true;
+            //   this.fetchItemsProcessingTimer();
+
+            //   this.selectCurrentlyProcessingDocument(this.itemsProcessing[this.langCodeFrom][item_index]);
+            // } else {
+            //   this.userAlignInProgress = false;
+            //   this.isLoading.alignStopping = false;
+            //   this.selectFirstProcessingDocument();
+            // }
             let in_progress_items = this.itemsProcessing[this.langCodeFrom].filter(x => x.state[0] == 0 || x
               .state[0] == 1)
             if (in_progress_items.length > 0) {
-              let item_index = this.itemsProcessing[this.langCodeFrom].indexOf(in_progress_items[0])
-              this.currentlyProcessingId = this.itemsProcessing[this.langCodeFrom][item_index].guid
-              this.userAlignInProgress = true;
               this.fetchItemsProcessingTimer();
-
-              this.selectCurrentlyProcessingDocument(this.itemsProcessing[this.langCodeFrom][item_index]);
             } else {
               this.userAlignInProgress = false;
               this.isLoading.alignStopping = false;
-              this.selectFirstProcessingDocument();
+              this.selectCurrentlyProcessingDocument(this.selectedProcessing);
             }
           });
         }, 5000)
