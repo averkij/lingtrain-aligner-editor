@@ -80,10 +80,10 @@
     </v-alert>
     <div v-else class="mt-5">
       <div v-if="!processingExists">
-        <!-- <div>Selected documents were not aligned yet. Press the button to start.</div> -->
-        <v-btn class="primary" @click="createAlignment()">
+        <v-btn class="primary"  @click="showCreateAlignmentDialog=true">
           Create alignment
         </v-btn>
+        <CreateAlignmentDialog v-model="showCreateAlignmentDialog" @createAlignment="createAlignment" />
       </div>
       <v-alert v-else type="info" border="left" colored-border color="blue" elevation="2">
         Alignment created. Select it below and start working.
@@ -128,7 +128,7 @@
               </v-list-item-icon>
               <v-list-item-content>
                 <v-list-item-title v-text="item.name"></v-list-item-title>
-                {{item.state}}
+                <!-- {{item.state}} -->
                 <!-- ---{{item.guid}}--- {{item.guid_from}} {{item.guid_to}} -->
               </v-list-item-content>
 
@@ -337,6 +337,7 @@
   import InfoPanel from "@/components/InfoPanel";
   import EditItem from "@/components/EditItem";
   import GoToDialog from "@/components/GoToDialog";
+  import CreateAlignmentDialog from "@/components/CreateAlignmentDialog"
   import {
     mapGetters
   } from "vuex";
@@ -430,6 +431,7 @@
         selectedListItem: 0,
         //dialogs
         showGoToDialog: false,
+        showCreateAlignmentDialog: false,
         unusedLines: [],
         flowBreaks: [],
         usedFromLinesSet: new Set(),
@@ -509,13 +511,13 @@
             langCodeTo: this.langCodeTo
           });
       },
-      createAlignment() {
+      createAlignment(name) {
         this.$store
           .dispatch(CREATE_ALIGNMENT, {
             username: this.$route.params.username,
             idFrom: this.selectedIds[this.langCodeFrom],
             idTo: this.selectedIds[this.langCodeTo],
-            name: "Hyper alignment"
+            name: name
           })
           .then(() => {
             this.$store.dispatch(FETCH_ITEMS_PROCESSING, {
@@ -1046,7 +1048,8 @@
       DownloadPanel,
       SplittedPanel,
       InfoPanel,
-      GoToDialog
+      GoToDialog,
+      CreateAlignmentDialog
     }
   };
 </script>
