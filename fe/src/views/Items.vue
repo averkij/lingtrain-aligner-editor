@@ -412,7 +412,6 @@
         selected: LanguageHelper.initGeneralVars(),
         selectedProcessing: null,
         selectedProcessingId: null,
-        currentlyProcessing: null,
         currentlyProcessingId: null,
         selectedIds: LanguageHelper.initGeneralVars(),
         isLoading: {
@@ -531,12 +530,12 @@
       startAlignment() {
         this.isLoading.align = true;
         this.initProcessingDocument();
-        this.currentlyProcessing = this.selected[this.langCodeFrom]
+        this.currentlyProcessingId = this.selectedProcessingId;
         this.$store
           .dispatch(ALIGN_SPLITTED, {
             username: this.$route.params.username,
             id: this.selectedProcessingId,
-            batchIds: [1],
+            batchIds: [0],
             alignAll: ''
           })
           .then(() => {
@@ -552,13 +551,37 @@
             this.fetchItemsProcessingTimer();
           });
       },
+      fetchItemsProcessingTimer() {
+        setTimeout(() => {
+          this.$store.dispatch(FETCH_ITEMS_PROCESSING, {
+            username: this.$route.params.username,
+            langCodeFrom: this.langCodeFrom,
+            langCodeTo: this.langCodeTo
+          }).then(() => {
+            let in_progress_items = this.itemsProcessing[this.langCodeFrom].filter(x => x.state[0] == 0 || x
+              .state[0] == 1)
+            if (in_progress_items.length > 0) {
+              this.selectCurrentlyProcessingDocument(this.selectedProcessing);
+              this.fetchItemsProcessingTimer();
+            } else {
+              this.userAlignInProgress = false;
+              this.isLoading.alignStopping = false;
+              let currItem = this.itemsProcessing[this.langCodeFrom].filter(x => x.guid == this
+                .currentlyProcessingId)
+              if (currItem.length > 0) {
+                this.selectCurrentlyProcessingDocument(currItem[0]);
+              } else {
+                this.selectCurrentlyProcessingDocument(this.selectedProcessing);
+              }
+            }
+          });
+        }, 5000)
+      },
       initProcessingDocument() {
         let processingItems = JSON.parse(JSON.stringify(this.itemsProcessing[this.langCodeFrom]));
         let currentIndex = -1;
         if (this.itemsProcessingNotEmpty(this.langCodeFrom)) {
           currentIndex = processingItems.findIndex(x => x.guid == this.selectedProcessingId);
-          console.log("currentIndex", currentIndex)
-          console.log("selected processing", this.selectedProcessing)
         }
         if (currentIndex >= 0) {
           processingItems.splice(currentIndex, 1, {
@@ -905,39 +928,6 @@
       },
       collapseEditItems() {
         this.triggerCollapseEditItem = !this.triggerCollapseEditItem;
-      },
-      fetchItemsProcessingTimer() {
-        setTimeout(() => {
-          this.$store.dispatch(FETCH_ITEMS_PROCESSING, {
-            username: this.$route.params.username,
-            langCodeFrom: this.langCodeFrom,
-            langCodeTo: this.langCodeTo
-          }).then(() => {
-            // let in_progress_items = this.itemsProcessing[this.langCodeFrom].filter(x => x.state[0] == 0 || x
-            //   .state[0] == 1)
-            // if (in_progress_items.length > 0) {
-            //   let item_index = this.itemsProcessing[this.langCodeFrom].indexOf(in_progress_items[0])
-            //   this.currentlyProcessingId = this.itemsProcessing[this.langCodeFrom][item_index].guid
-            //   this.userAlignInProgress = true;
-            //   this.fetchItemsProcessingTimer();
-
-            //   this.selectCurrentlyProcessingDocument(this.itemsProcessing[this.langCodeFrom][item_index]);
-            // } else {
-            //   this.userAlignInProgress = false;
-            //   this.isLoading.alignStopping = false;
-            //   this.selectFirstProcessingDocument();
-            // }
-            let in_progress_items = this.itemsProcessing[this.langCodeFrom].filter(x => x.state[0] == 0 || x
-              .state[0] == 1)
-            if (in_progress_items.length > 0) {
-              this.fetchItemsProcessingTimer();
-            } else {
-              this.userAlignInProgress = false;
-              this.isLoading.alignStopping = false;
-              this.selectCurrentlyProcessingDocument(this.selectedProcessing);
-            }
-          });
-        }, 5000)
       },
       fetchAll() {
         this.$store.dispatch(FETCH_ITEMS, {
