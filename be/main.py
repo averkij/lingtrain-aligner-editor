@@ -75,20 +75,20 @@ def items(username, lang):
     return files
 
 
-@app.route("/items/<username>/splitted/<lang>/<int:id>/download", methods=["GET"])
-def download_splitted(username, lang, id):
+@app.route("/items/<username>/splitted/<lang>/<guid>/download", methods=["GET"])
+def download_splitted(username, lang, guid):
     """Download splitted document file"""
-    logging.debug(f"[{username}]. Downloading {lang} {id} splitted document.")
+    logging.info(f"[{username}]. Downloading {lang} {guid} splitted document.")
     files = helper.get_files_list(os.path.join(
         con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang))
-    if len(files) < id+1:
+    filename = helper.get_filename(username, guid)
+    if not filename:
         abort(404)
     path = os.path.join(con.UPLOAD_FOLDER, username,
-                        con.SPLITTED_FOLDER, lang, files[id])
+                        con.SPLITTED_FOLDER, lang, filename)
     if not os.path.isfile(path):
-        logging.debug(f"[{username}]. Document not found.")
         abort(404)
-    logging.debug(f"[{username}]. Document found. Path: {path}. Sent to user.")
+    logging.info(f"[{username}]. Document found. Path: {path}. Sent to user.")
     return send_file(path, as_attachment=True)
 
 
