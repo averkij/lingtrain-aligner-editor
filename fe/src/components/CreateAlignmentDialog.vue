@@ -29,7 +29,7 @@
     },
     data() {
       return {
-        pageNumber: ""
+        name: ""
       }
     },
     methods: {
