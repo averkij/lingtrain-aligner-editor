@@ -851,26 +851,24 @@
       },
       downloadProcessing(langCode) {
         this.$store.dispatch(DOWNLOAD_PROCESSING, {
-          fileId: this.selectedIds[this.langCodeFrom],
-          fileName: this.selected[this.langCodeFrom],
+          align_guid: this.selectedProcessingId,
+          fileName: this.selectedProcessingId + ".txt",
           username: this.$route.params.username,
           langCodeFrom: this.langCodeFrom,
           langCodeTo: this.langCodeTo,
           langCodeDownload: langCode,
-          format: "txt",
-          threshold: this.downloadThreshold
+          format: "txt"
         });
       },
       downloadProcessingTmx() {
         this.$store.dispatch(DOWNLOAD_PROCESSING, {
-          fileId: this.selectedIds[this.langCodeFrom],
-          fileName: this.selected[this.langCodeFrom] + ".tmx",
+          align_guid: this.selectedProcessingId,
+          fileName: this.selectedProcessingId + ".tmx",
           username: this.$route.params.username,
           langCodeFrom: this.langCodeFrom,
           langCodeTo: this.langCodeTo,
           langCodeDownload: this.langCodeFrom,
-          format: "tmx",
-          threshold: this.downloadThreshold
+          format: "tmx"
         });
       },
       selectAndLoadPreview(langCode, name, fileId) {

@@ -420,17 +420,15 @@ def edit_processing(username, lang_from, lang_to, align_guid):
     return ('', 200)
 
 
-@app.route("/items/<username>/processing/<lang_from>/<lang_to>/<int:file_id>/download/<lang>/<file_format>/<int:threshold>", methods=["GET"])
-def download_processsing(username, lang_from, lang_to, file_id, lang, file_format, threshold):
+@app.route("/items/<username>/processing/<lang_from>/<lang_to>/<align_guid>/download/<lang>/<file_format>", methods=["GET"])
+def download_processsing(username, lang_from, lang_to, align_guid, lang, file_format):
     """Download processsing document"""
-
-    logging.debug(
-        f"[{username}]. Downloading {lang_from}-{lang_to} {file_id} {lang} result document.")
-    processing_folder = os.path.join(
-        con.UPLOAD_FOLDER, username, con.PROCESSING_FOLDER, lang_from, lang_to)
-    files = helper.get_files_list(processing_folder)
-    processing_file = os.path.join(processing_folder, files[file_id])
-    if not helper.check_file(processing_folder, files, file_id):
+    logging.info(
+        f"[{username}]. Downloading {lang_from}-{lang_to} {align_guid} {lang} result document.")
+    db_folder = os.path.join(con.UPLOAD_FOLDER, username,
+                             con.DB_FOLDER, lang_from, lang_to)
+    db_path = os.path.join(db_folder, f'{align_guid}.db')
+    if not os.path.isfile(db_path):
         abort(404)
 
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -438,17 +436,16 @@ def download_processsing(username, lang_from, lang_to, file_id, lang, file_forma
         con.UPLOAD_FOLDER, username, con.DOWNLOAD_FOLDER)
     helper.check_folder(download_folder)
     download_file = os.path.join(download_folder, "{0}_{1}_{2}.{3}".format(
-        os.path.splitext(files[file_id])[0], lang, timestamp, file_format))
+        align_guid, lang, timestamp, file_format))
 
     logging.debug(
         f"[{username}]. Preparing file for downloading {download_file}.")
 
-    # if file_format == con.FORMAT_TMX:
-    #     output.save_tmx(processing_file, download_file,
-    #                     lang_from, lang_to, threshold)
-    # elif file_format == con.FORMAT_PLAIN:
-    #     output.save_plain_text(processing_file, download_file,
-    #                            first_lang=lang == lang_from, threshold=threshold)
+    if file_format == con.FORMAT_TMX:
+        output.save_tmx(db_path, download_file, lang_from, lang_to)
+    elif file_format == con.FORMAT_PLAIN:
+        output.save_plain_text(db_path, download_file,
+                               first_lang=lang == lang_from)
 
     logging.debug(
         f"[{username}]. File {download_file} prepared. Sent to user.")
