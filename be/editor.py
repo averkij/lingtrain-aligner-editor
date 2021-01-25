@@ -97,7 +97,7 @@ def edit_doc(db_path, index_id, text, operation, target, candidate_line_id, cand
                 batch_index_id+1, (from_id, "[]", to_id, "[]"))
 
         elif operation == con.EDIT_LINE:
-            processing_target_id = index[index_id][0]
+            processing_target_id = index[batch_id][batch_index_id][0]
             helper.update_processing(
                 db, text_type, processing_target_id, json.dumps(line_ids), text)
             update_index = False

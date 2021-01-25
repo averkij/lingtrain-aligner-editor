@@ -117,6 +117,15 @@ export const ItemsService = {
       `${params.username}/processing/${params.langCodeFrom}/${params.langCodeTo}/${params.fileId}/${params.linesCount}/${params.page}`
     );
   },
+  getProcessingByIds(params) {
+    let form = new FormData();
+    form.append("index_ids", params.index_ids);
+    return ApiService.post(
+      "items",
+      `${params.username}/processing/${params.langCodeFrom}/${params.langCodeTo}/${params.align_guid}`,
+      form
+    );
+  },
   getCandidates(params) {
     return ApiService.get(
       "items",
@@ -127,6 +136,16 @@ export const ItemsService = {
     return ApiService.get(
       "items",
       `${params.username}/processing/${params.langCodeFrom}/${params.langCodeTo}/${params.fileId}/index`
+    );
+  },
+  getSplittedByIds(params) {
+    console.log("getSplittedByIds", params)
+    let form = new FormData();
+    form.append("ids", params.ids);
+    return ApiService.post(
+      "items",
+      `${params.username}/splitted/${params.type}/${params.langCodeFrom}/${params.langCodeTo}/${params.align_guid}`,
+      form
     );
   },
   stopAlignment(params) {

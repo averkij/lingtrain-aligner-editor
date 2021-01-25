@@ -75,20 +75,20 @@ def items(username, lang):
     return files
 
 
-@app.route("/items/<username>/splitted/<lang>/<int:id>/download", methods=["GET"])
-def download_splitted(username, lang, id):
+@app.route("/items/<username>/splitted/<lang>/<guid>/download", methods=["GET"])
+def download_splitted(username, lang, guid):
     """Download splitted document file"""
-    logging.debug(f"[{username}]. Downloading {lang} {id} splitted document.")
+    logging.info(f"[{username}]. Downloading {lang} {guid} splitted document.")
     files = helper.get_files_list(os.path.join(
         con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang))
-    if len(files) < id+1:
+    filename = helper.get_filename(username, guid)
+    if not filename:
         abort(404)
     path = os.path.join(con.UPLOAD_FOLDER, username,
-                        con.SPLITTED_FOLDER, lang, files[id])
+                        con.SPLITTED_FOLDER, lang, filename)
     if not os.path.isfile(path):
-        logging.debug(f"[{username}]. Document not found.")
         abort(404)
-    logging.debug(f"[{username}]. Document found. Path: {path}. Sent to user.")
+    logging.info(f"[{username}]. Document found. Path: {path}. Sent to user.")
     return send_file(path, as_attachment=True)
 
 
@@ -184,6 +184,9 @@ def align(username):
     align_all = request.form.get("align_all", '')
     batch_ids = helper.parse_json_array(request.form.get("batch_ids", "[0]"))
 
+    logging.info(
+        f"align parameters align_guid {align_guid} align_all {align_all} batch_ids {batch_ids}")
+
     name, guid_from, guid_to, state, curr_batches, total_batches = helper.get_alignment_info(
         username, align_guid)
     file_from, lang_from = helper.get_fileinfo(username, guid_from)
@@ -193,6 +196,9 @@ def align(username):
                              con.DB_FOLDER, lang_from, lang_to)
     db_path = os.path.join(db_folder, f"{align_guid}.db")
     user_db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
+
+    logging.info(
+        f"align parameters align_guid {align_guid} align_all {align_all} batch_ids {batch_ids} name {name} guid_from {guid_from} guid_to {guid_to} total_batches {total_batches}")
 
     splitted_from = os.path.join(
         con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_from, file_from)
@@ -243,7 +249,7 @@ def align(username):
     return con.EMPTY_LINES
 
 
-@app.route("/items/<username>/processing/<lang_from>/<lang_to>/<align_guid>/index")
+@app.route("/items/<username>/processing/<lang_from>/<lang_to>/<align_guid>/index", methods=["GET"])
 def get_doc_index(username, lang_from, lang_to, align_guid):
     """Get aligned document index"""
     db_folder = os.path.join(con.UPLOAD_FOLDER, username,
@@ -251,7 +257,7 @@ def get_doc_index(username, lang_from, lang_to, align_guid):
     db_path = os.path.join(db_folder, f'{align_guid}.db')
     if not os.path.isfile(db_path):
         abort(404)
-    index = helper.get_flatten_doc_index(db_path)
+    index = helper.get_clear_flatten_doc_index(db_path)
     return {"items": index}
 
 
@@ -266,34 +272,75 @@ def get_processing(username, lang_from, lang_to, align_guid, count, page):
     index = helper.get_flatten_doc_index(db_path)
 
     shift = (page-1)*count
-    pages = index[shift:shift+count]
-    res = []
-
-    for i, (data, texts) in enumerate(zip(pages, helper.get_doc_page(db_path, pages))):
-        print(shift + i)
-        # print("data",data)
-        res.append({
-            "index_id": shift + i,  # absolute position in index
-            # from
-            "batch_id": texts[4],
-            "batch_index_id": data[1],    # relative position in index batch
-            "text_from": texts[0],
-            "line_id_from": data[0][1],  # array with ids
-            # primary key in DB (processing_from)
-            "processing_from_id": data[0][0],
-            "proxy_from": texts[2],
-            # to
-            "text_to": texts[1],
-            "line_id_to": data[0][3],  # array with ids
-            # primary key in DB (processing_to)
-            "processing_to_id": data[0][2],
-            "proxy_to": texts[3],
-        })
+    pages = list(zip(index[shift:shift+count], range(shift, shift+count)))
+    res = helper.get_doc_items(pages, db_path)
 
     lines_count = len(index)
     total_pages = (lines_count//count) + (1 if lines_count % count != 0 else 0)
     meta = {"page": page, "total_pages": total_pages}
     return {"items": res, "meta": meta}
+
+
+@app.route("/items/<username>/processing/<lang_from>/<lang_to>/<align_guid>", methods=["POST"])
+def get_processing_by_ids(username, lang_from, lang_to, align_guid):
+    """Get processing (aligned) items by ids"""
+    db_folder = os.path.join(con.UPLOAD_FOLDER, username,
+                             con.DB_FOLDER, lang_from, lang_to)
+    db_path = os.path.join(db_folder, f'{align_guid}.db')
+    if not os.path.isfile(db_path):
+        abort(404)
+
+    index = helper.get_flatten_doc_index(db_path)
+    index_ids = helper.parse_json_array(request.form.get("index_ids", "[]"))
+
+    print("index_ids", index_ids)
+    print("index", index)
+
+    index_items = [(index[i], i) for i in index_ids]
+    res = {}
+    for i, item in zip(index_ids, helper.get_doc_items(index_items, db_path)):
+        res[i] = item
+
+    return {"items": res}
+
+
+@app.route("/items/<username>/splitted/from/<lang_from>/<lang_to>/<align_guid>", methods=["POST"])
+def get_splitted_from_by_ids(username, lang_from, lang_to, align_guid):
+    db_folder = os.path.join(con.UPLOAD_FOLDER, username,
+                             con.DB_FOLDER, lang_from, lang_to)
+    db_path = os.path.join(db_folder, f'{align_guid}.db')
+    if not os.path.isfile(db_path):
+        abort(404)
+    text_ids = helper.parse_json_array(request.form.get("ids", "[]"))
+
+    res = {}
+    if text_ids:
+        for id, text, proxy in helper.get_splitted_to_by_id(db_path, text_ids):
+            res[id] = {
+                "t": text,
+                "p": proxy if proxy else ''
+            }
+    return {"items": res}
+
+
+@app.route("/items/<username>/splitted/to/<lang_from>/<lang_to>/<align_guid>", methods=["POST"])
+def get_splitted_to_by_ids(username, lang_from, lang_to, align_guid):
+    db_folder = os.path.join(con.UPLOAD_FOLDER, username,
+                             con.DB_FOLDER, lang_from, lang_to)
+    db_path = os.path.join(db_folder, f'{align_guid}.db')
+    if not os.path.isfile(db_path):
+        abort(404)
+    text_ids = helper.parse_json_array(request.form.get("ids", "[]"))
+
+    res = {}
+    if text_ids:
+        for id, text, proxy in helper.get_splitted_to_by_id(db_path, text_ids):
+            res[id] = {
+                "t": text,
+                "p": proxy if proxy else ''
+            }
+
+    return {"items": res}
 
 
 @app.route("/items/<username>/processing/<lang_from>/<lang_to>/<align_guid>/candidates/<text_type>/<int:index_id>/<int:count_before>/<int:count_after>", methods=["GET"])

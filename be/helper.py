@@ -300,7 +300,7 @@ def add_empty_processing_line(db, batch_id):
     return (from_id, to_id)
 
 
-def get_doc_page(db_path, page):
+def get_doc_page(db_path, text_ids):
     """Get processing lines page"""
     res = []
     with sqlite3.connect(db_path) as db:
@@ -308,7 +308,7 @@ def get_doc_page(db_path, page):
         db.execute(
             'CREATE TEMP TABLE text_ids(rank integer primary key, id integer)')
         db.executemany('insert into temp.text_ids(id) values(?)', [
-                       (x[0][0],) for x in page])
+                       (x,) for x in text_ids])
         for batch_id, text_from, text_to, proxy_from, proxy_to in db.execute(
             '''SELECT
                 f.batch_id, f.text, t.text, pf.text, pt.text
@@ -331,6 +331,28 @@ def get_doc_page(db_path, page):
             '''
         ):
             res.append((text_from, text_to, proxy_from, proxy_to, batch_id))
+    return res
+
+
+def get_splitted_from_by_id(db_path, ids):
+    """Get lines from splitted_from by ids"""
+    res = []
+    with sqlite3.connect(db_path) as db:
+        for id, text_from, proxy_from in db.execute(
+            f'select f.id, f.text, pf.text from splitted_from f left join proxy_from pf on pf.id = f.id where f.id in ({",".join([str(x) for x in ids])})'
+        ):
+            res.append((id, text_from, proxy_from))
+    return res
+
+
+def get_splitted_to_by_id(db_path, ids):
+    """Get lines from splitted_to by ids"""
+    res = []
+    with sqlite3.connect(db_path) as db:
+        for id, text_to, proxy_to in db.execute(
+            f'select t.id, t.text, pt.text from splitted_to t left join proxy_to pt on pt.id = t.id where t.id in ({",".join([str(x) for x in ids])})'
+        ):
+            res.append((id, text_to, proxy_to))
     return res
 
 
@@ -489,6 +511,30 @@ def get_alignments_list(username, lang_from, lang_to):
                                 d_from.lang=:lang_from and d_to.lang=:lang_to""", {
                          "lang_from": lang_from, "lang_to": lang_to}).fetchall()
         return res
+
+
+def get_doc_items(index_items, db_path):
+    """Get document items by ids"""
+    res = []
+    for i, (data, texts) in enumerate(zip(index_items, get_doc_page(db_path, [x[0][0][0] for x in index_items]))):
+        res.append({
+            "index_id": data[1],  # absolute position in index
+            # from
+            "batch_id": texts[4],
+            "batch_index_id": data[0][1],    # relative position in index batch
+            "text_from": texts[0],
+            "line_id_from": data[0][0][1],  # array with ids
+            # primary key in DB (processing_from)
+            "processing_from_id": data[0][0][0],
+            "proxy_from": texts[2],
+            # to
+            "text_to": texts[1],
+            "line_id_to": data[0][0][3],  # array with ids
+            # primary key in DB (processing_to)
+            "processing_to_id": data[0][0][2],
+            "proxy_to": texts[3],
+        })
+    return res
 
 
 def check_folder(folder):

@@ -57,7 +57,8 @@
       <v-icon color="blue" large>mdi-align-horizontal-center</v-icon> Alignment
     </div>
     <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2">
-      Alignment process is going step by step. Create the alignment with choosen parameters and start working with it in the work area section.
+      Alignment process is going step by step. Create the alignment with choosen parameters and start working with it in
+      the work area section.
     </v-alert>
 
     <div class="text-h5 mt-10 font-weight-bold">Documents to align</div>
@@ -73,28 +74,41 @@
       </v-col>
     </v-row>
 
-    <v-alert type="info" border="left" colored-border color="blue" elevation="2" v-if="!selected[langCodeFrom] || !selected[langCodeTo]" class="mt-5">
+    <v-alert type="info" border="left" colored-border color="blue" elevation="2"
+      v-if="!selected[langCodeFrom] || !selected[langCodeTo]" class="mt-5">
       Please, select two items in the Documents section.
     </v-alert>
     <div v-else class="mt-5">
       <div v-if="!processingExists">
-        <!-- <div>Selected documents were not aligned yet. Press the button to start.</div> -->
-        <v-btn class="success" @click="createAlignment()">
+        <v-btn class="primary" @click="showCreateAlignmentDialog=true">
           Create alignment
         </v-btn>
+        <CreateAlignmentDialog v-model="showCreateAlignmentDialog" @createAlignment="createAlignment" />
       </div>
       <v-alert v-else type="info" border="left" colored-border color="blue" elevation="2">
         Alignment created. Select it below and start working.
       </v-alert>
     </div>
 
-    <div class="text-h5 mt-10 font-weight-bold">Alignments</div>
+
+    <!-- <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2"
+      v-if="!itemsProcessing || !itemsProcessing[langCodeFrom] || (itemsProcessing[langCodeFrom].length == 0)">
+      There are no previously aligned documents yet.
+    </v-alert> -->
+
+
+    <div class="text-h4 mt-10 font-weight-bold">
+      <v-icon color="blue" large>mdi-pencil</v-icon> Work area
+    </div>
 
     <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2"
       v-if="!itemsProcessing || !itemsProcessing[langCodeFrom] || (itemsProcessing[langCodeFrom].length == 0)">
       There are no previously aligned documents yet.
     </v-alert>
-    <v-card v-else class="mt-10">
+    <div v-else class="mt-5">
+
+      <div class="text-h5 mt-10 font-weight-bold">Alignments</div>
+      <v-card class="mt-6">
         <div class="green lighten-5" dark>
           <v-card-title>Alignments</v-card-title>
           <v-card-text>List of previosly aligned documents [{{langCodeFrom}}-{{langCodeTo}}]</v-card-text>
@@ -114,7 +128,7 @@
               </v-list-item-icon>
               <v-list-item-content>
                 <v-list-item-title v-text="item.name"></v-list-item-title>
-                {{item.state}}
+                <!-- {{item.state}} -->
                 <!-- ---{{item.guid}}--- {{item.guid_from}} {{item.guid_to}} -->
               </v-list-item-content>
 
@@ -127,24 +141,14 @@
         </v-list>
       </v-card>
 
-    <div class="text-h4 mt-10 font-weight-bold">
-      <v-icon color="blue" large>mdi-pencil</v-icon> Work area
-    </div>
-
-    <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2"
-      v-if="!itemsProcessing || !itemsProcessing[langCodeFrom] || (itemsProcessing[langCodeFrom].length == 0)">
-      There are no previously aligned documents yet.
-    </v-alert>
-
-    <!-- PROCESSING DOCUMENTS LIST BLOCK -->
-    <div v-else class="mt-6">
+      <!-- PROCESSING DOCUMENTS LIST BLOCK -->
       <div class="text-h5 mt-10 font-weight-bold">Controls</div>
 
 
       <v-btn v-if="!userAlignInProgress" v-show="selected[langCodeFrom] && selected[langCodeTo]" class="success mt-6"
         :loading="isLoading.align || isLoading.alignStopping" :disabled="isLoading.align || isLoading.alignStopping"
         @click="startAlignment()">
-        Align batch
+        Align next batch
       </v-btn>
       <v-btn v-else v-show="selected[langCodeFrom] && selected[langCodeTo]" class="error mt-6" @click="stopAlignment()">
         Stop alignment
@@ -221,7 +225,7 @@
             @editAddEmptyLineAfter="editAddEmptyLineAfter" @editClearLine="editClearLine" @getCandidates="getCandidates"
             @editAddCandidateEnd="editAddCandidateEnd" :item="line"
             :prevItem="i == 0 ? processing.items[0] : processing.items[i-1]" :collapse="triggerCollapseEditItem"
-            :clearCandidates="triggerClearCandidates" :showProxyTo="showProxyTo">
+            :clearCandidates="triggerClearCandidates" :showProxyTo="showProxyTo" :panelColor="'green'">
           </EditItem>
           <v-divider></v-divider>
         </div>
@@ -249,6 +253,10 @@
         </v-row>
       </v-card>
 
+      <!-- TO DO -->
+      <!-- <div class="text-h4 mt-10 font-weight-bold">
+        <v-icon color="blue" large>mdi-puzzle</v-icon> Conflicts
+      </div> -->
       <div class="text-h4 mt-10 font-weight-bold">
         <v-icon color="blue" large>mdi-puzzle</v-icon> Unused strings
       </div>
@@ -258,7 +266,137 @@
         Please, wait. Alignment is in progress.
       </v-alert>
       <div v-else>
-        <div class="mt-10">{{docIndex}}</div>
+
+        <!-- TO DO -->
+        <!-- <v-alert type="info" border="left" colored-border color="info" class="mt-6" elevation="2">
+          To proceed to the next batch all conflicts need to be resolved. Lines without identifiers are not considered
+          during the conflicts detection.
+        </v-alert>
+
+        <div class="text-h5 mt-10 font-weight-bold">Flow breaks</div>
+
+        <v-alert v-if="!flowBreakGroups || flowBreakGroups.length==0" type="info" border="left" colored-border color="info"
+          class="mt-6" elevation="2">
+          No unhandled flow breaks detected.
+        </v-alert>
+        <div class="mt-6">
+          <v-card>
+            <div class="blue lighten-5" dark>
+
+              <v-card-title class="pr-3">
+                <v-spacer></v-spacer>
+
+                <v-icon>mdi-translate</v-icon>
+                <v-switch value="true" v-model="showProxyTo" class="mx-2"></v-switch>
+
+                <v-btn icon @click="collapseEditItems">
+                  <v-icon>mdi-collapse-all</v-icon>
+                </v-btn>
+              </v-card-title>
+            </div>
+            <v-divider></v-divider>
+
+            <div v-for="(group,i) in flowBreakGroups" :key="i">
+              <div class="pa-3 blue lighten-5 font-weight-bold text-caption">conflict on line {{group['lineId']}}</div>
+              <v-divider></v-divider>
+              <EditItem @editProcessing="editProcessing" @editAddUpEnd="editAddUpEnd" @editAddDownEnd="editAddDownEnd"
+                @editDeleteLine="editDeleteLine" @editAddEmptyLineBefore="editAddEmptyLineBefore"
+                @editAddEmptyLineAfter="editAddEmptyLineAfter" @editClearLine="editClearLine"
+                @getCandidates="getCandidates" @editAddCandidateEnd="editAddCandidateEnd"
+                :item="conflictFlowTo[group['prev']]"
+                :prevItem="group['prev'] == 0 ? conflictFlowTo[0] : conflictFlowTo[group['prev']-1]"
+                :collapse="triggerCollapseEditItem" :clearCandidates="triggerClearCandidates" :showProxyTo="showProxyTo"
+                :panelColor="'blue'">
+              </EditItem>
+              <v-divider></v-divider>
+              <EditItem @editProcessing="editProcessing" @editAddUpEnd="editAddUpEnd" @editAddDownEnd="editAddDownEnd"
+                @editDeleteLine="editDeleteLine" @editAddEmptyLineBefore="editAddEmptyLineBefore"
+                @editAddEmptyLineAfter="editAddEmptyLineAfter" @editClearLine="editClearLine"
+                @getCandidates="getCandidates" @editAddCandidateEnd="editAddCandidateEnd"
+                :item="conflictFlowTo[group['curr']]"
+                :prevItem="group['curr'] == 0 ? conflictFlowTo[0] : conflictFlowTo[group['curr']-1]"
+                :collapse="triggerCollapseEditItem" :clearCandidates="triggerClearCandidates" :showProxyTo="showProxyTo"
+                :panelColor="'red'">
+              </EditItem>
+              <v-divider></v-divider>
+            </div>
+          </v-card>
+        </div> -->
+
+        <!-- <div class="text-h5 mt-10 font-weight-bold">Unused strings</div> -->
+
+        <v-alert v-if="(!unusedFromLines || unusedFromLines.length==0) && (!unusedToLines || unusedToLines.length==0)"
+          type="info" border="left" colored-border color="info" class="mt-6" elevation="2">
+          All sentences are in use.
+        </v-alert>
+        <div v-else>
+          <v-card v-if="unusedFromLines && unusedFromLines.length > 0" class="mt-6">
+            <div class="blue lighten-5">
+              <v-card-title>{{LANGUAGES[langCodeFrom].name}}</v-card-title>
+              <v-card-text>{{unusedFromLines.length}} lines
+              </v-card-text>
+            </div>
+            <v-divider></v-divider>
+            <div v-for="(line,i) in unusedFromLines" :key="i">
+              <template>
+                <div>
+                  <v-row justify="center" no-gutters>
+                    <v-col class="text-left" cols="12">
+                      <div class="d-table fill-height">
+                        <div class="d-table-cell grey lighten-4 pa-2 text-center" style="min-width:45px">
+                          {{ line }}
+                        </div>
+                        <v-divider class="d-table-cell" vertical></v-divider>
+                        <div class="d-table-cell pa-2">{{ conflictSplittedFrom[line].t}}
+                          <div v-if="conflictSplittedFrom[line].p"
+                            class="mt-3 proxy-to-subtitles grey lighten-3 font-weight-medium">
+                            {{conflictSplittedFrom[line].p}}
+                          </div>
+                        </div>
+                        <div class="d-table-cell pa-2">
+                        </div>
+                      </div>
+                    </v-col>
+                  </v-row>
+                </div>
+                <v-divider></v-divider>
+              </template>
+            </div>
+          </v-card>
+          <v-card v-if="unusedToLines && unusedToLines.length > 0" class="mt-6">
+            <div class="blue lighten-5">
+              <v-card-title>{{LANGUAGES[langCodeTo].name}}</v-card-title>
+              <v-card-text>{{unusedToLines.length}} lines
+              </v-card-text>
+            </div>
+            <v-divider></v-divider>
+            <div v-for="(line,i) in unusedToLines" :key="i">
+              <template>
+                <div>
+                  <v-row justify="center" no-gutters>
+                    <v-col class="text-left" cols="12">
+                      <div class="d-table fill-height">
+                        <div class="d-table-cell grey lighten-4 pa-2 text-center" style="min-width:45px">
+                          {{ line }}
+                        </div>
+                        <v-divider class="d-table-cell" vertical></v-divider>
+                        <div class="d-table-cell pa-2">{{ conflictSplittedTo[line].t}}
+                          <div v-if="conflictSplittedTo[line].p"
+                            class="mt-3 proxy-to-subtitles grey lighten-3 font-weight-medium">
+                            {{conflictSplittedTo[line].p}}
+                          </div>
+                        </div>
+                      </div>
+                    </v-col>
+                  </v-row>
+                </div>
+                <v-divider></v-divider>
+              </template>
+            </div>
+          </v-card>
+        </div>
+
+
       </div>
 
       <div class="text-h4 mt-10 font-weight-bold">
@@ -316,6 +454,7 @@
   import InfoPanel from "@/components/InfoPanel";
   import EditItem from "@/components/EditItem";
   import GoToDialog from "@/components/GoToDialog";
+  import CreateAlignmentDialog from "@/components/CreateAlignmentDialog"
   import {
     mapGetters
   } from "vuex";
@@ -359,6 +498,9 @@
     GET_DOC_INDEX,
     GET_PROCESSING,
     GET_CANDIDATES,
+    GET_CONFLICT_SPLITTED_FROM,
+    GET_CONFLICT_SPLITTED_TO,
+    // GET_CONFLICT_FLOW_TO,
     STOP_ALIGNMENT,
     EDIT_PROCESSING,
     CREATE_ALIGNMENT,
@@ -384,12 +526,12 @@
         PROC_IN_PROGRESS_DONE,
         PROC_ERROR,
         PROC_DONE,
+        batchesToAlign: [0],
         files: LanguageHelper.initGeneralVars(),
         proxyFiles: LanguageHelper.initGeneralVars(),
         selected: LanguageHelper.initGeneralVars(),
         selectedProcessing: null,
         selectedProcessingId: null,
-        currentlyProcessing: null,
         currentlyProcessingId: null,
         selectedIds: LanguageHelper.initGeneralVars(),
         isLoading: {
@@ -406,18 +548,129 @@
         downloadThreshold: 9,
         showProxyTo: SettingsHelper.getShowProxyTo(),
         selectedListItem: 0,
+
         //dialogs
         showGoToDialog: false,
+        showCreateAlignmentDialog: false,
+
+        //conflicts
+        unusedFromLines: [],
+        unusedToLines: [],
+        // flowBreakGroups: [],
+        usedFromLinesSet: new Set(),
+        usedToLinesSet: new Set(),
+        usedToLinesFlow: []
       };
     },
     methods: {
-      createAlignment() {
+      prepareUsedToLines() {
+        let foo = new Set();
+        let bar = [];
+
+        this.docIndex.forEach(function (ix, i) {
+          let arr = JSON.parse(ix[3]);
+          arr.forEach(to => {
+            foo.add(to);
+            bar.push([i + 1, to]);
+          });
+        });
+
+        this.usedToLinesSet = foo;
+        this.usedToLinesFlow = bar;
+      },
+      prepareUsedFromLines() {
+        let foo = new Set();
+        this.docIndex.forEach(function (ix) {
+          let arr = JSON.parse(ix[1]);
+          arr.forEach(from => {
+            foo.add(from);
+          });
+        });
+
+        this.usedFromLinesSet = foo;
+      },
+      updateUnusedLines() {
+        this.prepareUsedFromLines();
+        this.prepareUsedToLines();
+
+        let unusedFromLines = [];
+        let unusedToLines = [];
+        // let flowBreaks = new Set();
+        // let flowBreakGroups = [];
+
+        let lastLine = this.docIndex[this.docIndex.length - 1];
+        let lastLineFromIndex = JSON.parse(lastLine[1]);
+        let lastLineToIndex = JSON.parse(lastLine[3]);
+
+        //calculate unused lines
+        for (let i = 1; i < lastLineFromIndex[0]; i++) {
+          if (!this.usedFromLinesSet.has(i)) {
+            unusedFromLines.push(i)
+          }
+        }
+        for (let i = 1; i < lastLineToIndex[0]; i++) {
+          if (!this.usedToLinesSet.has(i)) {
+            unusedToLines.push(i)
+          }
+        }
+
+        //calculate flow breaks
+        // let counter = this.usedToLinesFlow[0][1];
+        // this.usedToLinesFlow.forEach(item => {
+        //   if (item[1] != counter) {
+        //     flowBreaks.add(item[0] - 2);
+        //     flowBreaks.add(item[0] - 1);
+
+        //     flowBreakGroups.push({
+        //       "lineId": item[0] - 1,
+        //       "prev": item[0] - 2,
+        //       "curr": item[0] - 1
+        //     })
+        //     counter = item[1];
+        //   }
+        //   counter = counter + 1;
+        // });
+
+        this.$store
+          .dispatch(GET_CONFLICT_SPLITTED_FROM, {
+            username: this.$route.params.username,
+            type: "from",
+            ids: JSON.stringify(unusedFromLines),
+            align_guid: this.selectedProcessingId,
+            langCodeFrom: this.langCodeFrom,
+            langCodeTo: this.langCodeTo
+          }).then(() => {
+            this.unusedFromLines = unusedFromLines;
+          });
+        this.$store
+          .dispatch(GET_CONFLICT_SPLITTED_TO, {
+            username: this.$route.params.username,
+            type: "to",
+            ids: JSON.stringify(unusedToLines),
+            align_guid: this.selectedProcessingId,
+            langCodeFrom: this.langCodeFrom,
+            langCodeTo: this.langCodeTo
+          }).then(() => {
+            this.unusedToLines = unusedToLines;
+          });
+        // this.$store
+        //   .dispatch(GET_CONFLICT_FLOW_TO, {
+        //     username: this.$route.params.username,
+        //     index_ids: JSON.stringify([...flowBreaks]),
+        //     align_guid: this.selectedProcessingId,
+        //     langCodeFrom: this.langCodeFrom,
+        //     langCodeTo: this.langCodeTo
+        //   }).then(() => {
+        //     this.flowBreakGroups = flowBreakGroups;
+        //   });
+      },
+      createAlignment(name) {
         this.$store
           .dispatch(CREATE_ALIGNMENT, {
             username: this.$route.params.username,
             idFrom: this.selectedIds[this.langCodeFrom],
             idTo: this.selectedIds[this.langCodeTo],
-            name: "Hyper alignment"
+            name: name
           })
           .then(() => {
             this.$store.dispatch(FETCH_ITEMS_PROCESSING, {
@@ -425,19 +678,19 @@
               langCodeFrom: this.langCodeFrom,
               langCodeTo: this.langCodeTo
             }).then(() => {
-              this.selectCurrentlyProcessingDocument();
+              this.selectFirstProcessingDocument();
             });
           });
       },
       startAlignment() {
         this.isLoading.align = true;
         this.initProcessingDocument();
-        this.currentlyProcessing = this.selected[this.langCodeFrom]
+        this.currentlyProcessingId = this.selectedProcessingId;
         this.$store
           .dispatch(ALIGN_SPLITTED, {
             username: this.$route.params.username,
             id: this.selectedProcessingId,
-            batchIds: [2],
+            batchIds: this.batchesToAlign,
             alignAll: ''
           })
           .then(() => {
@@ -448,9 +701,60 @@
               langCodeFrom: this.langCodeFrom,
               langCodeTo: this.langCodeTo
             }).then(() => {
-              this.selectCurrentlyProcessingDocument();
+              this.selectCurrentlyProcessingDocument(this.selectedProcessing);
             });
             this.fetchItemsProcessingTimer();
+          });
+      },
+      fetchItemsProcessingTimer() {
+        setTimeout(() => {
+          this.$store.dispatch(FETCH_ITEMS_PROCESSING, {
+            username: this.$route.params.username,
+            langCodeFrom: this.langCodeFrom,
+            langCodeTo: this.langCodeTo
+          }).then(() => {
+            let in_progress_items = this.itemsProcessing[this.langCodeFrom].filter(x => x.state[0] == 0 || x
+              .state[0] == 1)
+            if (in_progress_items.length > 0) {
+              this.selectCurrentlyProcessingDocument(this.selectedProcessing);
+              this.fetchItemsProcessingTimer();
+            } else {
+              this.userAlignInProgress = false;
+              this.isLoading.alignStopping = false;
+              let currItem = this.itemsProcessing[this.langCodeFrom].filter(x => x.guid == this
+                .currentlyProcessingId)
+              if (currItem.length > 0) {
+                this.selectCurrentlyProcessingDocument(currItem[0]);
+              } else {
+                this.selectCurrentlyProcessingDocument(this.selectedProcessing);
+              }
+            }
+          });
+        }, 5000)
+      },
+      initProcessingDocument() {
+        let processingItems = JSON.parse(JSON.stringify(this.itemsProcessing[this.langCodeFrom]));
+        let currentIndex = -1;
+        if (this.itemsProcessingNotEmpty(this.langCodeFrom)) {
+          currentIndex = processingItems.findIndex(x => x.guid == this.selectedProcessingId);
+        }
+        if (currentIndex >= 0) {
+          processingItems.splice(currentIndex, 1, {
+            "imgs": [],
+            "name": this.selectedProcessing.name,
+            "state": this.selectedProcessing.state
+          });
+        } else {
+          processingItems.push({
+            "imgs": [],
+            "name": this.selectedProcessing.name,
+            "state": this.selectedProcessing.state
+          });
+        }
+        this.$store
+          .commit(SET_ITEMS_PROCESSING, {
+            items: processingItems,
+            langCode: this.langCodeFrom
           });
       },
       stopAlignment() {
@@ -742,31 +1046,6 @@
             callback(RESULT_ERROR)
           });
       },
-      initProcessingDocument() {
-        let processingItems = JSON.parse(JSON.stringify(this.itemsProcessing[this.langCodeFrom]));
-        let currentIndex = -1;
-        if (this.itemsProcessingNotEmpty(this.langCodeFrom)) {
-          currentIndex = processingItems.findIndex(x => x.name == this.selected[this.langCodeFrom]);
-        }
-        if (currentIndex >= 0) {
-          processingItems.splice(currentIndex, 1, {
-            "imgs": [],
-            "name": this.selected[this.langCodeFrom],
-            "state": [0, 3, 0]
-          });
-        } else {
-          processingItems.push({
-            "imgs": [],
-            "name": this.selected[this.langCodeFrom],
-            "state": [0, 3, 0]
-          });
-        }
-        this.$store
-          .commit(SET_ITEMS_PROCESSING, {
-            items: processingItems,
-            langCode: this.langCodeFrom
-          });
-      },
       //dialogs
       goToPage(pageNumber) {
         this.onProcessingPageChange(pageNumber);
@@ -791,7 +1070,8 @@
       },
       selectFirstProcessingDocument() {
         if (this.itemsProcessingNotEmpty(this.langCodeFrom)) {
-          this.selectProcessing(this.itemsProcessing[this.langCodeFrom][0], this.itemsProcessing[this.langCodeFrom][0].guid);
+          this.selectProcessing(this.itemsProcessing[this.langCodeFrom][0], this.itemsProcessing[this.langCodeFrom][0]
+            .guid);
         }
       },
       selectCurrentlyProcessingDocument(item) {
@@ -803,30 +1083,6 @@
       },
       collapseEditItems() {
         this.triggerCollapseEditItem = !this.triggerCollapseEditItem;
-      },
-      fetchItemsProcessingTimer() {
-        setTimeout(() => {
-          this.$store.dispatch(FETCH_ITEMS_PROCESSING, {
-            username: this.$route.params.username,
-            langCodeFrom: this.langCodeFrom,
-            langCodeTo: this.langCodeTo
-          }).then(() => {
-            let in_progress_items = this.itemsProcessing[this.langCodeFrom].filter(x => x.state[0] == 0 || x
-              .state[0] == 1)
-            if (in_progress_items.length > 0) {
-              let item_index = this.itemsProcessing[this.langCodeFrom].indexOf(in_progress_items[0])
-              this.currentlyProcessingId = this.itemsProcessing[this.langCodeFrom][item_index].guid
-              this.userAlignInProgress = true;
-              this.fetchItemsProcessingTimer();
-
-              this.selectCurrentlyProcessingDocument(this.itemsProcessing[this.langCodeFrom][item_index]);
-            } else {
-              this.userAlignInProgress = false;
-              this.isLoading.alignStopping = false;
-              this.selectFirstProcessingDocument();
-            }
-          });
-        }, 5000)
       },
       fetchAll() {
         this.$store.dispatch(FETCH_ITEMS, {
@@ -846,7 +1102,8 @@
           langCodeFrom: this.langCodeFrom,
           langCodeTo: this.langCodeTo
         }).then(() => {
-          let in_progress_items = this.itemsProcessing[this.langCodeFrom].filter(x => x.state[0] == 0 || x.state[0] ==
+          let in_progress_items = this.itemsProcessing[this.langCodeFrom].filter(x => x.state[0] == 0 || x.state[
+              0] ==
             1)
           if (in_progress_items.length > 0) {
             let item_index = this.itemsProcessing[this.langCodeFrom].indexOf(in_progress_items[0])
@@ -879,10 +1136,15 @@
       },
       langCodeTo() {
         this.fetchAll();
+      },
+      docIndex() {
+        this.updateUnusedLines();
       }
     },
     computed: {
-      ...mapGetters(["items", "itemsProcessing", "splitted", "processing", "docIndex"]),
+      ...mapGetters(["items", "itemsProcessing", "splitted", "processing", "docIndex", "conflictSplittedFrom",
+        "conflictSplittedTo", "conflictFlowTo"
+      ]),
       username() {
         return this.$route.params.username;
       },
@@ -915,13 +1177,8 @@
         return (this.downloadThreshold / 100).toFixed(2);
       },
       processingExists() {
-        // if (this.items && this.items[this.langCodeFrom] && this.items[this.langCodeFrom]) {
-
-        // }
-
-
-
-        let selected_progress_item = this.itemsProcessing[this.langCodeFrom].filter(x => x.guid_from == this.selectedIds[this.langCodeFrom] && x.guid_to == this.selectedIds[this.langCodeTo]);
+        let selected_progress_item = this.itemsProcessing[this.langCodeFrom].filter(x => x.guid_from == this
+          .selectedIds[this.langCodeFrom] && x.guid_to == this.selectedIds[this.langCodeTo]);
         if (selected_progress_item.length > 0) {
           return true;
         }
@@ -944,7 +1201,8 @@
       DownloadPanel,
       SplittedPanel,
       InfoPanel,
-      GoToDialog
+      GoToDialog,
+      CreateAlignmentDialog
     }
   };
 </script>
