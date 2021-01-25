@@ -24,13 +24,14 @@
         <div class="d-table fill-height cell-edit">
 
           <!-- left line id column -->
-          <div class="d-table-cell green lighten-5 cell-edit-index text-center">
+          <div class="d-table-cell lighten-5 cell-edit-index text-center"
+            :class="[{'red': panelColor=='red'},{'green': panelColor=='green'},{'blue': panelColor=='blue'}]">
             <div class="fill-height d-flex cell-edit-index-cont fix-height flex-column justify-space-between">
               <div class="pa-2 font-weight-medium line-num">
                 {{ lineIdFrom }}
                 <!-- [{{item.batch_id}}] [{{item.batch_index_id}}] -->
               </div>
-              <div class="cell-edit-action-panel colored">
+              <div class="cell-edit-action-panel" :class="[{'c-red': panelColor=='red'},{'c-green': panelColor=='green'},{'c-blue': panelColor=='blue'}]">
                 <div class="cell-edit-button" @click="editAddUpEnd('from')">
                   <v-icon>mdi-arrow-up-bold-circle</v-icon>
                 </div>
@@ -131,12 +132,13 @@
               }"> -->
 
           <!-- right line id column -->
-          <div class="d-table-cell green lighten-5 cell-edit-index text-center">
+          <div class="d-table-cell lighten-5 cell-edit-index text-center"
+            :class="[{'red': panelColor=='red'},{'green': panelColor=='green'},{'blue': panelColor=='blue'}]">
             <div class="fill-height d-flex cell-edit-index-cont fix-height flex-column justify-space-between">
               <div class="pa-2 font-weight-medium line-num">
                 {{ lineIdTo }}
               </div>
-              <div class="cell-edit-action-panel colored">
+              <div class="cell-edit-action-panel" :class="[{'c-red': panelColor=='red'},{'c-green': panelColor=='green'},{'c-blue': panelColor=='blue'}]">
                 <div class="cell-edit-button" @click="editAddUpEnd('to')">
                   <v-icon>mdi-arrow-up-bold-circle</v-icon>
                 </div>
@@ -247,7 +249,7 @@
   } from "@/common/helper"
   export default {
     name: "EditItem",
-    props: ["item", "collapse", "clearCandidates", "showProxyTo", "prevItem", "fileId", ],
+    props: ["item", "collapse", "clearCandidates", "showProxyTo", "prevItem", "fileId", "panelColor"],
     data() {
       return {
         state: STATE_SAVED,
@@ -281,23 +283,28 @@
       editAddUpEnd(textType) {
         if (textType == "from") {
           let newText = this.editedFromText ? this.editedFromText : this.item.text_from;
-          this.$emit('editAddUpEnd', this.item.index_id, newText, textType, this.item.batch_id, this.item.batch_index_id);
+          this.$emit('editAddUpEnd', this.item.index_id, newText, textType, this.item.batch_id, this.item
+            .batch_index_id);
         } else if (textType == "to") {
           let newText = this.editedToText ? this.editedToText : this.item.text_to;
-          this.$emit('editAddUpEnd', this.item.index_id, newText, textType, this.item.batch_id, this.item.batch_index_id);
+          this.$emit('editAddUpEnd', this.item.index_id, newText, textType, this.item.batch_id, this.item
+            .batch_index_id);
         }
       },
       editAddDownEnd(textType) {
         if (textType == "from") {
           let newText = this.editedFromText ? this.editedFromText : this.item.text_from;
-          this.$emit('editAddDownEnd', this.item.index_id, newText, textType, this.item.batch_id, this.item.batch_index_id);
+          this.$emit('editAddDownEnd', this.item.index_id, newText, textType, this.item.batch_id, this.item
+            .batch_index_id);
         } else if (textType == "to") {
           let newText = this.editedToText ? this.editedToText : this.item.text_to;
-          this.$emit('editAddDownEnd', this.item.index_id, newText, textType, this.item.batch_id, this.item.batch_index_id);
+          this.$emit('editAddDownEnd', this.item.index_id, newText, textType, this.item.batch_id, this.item
+            .batch_index_id);
         }
       },
       editAddCandidateEnd(textType, lineId, text) {
-        this.$emit('editAddCandidateEnd', this.item.index_id, textType, lineId, text, this.item.batch_id, this.item.batch_index_id);
+        this.$emit('editAddCandidateEnd', this.item.index_id, textType, lineId, text, this.item.batch_id, this.item
+          .batch_index_id);
       },
       editDeleteLine() {
         this.$emit('editDeleteLine', this.item.index_id, this.item.batch_id, this.item.batch_index_id);
@@ -317,16 +324,17 @@
         // #Не сохранять, если не изменилось
         let newText = event.target.value;
         if (Helper.trim(newText) != Helper.trim(this.uneditedText)) {
-          this.$emit('editProcessing', this.item.index_id, newText, textType, this.item.batch_id, this.item.batch_index_id, (res) => {
-            console.log("edit result:", res)
-            if (res == RESULT_OK) {
-              this.state = STATE_SAVED;
-              this.changed_from = false;
-              this.changed_to = false;
-            } else {
-              console.log("Edit error on save.")
-            }
-          });
+          this.$emit('editProcessing', this.item.index_id, newText, textType, this.item.batch_id, this.item
+            .batch_index_id, (res) => {
+              console.log("edit result:", res)
+              if (res == RESULT_OK) {
+                this.state = STATE_SAVED;
+                this.changed_from = false;
+                this.changed_to = false;
+              } else {
+                console.log("Edit error on save.")
+              }
+            });
         }
       },
       setUneditedText(event) {

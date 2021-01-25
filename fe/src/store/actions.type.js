@@ -14,6 +14,7 @@ export const GET_DOC_INDEX = "get_doc_index";
 
 export const GET_CONFLICT_SPLITTED_FROM = "get_conflict_splitted_from";
 export const GET_CONFLICT_SPLITTED_TO = "get_conflict_splitted_to";
+export const GET_CONFLICT_FLOW_TO = "get_conflict_flow_to";
 
 export const CREATE_ALIGNMENT = "create_alignment"
 export const STOP_ALIGNMENT = "stop_alignment";

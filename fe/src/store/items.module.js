@@ -22,7 +22,8 @@ import {
   ALIGN_SPLITTED,
   CREATE_ALIGNMENT,
   GET_CONFLICT_SPLITTED_FROM,
-  GET_CONFLICT_SPLITTED_TO
+  GET_CONFLICT_SPLITTED_TO,
+  GET_CONFLICT_FLOW_TO
 } from "./actions.type";
 
 import {
@@ -32,7 +33,8 @@ import {
   SET_PROCESSING,
   SET_DOC_INDEX,
   SET_CONFLICT_SPLITTED_FROM,
-  SET_CONFLICT_SPLITTED_TO
+  SET_CONFLICT_SPLITTED_TO,
+  SET_CONFLICT_FLOW_TO
 } from "./mutations.type";
 
 const initialState = {
@@ -42,7 +44,8 @@ const initialState = {
   processing: LanguageHelper.initProcessing(),
   docIndex: [],
   conflictSplittedFrom: [],
-  conflictSplittedTo: []
+  conflictSplittedTo: [],
+  conflictFlowTo: []
 };
 
 export const state = {
@@ -122,6 +125,17 @@ export const actions = {
       },
       function () {
         console.log(`Didn't find processing document.`);
+      }
+    );
+    return;
+  },
+  async [GET_CONFLICT_FLOW_TO](context, params) {
+    await ItemsService.getProcessingByIds(params).then(
+      function (response) {
+        context.commit(SET_CONFLICT_FLOW_TO, response.data);
+      },
+      function () {
+        console.log(`GET_CONFLICT_FLOW_TO error.`);
       }
     );
     return;
@@ -209,16 +223,18 @@ export const mutations = {
     state.processing = data;
   },
   [SET_DOC_INDEX](state, data) {
-    // console.log("new index:", data.items)
     state.docIndex = data.items;
   },
   [SET_CONFLICT_SPLITTED_FROM](state, data) {
-    console.log("SET_CONFLICT_SPLITTED_FROM:", data.items)
     state.conflictSplittedFrom = data.items;
   },
   [SET_CONFLICT_SPLITTED_TO](state, data) {
     state.conflictSplittedTo = data.items;
-  }
+  },
+  [SET_CONFLICT_FLOW_TO](state, data) {
+    console.log("SET_CONFLICT_FLOW_TO:", data.items)
+    state.conflictFlowTo = data.items;
+  },
 };
 
 const getters = {
@@ -243,6 +259,9 @@ const getters = {
   conflictSplittedTo(state) {
     return state.conflictSplittedTo;
   },
+  conflictFlowTo(state) {
+    return state.conflictFlowTo;
+  }
 };
 
 export default {

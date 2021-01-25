@@ -272,34 +272,36 @@ def get_processing(username, lang_from, lang_to, align_guid, count, page):
     index = helper.get_flatten_doc_index(db_path)
 
     shift = (page-1)*count
-    pages = index[shift:shift+count]
-    res = []
-
-    for i, (data, texts) in enumerate(zip(pages, helper.get_doc_page(db_path, [x[0][0] for x in pages]))):
-        print(shift + i)
-        # print("data",data)
-        res.append({
-            "index_id": shift + i,  # absolute position in index
-            # from
-            "batch_id": texts[4],
-            "batch_index_id": data[1],    # relative position in index batch
-            "text_from": texts[0],
-            "line_id_from": data[0][1],  # array with ids
-            # primary key in DB (processing_from)
-            "processing_from_id": data[0][0],
-            "proxy_from": texts[2],
-            # to
-            "text_to": texts[1],
-            "line_id_to": data[0][3],  # array with ids
-            # primary key in DB (processing_to)
-            "processing_to_id": data[0][2],
-            "proxy_to": texts[3],
-        })
+    pages = list(zip(index[shift:shift+count], range(shift, shift+count)))
+    res = helper.get_doc_items(pages, db_path)
 
     lines_count = len(index)
     total_pages = (lines_count//count) + (1 if lines_count % count != 0 else 0)
     meta = {"page": page, "total_pages": total_pages}
     return {"items": res, "meta": meta}
+
+
+@app.route("/items/<username>/processing/<lang_from>/<lang_to>/<align_guid>", methods=["POST"])
+def get_processing_by_ids(username, lang_from, lang_to, align_guid):
+    """Get processing (aligned) items by ids"""
+    db_folder = os.path.join(con.UPLOAD_FOLDER, username,
+                             con.DB_FOLDER, lang_from, lang_to)
+    db_path = os.path.join(db_folder, f'{align_guid}.db')
+    if not os.path.isfile(db_path):
+        abort(404)
+
+    index = helper.get_flatten_doc_index(db_path)
+    index_ids = helper.parse_json_array(request.form.get("index_ids", "[]"))
+
+    print("index_ids", index_ids)
+    print("index", index)
+
+    index_items = [(index[i], i) for i in index_ids]
+    res = {}
+    for i, item in zip(index_ids, helper.get_doc_items(index_items, db_path)):
+        res[i] = item
+
+    return {"items": res}
 
 
 @app.route("/items/<username>/splitted/from/<lang_from>/<lang_to>/<align_guid>", methods=["POST"])

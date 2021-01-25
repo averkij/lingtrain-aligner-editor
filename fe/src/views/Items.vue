@@ -80,7 +80,7 @@
     </v-alert>
     <div v-else class="mt-5">
       <div v-if="!processingExists">
-        <v-btn class="primary"  @click="showCreateAlignmentDialog=true">
+        <v-btn class="primary" @click="showCreateAlignmentDialog=true">
           Create alignment
         </v-btn>
         <CreateAlignmentDialog v-model="showCreateAlignmentDialog" @createAlignment="createAlignment" />
@@ -225,7 +225,7 @@
             @editAddEmptyLineAfter="editAddEmptyLineAfter" @editClearLine="editClearLine" @getCandidates="getCandidates"
             @editAddCandidateEnd="editAddCandidateEnd" :item="line"
             :prevItem="i == 0 ? processing.items[0] : processing.items[i-1]" :collapse="triggerCollapseEditItem"
-            :clearCandidates="triggerClearCandidates" :showProxyTo="showProxyTo">
+            :clearCandidates="triggerClearCandidates" :showProxyTo="showProxyTo" :panelColor="'green'">
           </EditItem>
           <v-divider></v-divider>
         </div>
@@ -263,23 +263,138 @@
       </v-alert>
       <div v-else>
 
-        <div class="text-h5 mt-10 font-weight-bold">Unused strings</div>
-
-        <div class="mt-6">
-          <div v-for="(line,i) in unusedLines" :key="i">
-            {{line}} {{conflictSplittedTo[line].t}} {{conflictSplittedTo[line].p}}
-          </div>
-        </div>
+        <v-alert type="info" border="left" colored-border color="info" class="mt-6" elevation="2">
+          To proceed to the next batch all conflicts need to be resolved. Lines without identifiers are not considered
+          during the conflicts detection.
+        </v-alert>
 
         <div class="text-h5 mt-10 font-weight-bold">Flow breaks</div>
 
+        <v-alert v-if="!flowBreakGroups || flowBreakGroups.length==0" type="info" border="left" colored-border color="info"
+          class="mt-6" elevation="2">
+          No unhandled flow breaks detected.
+        </v-alert>
         <div class="mt-6">
-          <div v-for="(line,i) in flowBreaks" :key="i">
-            line {{line[0]}} ➡ {{line[1]}}
-          </div>
+          <v-card>
+            <div class="blue lighten-5" dark>
+
+              <!-- title -->
+              <v-card-title class="pr-3">
+                <!-- {{selectedProcessing.name}} -->
+                <v-spacer></v-spacer>
+
+                <v-icon>mdi-translate</v-icon>
+                <v-switch value="true" v-model="showProxyTo" class="mx-2"></v-switch>
+                <!-- <div>showTranslation: {{clientSettings}}</div> -->
+
+                <v-btn icon @click="collapseEditItems">
+                  <v-icon>mdi-collapse-all</v-icon>
+                </v-btn>
+              </v-card-title>
+            </div>
+            <v-divider></v-divider>
+
+            <div v-for="(group,i) in flowBreakGroups" :key="i">
+              <div class="pa-3 blue lighten-5 font-weight-bold text-caption">conflict on line {{group['lineId']}}</div>
+              <v-divider></v-divider>
+              <EditItem @editProcessing="editProcessing" @editAddUpEnd="editAddUpEnd" @editAddDownEnd="editAddDownEnd"
+                @editDeleteLine="editDeleteLine" @editAddEmptyLineBefore="editAddEmptyLineBefore"
+                @editAddEmptyLineAfter="editAddEmptyLineAfter" @editClearLine="editClearLine"
+                @getCandidates="getCandidates" @editAddCandidateEnd="editAddCandidateEnd"
+                :item="conflictFlowTo[group['prev']]"
+                :prevItem="group['prev'] == 0 ? conflictFlowTo[0] : conflictFlowTo[group['prev']-1]"
+                :collapse="triggerCollapseEditItem" :clearCandidates="triggerClearCandidates" :showProxyTo="showProxyTo"
+                :panelColor="'blue'">
+              </EditItem>
+              <v-divider></v-divider>
+              <EditItem @editProcessing="editProcessing" @editAddUpEnd="editAddUpEnd" @editAddDownEnd="editAddDownEnd"
+                @editDeleteLine="editDeleteLine" @editAddEmptyLineBefore="editAddEmptyLineBefore"
+                @editAddEmptyLineAfter="editAddEmptyLineAfter" @editClearLine="editClearLine"
+                @getCandidates="getCandidates" @editAddCandidateEnd="editAddCandidateEnd"
+                :item="conflictFlowTo[group['curr']]"
+                :prevItem="group['curr'] == 0 ? conflictFlowTo[0] : conflictFlowTo[group['curr']-1]"
+                :collapse="triggerCollapseEditItem" :clearCandidates="triggerClearCandidates" :showProxyTo="showProxyTo"
+                :panelColor="'red'">
+              </EditItem>
+              <v-divider></v-divider>
+            </div>
+          </v-card>
         </div>
 
-        <!-- <div class="mt-10">{{docIndex}}</div> -->
+        <div class="text-h5 mt-10 font-weight-bold">Unused strings</div>
+
+        <v-alert v-if="(!unusedFromLines || unusedFromLines.length==0) && (!unusedToLines || unusedToLines.length==0)"
+          type="info" border="left" colored-border color="info" class="mt-6" elevation="2">
+          All sentences are in use.
+        </v-alert>
+        <div v-else>
+          <v-card v-if="unusedFromLines && unusedFromLines.length > 0" class="mt-6">
+            <div class="blue lighten-5">
+              <v-card-title>{{LANGUAGES[langCodeFrom].name}}</v-card-title>
+              <v-card-text>{{unusedFromLines.length}} lines
+              </v-card-text>
+            </div>
+            <v-divider></v-divider>
+            <div v-for="(line,i) in unusedFromLines" :key="i">
+              <template>
+                <div>
+                  <v-row justify="center" no-gutters>
+                    <v-col class="text-left" cols="12">
+                      <div class="d-table fill-height">
+                        <div class="d-table-cell grey lighten-4 pa-2 text-center" style="min-width:45px">
+                          {{ line }}
+                        </div>
+                        <v-divider class="d-table-cell" vertical></v-divider>
+                        <div class="d-table-cell pa-2">{{ conflictSplittedFrom[line].t}}
+                          <div v-if="conflictSplittedFrom[line].p"
+                            class="mt-3 proxy-to-subtitles grey lighten-3 font-weight-medium">
+                            {{conflictSplittedFrom[line].p}}
+                          </div>
+                        </div>
+                        <div class="d-table-cell pa-2">
+                        </div>
+                      </div>
+                    </v-col>
+                  </v-row>
+                </div>
+                <v-divider></v-divider>
+              </template>
+            </div>
+          </v-card>
+          <v-card v-if="unusedToLines && unusedToLines.length > 0" class="mt-6">
+            <div class="blue lighten-5">
+              <v-card-title>{{LANGUAGES[langCodeTo].name}}</v-card-title>
+              <v-card-text>{{unusedToLines.length}} lines
+              </v-card-text>
+            </div>
+            <v-divider></v-divider>
+            <div v-for="(line,i) in unusedToLines" :key="i">
+              <template>
+                <div>
+                  <v-row justify="center" no-gutters>
+                    <v-col class="text-left" cols="12">
+                      <div class="d-table fill-height">
+                        <div class="d-table-cell grey lighten-4 pa-2 text-center" style="min-width:45px">
+                          {{ line }}
+                        </div>
+                        <v-divider class="d-table-cell" vertical></v-divider>
+                        <div class="d-table-cell pa-2">{{ conflictSplittedTo[line].t}}
+                          <div v-if="conflictSplittedTo[line].p"
+                            class="mt-3 proxy-to-subtitles grey lighten-3 font-weight-medium">
+                            {{conflictSplittedTo[line].p}}
+                          </div>
+                        </div>
+                      </div>
+                    </v-col>
+                  </v-row>
+                </div>
+                <v-divider></v-divider>
+              </template>
+            </div>
+          </v-card>
+        </div>
+
+
       </div>
 
       <div class="text-h4 mt-10 font-weight-bold">
@@ -381,8 +496,9 @@
     GET_DOC_INDEX,
     GET_PROCESSING,
     GET_CANDIDATES,
-    // GET_CONFLICT_SPLITTED_FROM,
+    GET_CONFLICT_SPLITTED_FROM,
     GET_CONFLICT_SPLITTED_TO,
+    GET_CONFLICT_FLOW_TO,
     STOP_ALIGNMENT,
     EDIT_PROCESSING,
     CREATE_ALIGNMENT,
@@ -408,6 +524,7 @@
         PROC_IN_PROGRESS_DONE,
         PROC_ERROR,
         PROC_DONE,
+        batchesToAlign: [0],
         files: LanguageHelper.initGeneralVars(),
         proxyFiles: LanguageHelper.initGeneralVars(),
         selected: LanguageHelper.initGeneralVars(),
@@ -432,8 +549,9 @@
         //dialogs
         showGoToDialog: false,
         showCreateAlignmentDialog: false,
-        unusedLines: [],
-        flowBreaks: [],
+        unusedFromLines: [],
+        unusedToLines: [],
+        flowBreakGroups: [],
         usedFromLinesSet: new Set(),
         usedToLinesSet: new Set(),
         usedToLinesFlow: []
@@ -470,19 +588,24 @@
         this.prepareUsedFromLines();
         this.prepareUsedToLines();
 
-        let unusedLines = [];
-        let flowBreaks = [];
-
-        console.log(this.usedToLinesSet)
+        let unusedFromLines = [];
+        let unusedToLines = [];
+        let flowBreaks = new Set();
+        let flowBreakGroups = [];
 
         let lastLine = this.docIndex[this.docIndex.length - 1];
+        let lastLineFromIndex = JSON.parse(lastLine[1]);
         let lastLineToIndex = JSON.parse(lastLine[3]);
 
-        console.log("lastLineToIndex", lastLineToIndex)
-
+        //calculate unused lines
+        for (let i = 1; i < lastLineFromIndex[0]; i++) {
+          if (!this.usedFromLinesSet.has(i)) {
+            unusedFromLines.push(i)
+          }
+        }
         for (let i = 1; i < lastLineToIndex[0]; i++) {
           if (!this.usedToLinesSet.has(i)) {
-            unusedLines.push(i)
+            unusedToLines.push(i)
           }
         }
 
@@ -490,25 +613,50 @@
         let counter = this.usedToLinesFlow[0][1];
         this.usedToLinesFlow.forEach(item => {
           if (item[1] != counter) {
-            flowBreaks.push(item);
+            flowBreaks.add(item[0] - 2);
+            flowBreaks.add(item[0] - 1);
+
+            flowBreakGroups.push({
+              "lineId": item[0] - 1,
+              "prev": item[0] - 2,
+              "curr": item[0] - 1
+            })
             counter = item[1];
           }
           counter = counter + 1;
         });
 
-        console.log(lastLineToIndex)
-
-        this.flowBreaks = flowBreaks;
-        this.unusedLines = unusedLines;
-
+        this.$store
+          .dispatch(GET_CONFLICT_SPLITTED_FROM, {
+            username: this.$route.params.username,
+            type: "from",
+            ids: JSON.stringify(unusedFromLines),
+            align_guid: this.selectedProcessingId,
+            langCodeFrom: this.langCodeFrom,
+            langCodeTo: this.langCodeTo
+          }).then(() => {
+            this.unusedFromLines = unusedFromLines;
+          });
         this.$store
           .dispatch(GET_CONFLICT_SPLITTED_TO, {
             username: this.$route.params.username,
             type: "to",
-            ids: JSON.stringify(unusedLines),
+            ids: JSON.stringify(unusedToLines),
             align_guid: this.selectedProcessingId,
             langCodeFrom: this.langCodeFrom,
             langCodeTo: this.langCodeTo
+          }).then(() => {
+            this.unusedToLines = unusedToLines;
+          });
+        this.$store
+          .dispatch(GET_CONFLICT_FLOW_TO, {
+            username: this.$route.params.username,
+            index_ids: JSON.stringify([...flowBreaks]),
+            align_guid: this.selectedProcessingId,
+            langCodeFrom: this.langCodeFrom,
+            langCodeTo: this.langCodeTo
+          }).then(() => {
+            this.flowBreakGroups = flowBreakGroups;
           });
       },
       createAlignment(name) {
@@ -537,7 +685,7 @@
           .dispatch(ALIGN_SPLITTED, {
             username: this.$route.params.username,
             id: this.selectedProcessingId,
-            batchIds: [0],
+            batchIds: this.batchesToAlign,
             alignAll: ''
           })
           .then(() => {
@@ -990,7 +1138,7 @@
     },
     computed: {
       ...mapGetters(["items", "itemsProcessing", "splitted", "processing", "docIndex", "conflictSplittedFrom",
-        "conflictSplittedTo"
+        "conflictSplittedTo", "conflictFlowTo"
       ]),
       username() {
         return this.$route.params.username;

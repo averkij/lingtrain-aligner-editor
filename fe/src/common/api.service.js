@@ -117,6 +117,15 @@ export const ItemsService = {
       `${params.username}/processing/${params.langCodeFrom}/${params.langCodeTo}/${params.fileId}/${params.linesCount}/${params.page}`
     );
   },
+  getProcessingByIds(params) {
+    let form = new FormData();
+    form.append("index_ids", params.index_ids);
+    return ApiService.post(
+      "items",
+      `${params.username}/processing/${params.langCodeFrom}/${params.langCodeTo}/${params.align_guid}`,
+      form
+    );
+  },
   getCandidates(params) {
     return ApiService.get(
       "items",

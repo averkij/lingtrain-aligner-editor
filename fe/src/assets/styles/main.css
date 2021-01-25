@@ -70,8 +70,16 @@
     display: none;
 }
 
-.cell-edit-action-panel.colored {
+.cell-edit-action-panel.c-green {
     background: #E8F5E9;
+}
+
+.cell-edit-action-panel.c-red {
+    background: #FFEBEE;
+}
+
+.cell-edit-action-panel.c-blue {
+    background: #E3F2FD ;
 }
 
 .cell-edit-button {

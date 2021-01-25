@@ -513,6 +513,30 @@ def get_alignments_list(username, lang_from, lang_to):
         return res
 
 
+def get_doc_items(index_items, db_path):
+    """Get document items by ids"""
+    res = []
+    for i, (data, texts) in enumerate(zip(index_items, get_doc_page(db_path, [x[0][0][0] for x in index_items]))):
+        res.append({
+            "index_id": data[1],  # absolute position in index
+            # from
+            "batch_id": texts[4],
+            "batch_index_id": data[0][1],    # relative position in index batch
+            "text_from": texts[0],
+            "line_id_from": data[0][0][1],  # array with ids
+            # primary key in DB (processing_from)
+            "processing_from_id": data[0][0][0],
+            "proxy_from": texts[2],
+            # to
+            "text_to": texts[1],
+            "line_id_to": data[0][0][3],  # array with ids
+            # primary key in DB (processing_to)
+            "processing_to_id": data[0][0][2],
+            "proxy_to": texts[3],
+        })
+    return res
+
+
 def check_folder(folder):
     """Check if folder exists"""
     pathlib.Path(folder).mkdir(parents=True, exist_ok=True)
