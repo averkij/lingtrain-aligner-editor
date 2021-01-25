@@ -253,8 +253,12 @@
         </v-row>
       </v-card>
 
-      <div class="text-h4 mt-10 font-weight-bold">
+      <!-- TO DO -->
+      <!-- <div class="text-h4 mt-10 font-weight-bold">
         <v-icon color="blue" large>mdi-puzzle</v-icon> Conflicts
+      </div> -->
+      <div class="text-h4 mt-10 font-weight-bold">
+        <v-icon color="blue" large>mdi-puzzle</v-icon> Unused strings
       </div>
 
       <v-alert v-if="!processing || !processing.items || processing.items.length == 0" type="info" border="left"
@@ -263,7 +267,8 @@
       </v-alert>
       <div v-else>
 
-        <v-alert type="info" border="left" colored-border color="info" class="mt-6" elevation="2">
+        <!-- TO DO -->
+        <!-- <v-alert type="info" border="left" colored-border color="info" class="mt-6" elevation="2">
           To proceed to the next batch all conflicts need to be resolved. Lines without identifiers are not considered
           during the conflicts detection.
         </v-alert>
@@ -278,14 +283,11 @@
           <v-card>
             <div class="blue lighten-5" dark>
 
-              <!-- title -->
               <v-card-title class="pr-3">
-                <!-- {{selectedProcessing.name}} -->
                 <v-spacer></v-spacer>
 
                 <v-icon>mdi-translate</v-icon>
                 <v-switch value="true" v-model="showProxyTo" class="mx-2"></v-switch>
-                <!-- <div>showTranslation: {{clientSettings}}</div> -->
 
                 <v-btn icon @click="collapseEditItems">
                   <v-icon>mdi-collapse-all</v-icon>
@@ -319,9 +321,9 @@
               <v-divider></v-divider>
             </div>
           </v-card>
-        </div>
+        </div> -->
 
-        <div class="text-h5 mt-10 font-weight-bold">Unused strings</div>
+        <!-- <div class="text-h5 mt-10 font-weight-bold">Unused strings</div> -->
 
         <v-alert v-if="(!unusedFromLines || unusedFromLines.length==0) && (!unusedToLines || unusedToLines.length==0)"
           type="info" border="left" colored-border color="info" class="mt-6" elevation="2">
@@ -498,7 +500,7 @@
     GET_CANDIDATES,
     GET_CONFLICT_SPLITTED_FROM,
     GET_CONFLICT_SPLITTED_TO,
-    GET_CONFLICT_FLOW_TO,
+    // GET_CONFLICT_FLOW_TO,
     STOP_ALIGNMENT,
     EDIT_PROCESSING,
     CREATE_ALIGNMENT,
@@ -546,12 +548,15 @@
         downloadThreshold: 9,
         showProxyTo: SettingsHelper.getShowProxyTo(),
         selectedListItem: 0,
+
         //dialogs
         showGoToDialog: false,
         showCreateAlignmentDialog: false,
+
+        //conflicts
         unusedFromLines: [],
         unusedToLines: [],
-        flowBreakGroups: [],
+        // flowBreakGroups: [],
         usedFromLinesSet: new Set(),
         usedToLinesSet: new Set(),
         usedToLinesFlow: []
@@ -590,8 +595,8 @@
 
         let unusedFromLines = [];
         let unusedToLines = [];
-        let flowBreaks = new Set();
-        let flowBreakGroups = [];
+        // let flowBreaks = new Set();
+        // let flowBreakGroups = [];
 
         let lastLine = this.docIndex[this.docIndex.length - 1];
         let lastLineFromIndex = JSON.parse(lastLine[1]);
@@ -610,21 +615,21 @@
         }
 
         //calculate flow breaks
-        let counter = this.usedToLinesFlow[0][1];
-        this.usedToLinesFlow.forEach(item => {
-          if (item[1] != counter) {
-            flowBreaks.add(item[0] - 2);
-            flowBreaks.add(item[0] - 1);
+        // let counter = this.usedToLinesFlow[0][1];
+        // this.usedToLinesFlow.forEach(item => {
+        //   if (item[1] != counter) {
+        //     flowBreaks.add(item[0] - 2);
+        //     flowBreaks.add(item[0] - 1);
 
-            flowBreakGroups.push({
-              "lineId": item[0] - 1,
-              "prev": item[0] - 2,
-              "curr": item[0] - 1
-            })
-            counter = item[1];
-          }
-          counter = counter + 1;
-        });
+        //     flowBreakGroups.push({
+        //       "lineId": item[0] - 1,
+        //       "prev": item[0] - 2,
+        //       "curr": item[0] - 1
+        //     })
+        //     counter = item[1];
+        //   }
+        //   counter = counter + 1;
+        // });
 
         this.$store
           .dispatch(GET_CONFLICT_SPLITTED_FROM, {
@@ -648,16 +653,16 @@
           }).then(() => {
             this.unusedToLines = unusedToLines;
           });
-        this.$store
-          .dispatch(GET_CONFLICT_FLOW_TO, {
-            username: this.$route.params.username,
-            index_ids: JSON.stringify([...flowBreaks]),
-            align_guid: this.selectedProcessingId,
-            langCodeFrom: this.langCodeFrom,
-            langCodeTo: this.langCodeTo
-          }).then(() => {
-            this.flowBreakGroups = flowBreakGroups;
-          });
+        // this.$store
+        //   .dispatch(GET_CONFLICT_FLOW_TO, {
+        //     username: this.$route.params.username,
+        //     index_ids: JSON.stringify([...flowBreaks]),
+        //     align_guid: this.selectedProcessingId,
+        //     langCodeFrom: this.langCodeFrom,
+        //     langCodeTo: this.langCodeTo
+        //   }).then(() => {
+        //     this.flowBreakGroups = flowBreakGroups;
+        //   });
       },
       createAlignment(name) {
         this.$store
