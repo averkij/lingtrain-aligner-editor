@@ -15,7 +15,6 @@ import model_dispatcher
 import numpy as np
 import seaborn as sns
 import sim_helper
-import state_manager as state
 from matplotlib import pyplot as plt
 from scipy import spatial
 
@@ -85,22 +84,15 @@ class AlignmentProcessor:
             result_code, batch_number, texts_from, texts_to = queue_out.get()
 
             if result_code == con.PROC_DONE:
-                print("RESULT:", result_code)
                 result.append((batch_number, texts_from, texts_to))
-                state.set_processing_state(
-                    self.db_path, (con.PROC_IN_PROGRESS, self.tasks_count, counter+1))
-
+                helper.update_batch_progress(self.db_path, batch_number)
                 helper.increment_alignment_state(
-                    self.user_db_path, self.guid_from, self.guid_to, con.PROC_IN_PROGRESS)
+                    self.db_path, self.user_db_path, self.guid_from, self.guid_to, con.PROC_IN_PROGRESS)
 
             elif result_code == con.PROC_ERROR:
                 error_occured = True
-                state.set_processing_state(
-                    self.db_path, (con.PROC_ERROR, self.tasks_count, counter+1))
-
                 helper.increment_alignment_state(
-                    self.user_db_path, self.guid_from, self.guid_to, con.PROC_ERROR)
-
+                    self.db_path, self.user_db_path, self.guid_from, self.guid_to, con.PROC_ERROR)
                 break
 
             counter += 1
@@ -114,8 +106,6 @@ class AlignmentProcessor:
             logging.info(f"creating index for {self.db_path}")
             helper.create_doc_index(db, result)
 
-        logging.info(f"Alignment is finished. Removing state. {self.db_path}")
-
         if not error_occured:
             print("finishing. no error occured")
             helper.update_alignment_state(
@@ -125,9 +115,6 @@ class AlignmentProcessor:
 
     def start(self):
         """Start workers"""
-        state.set_processing_state(
-            self.db_path, (con.PROC_IN_PROGRESS, self.tasks_count, 1))
-
         result_handler = Process(
             target=self.handle_result, args=(self.queue_out,), daemon=True)
         result_handler.start()

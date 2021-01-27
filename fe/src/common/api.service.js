@@ -65,11 +65,11 @@ export const ItemsService = {
     //check filesize
     if (!params.file) {
       alert("File is empty");
-      return;
+      return Promise.resolve();
     }
     if (params.file.size > 5 * 1024 * 1024) {
       alert("File is too big (> 5MB)");
-      return;
+      return Promise.resolve();
     }
     let form = new FormData();
     form.append(params.langCode, params.file);
@@ -138,13 +138,13 @@ export const ItemsService = {
       `${params.username}/processing/${params.langCodeFrom}/${params.langCodeTo}/${params.fileId}/index`
     );
   },
-  getSplittedByIds(params) {
+  getSplittedByIds(params, type) {
     console.log("getSplittedByIds", params)
     let form = new FormData();
     form.append("ids", params.ids);
     return ApiService.post(
       "items",
-      `${params.username}/splitted/${params.type}/${params.langCodeFrom}/${params.langCodeTo}/${params.align_guid}`,
+      `${params.username}/splitted/${type}/${params.langCodeFrom}/${params.langCodeTo}/${params.align_guid}`,
       form
     );
   },
@@ -159,11 +159,22 @@ export const ItemsService = {
     form.append("id", params.id);
     form.append("align_all", params.alignAll);
     form.append("batch_ids", JSON.stringify(params.batchIds))
-    return ApiService.post(
-      "items",
-      `${params.username}/alignment/align`,
-      form
-    );
+    if (params.nextOnly) {
+      console.log("calculating next batch")
+      return ApiService.post(
+        "items",
+        `${params.username}/alignment/align/next`,
+        form
+      );
+    }
+    else {
+      return ApiService.post(
+        "items",
+        `${params.username}/alignment/align`,
+        form
+      );
+
+    }
   },
   createAlignment(params) {
     let form = new FormData();

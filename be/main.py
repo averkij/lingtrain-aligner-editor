@@ -12,7 +12,6 @@ import editor
 import helper
 import language_helper
 import output
-import state_manager as state
 from align_processor import AlignmentProcessor
 from flask import Flask, abort, request, send_file
 from flask_cors import CORS
@@ -249,6 +248,71 @@ def align(username):
     return con.EMPTY_LINES
 
 
+@app.route("/items/<username>/alignment/align/next", methods=["POST"])
+def align_next_batch(username):
+    """Align next batch of two splitted documents"""
+
+    align_guid = request.form.get("id", '')
+
+    name, guid_from, guid_to, state, curr_batches, total_batches = helper.get_alignment_info(
+        username, align_guid)
+    file_from, lang_from = helper.get_fileinfo(username, guid_from)
+    file_to, lang_to = helper.get_fileinfo(username, guid_to)
+
+    db_folder = os.path.join(con.UPLOAD_FOLDER, username,
+                             con.DB_FOLDER, lang_from, lang_to)
+    db_path = os.path.join(db_folder, f"{align_guid}.db")
+    user_db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
+
+    batches_count = helper.get_batches_count(db_path)
+    batch_ids = [batches_count]
+
+    logging.info(
+        f"align parameters align_guid {align_guid} batch_ids {batch_ids} name {name} guid_from {guid_from} guid_to {guid_to} total_batches {total_batches}")
+
+    splitted_from = os.path.join(
+        con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_from, file_from)
+    splitted_to = os.path.join(
+        con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_to, file_to)
+
+    with open(splitted_from, mode="r", encoding="utf-8") as input_from, \
+            open(splitted_to, mode="r", encoding="utf-8") as input_to:
+        lines_from = input_from.readlines()
+        lines_to = input_to.readlines()
+
+    logging.info(f"[{username}]. Cleaning images.")
+    helper.clean_img_user_foler(username, file_from)
+
+    # exit if batch ids is empty
+    batch_ids = [x for x in batch_ids if x < total_batches][:total_batches]
+    if not batch_ids:
+        abort(404)
+
+    helper.update_alignment_state_by_align_id(
+        user_db_path, align_guid, con.PROC_IN_PROGRESS)
+
+    # parallel processing
+    logging.info(f"{username}: aligning started")
+    res_img = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER,
+                           username, f"{align_guid}.png")
+    res_img_best = os.path.join(
+        con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{align_guid}.best.png")
+
+    task_list = [(lines_from_batch, lines_to_batch, line_ids_from, line_ids_to, batch_id)
+                 for lines_from_batch, lines_to_batch,
+                 line_ids_from, line_ids_to, batch_id
+                 in helper.get_batch_intersected(lines_from, lines_to, batch_ids)]
+
+    proc_count = config.PROCESSORS_COUNT
+
+    proc = AlignmentProcessor(
+        proc_count, db_path, user_db_path, res_img, res_img_best, lang_from, lang_to, guid_from, guid_to)
+    proc.add_tasks(task_list)
+    proc.start()
+
+    return con.EMPTY_LINES
+
+
 @app.route("/items/<username>/processing/<lang_from>/<lang_to>/<align_guid>/index", methods=["GET"])
 def get_doc_index(username, lang_from, lang_to, align_guid):
     """Get aligned document index"""
@@ -306,6 +370,7 @@ def get_processing_by_ids(username, lang_from, lang_to, align_guid):
 
 @app.route("/items/<username>/splitted/from/<lang_from>/<lang_to>/<align_guid>", methods=["POST"])
 def get_splitted_from_by_ids(username, lang_from, lang_to, align_guid):
+    """Get splitted from lines by array of IDs"""
     db_folder = os.path.join(con.UPLOAD_FOLDER, username,
                              con.DB_FOLDER, lang_from, lang_to)
     db_path = os.path.join(db_folder, f'{align_guid}.db')
@@ -315,7 +380,7 @@ def get_splitted_from_by_ids(username, lang_from, lang_to, align_guid):
 
     res = {}
     if text_ids:
-        for id, text, proxy in helper.get_splitted_to_by_id(db_path, text_ids):
+        for id, text, proxy in helper.get_splitted_from_by_id(db_path, text_ids):
             res[id] = {
                 "t": text,
                 "p": proxy if proxy else ''
@@ -325,6 +390,7 @@ def get_splitted_from_by_ids(username, lang_from, lang_to, align_guid):
 
 @app.route("/items/<username>/splitted/to/<lang_from>/<lang_to>/<align_guid>", methods=["POST"])
 def get_splitted_to_by_ids(username, lang_from, lang_to, align_guid):
+    """Get splitted to lines by array of IDs"""
     db_folder = os.path.join(con.UPLOAD_FOLDER, username,
                              con.DB_FOLDER, lang_from, lang_to)
     db_path = os.path.join(db_folder, f'{align_guid}.db')
@@ -372,7 +438,6 @@ def get_processing_candidates(username, lang_from, lang_to, align_guid, text_typ
         else:
             break
 
-    print("line_ids", line_ids)
     if not line_ids or index_id == 0:
         line_id = 1
     else:

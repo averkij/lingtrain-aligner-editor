@@ -141,7 +141,7 @@ export const actions = {
     return;
   },
   async [GET_CONFLICT_SPLITTED_FROM](context, params) {
-    await ItemsService.getSplittedByIds(params).then(
+    await ItemsService.getSplittedByIds(params, "from").then(
       function (response) {
         context.commit(SET_CONFLICT_SPLITTED_FROM, response.data);
       },
@@ -152,7 +152,7 @@ export const actions = {
     return;
   },
   async [GET_CONFLICT_SPLITTED_TO](context, params) {
-    await ItemsService.getSplittedByIds(params).then(
+    await ItemsService.getSplittedByIds(params, "to").then(
       function (response) {
         context.commit(SET_CONFLICT_SPLITTED_TO, response.data);
       },
