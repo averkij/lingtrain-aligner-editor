@@ -13,7 +13,6 @@ from warnings import simplefilter
 
 import config
 import constants as con
-import state_manager as state
 
 
 def get_files_list(folder, mask="*.txt"):
@@ -108,6 +107,8 @@ def init_document_db(db_path):
             'create table processing_to(id integer primary key, batch_id integer, text_ids varchar, initial_id integer, text nvarchar)')
         db.execute(
             'create table doc_index(id integer primary key, contents varchar)')
+        db.execute(
+            'create table batches(id integer primary key, batch_id integer unique, insert_ts text)')
 
 
 def fill_document_db(db_path, splitted_from, splitted_to, proxy_from, proxy_to):
@@ -426,17 +427,27 @@ def update_alignment_state(user_db_path, guid_from, guid_to, state, curr_batches
                 "guid_from": guid_from, "guid_to": guid_to, "state": state})
 
 
-def increment_alignment_state(user_db_path, guid_from, guid_to, state):
+def update_batch_progress(db_path, batch_id):
+    """Update batches table with already processed batches IDs"""
+    with sqlite3.connect(db_path) as db:
+        db.execute(
+            "insert or ignore into batches (batch_id, insert_ts) values (?, datetime('now'))", (batch_id,))
+
+
+def get_batches_count(db_path):
+    """Get amount of already processed batches"""
+    with sqlite3.connect(db_path) as db:
+        count = db.execute("select count(*) from batches").fetchone()
+    return count[0]
+
+
+def increment_alignment_state(db_path, user_db_path, guid_from, guid_to, state):
     """Increment alignment progress"""
-    with sqlite3.connect(user_db_path) as db:
-        curr_batches, total_batches = db.execute("select curr_batches, total_batches from alignments where guid_from=:guid_from and guid_to=:guid_to", {
-            "guid_from": guid_from, "guid_to": guid_to}).fetchone()
-
-        print("curr_batches", curr_batches)
-        curr_batches += 1
-
-        db.execute('update alignments set state=:state, curr_batches=:curr_batches where guid_from=:guid_from and guid_to=:guid_to', {
-            "guid_from": guid_from, "guid_to": guid_to, "state": state, "curr_batches": curr_batches})
+    batches_count = get_batches_count(db_path)
+    with sqlite3.connect(user_db_path) as user_db:
+        print("batches_count", batches_count)
+        user_db.execute('update alignments set state=:state, curr_batches=:curr_batches where guid_from=:guid_from and guid_to=:guid_to', {
+            "guid_from": guid_from, "guid_to": guid_to, "state": state, "curr_batches": batches_count})
 
 
 def update_alignment_state_by_align_id(user_db_path, align_id, state):

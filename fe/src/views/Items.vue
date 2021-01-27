@@ -146,7 +146,7 @@
 
 
       <v-btn v-if="!userAlignInProgress" v-show="selected[langCodeFrom] && selected[langCodeTo]" class="success mt-6"
-        :loading="isLoading.align || isLoading.alignStopping" :disabled="isLoading.align || isLoading.alignStopping"
+        :loading="isLoading.align || isLoading.alignStopping" :disabled="selectedProcessing && selectedProcessing.state[1]==selectedProcessing.state[2]"
         @click="startAlignment()">
         Align next batch
       </v-btn>
@@ -261,7 +261,10 @@
         <v-icon color="blue" large>mdi-puzzle</v-icon> Unused strings
       </div>
 
-      <v-alert v-if="!processing || !processing.items || processing.items.length == 0" type="info" border="left"
+      <div class="text-center" v-if="isLoading.processing">
+        <v-progress-circular indeterminate color="green"></v-progress-circular>
+      </div>
+      <v-alert v-else-if="!processing || !processing.items || processing.items.length == 0" type="info" border="left"
         colored-border color="info" class="mt-6" elevation="2">
         Please, wait. Alignment is in progress.
       </v-alert>
@@ -634,7 +637,6 @@
         this.$store
           .dispatch(GET_CONFLICT_SPLITTED_FROM, {
             username: this.$route.params.username,
-            type: "from",
             ids: JSON.stringify(unusedFromLines),
             align_guid: this.selectedProcessingId,
             langCodeFrom: this.langCodeFrom,
@@ -645,7 +647,6 @@
         this.$store
           .dispatch(GET_CONFLICT_SPLITTED_TO, {
             username: this.$route.params.username,
-            type: "to",
             ids: JSON.stringify(unusedToLines),
             align_guid: this.selectedProcessingId,
             langCodeFrom: this.langCodeFrom,
@@ -690,6 +691,7 @@
           .dispatch(ALIGN_SPLITTED, {
             username: this.$route.params.username,
             id: this.selectedProcessingId,
+            nextOnly: true,
             batchIds: this.batchesToAlign,
             alignAll: ''
           })
