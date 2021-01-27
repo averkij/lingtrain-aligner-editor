@@ -23,7 +23,8 @@ JP_CODE = "jp"
 LANGUAGES = [RU_CODE, ZH_CODE, DE_CODE, EN_CODE, FR_CODE,
              IT_CODE, TR_CODE, ES_CODE, PL_CODE, PT_CODE, HU_CODE, CZ_CODE, JP_CODE]
 
-pattern_ru_orig = re.compile(r'[a-zA-Z\(\)\[\]\/\<\>•\'\n]+')
+# pattern_ru_orig = re.compile(r'[a-zA-Z\(\)\[\]\/\<\>•\'\n]+')
+pattern_ru_orig = re.compile(r'[\(\)\[\]\/\<\>•\'\n]+')
 double_spaces = re.compile(r'[\s]+')
 double_commas = re.compile(r'[,]+')
 double_dash = re.compile(r'[-—]+')
