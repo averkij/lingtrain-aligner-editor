@@ -499,7 +499,6 @@ def get_alignment_info(username, guid):
 def get_alignments_list(username, lang_from, lang_to):
     """Get alignments list by language code"""
     db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
-    print("fetching processing list", db_path)
     with sqlite3.connect(db_path) as db:
         res = db.execute("""select
                                 a.guid, a.name, a.guid_from, a.guid_to, a.state, a.curr_batches, a.total_batches
@@ -511,6 +510,20 @@ def get_alignments_list(username, lang_from, lang_to):
                                 d_from.lang=:lang_from and d_to.lang=:lang_to""", {
                          "lang_from": lang_from, "lang_to": lang_to}).fetchall()
         return res
+
+
+def read_processing(db_path):
+    """Read the processsing document"""
+    with sqlite3.connect(db_path) as db:
+        return db.execute("""
+            SELECT
+                f.text, t.text
+            FROM
+                processing_from f
+                join
+                    processing_to t
+                        on t.id=f.id
+                """).fetchall()
 
 
 def get_doc_items(index_items, db_path):
