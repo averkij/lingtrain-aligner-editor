@@ -127,7 +127,7 @@
                 <v-icon v-else color="teal">mdi-check</v-icon>
               </v-list-item-icon>
               <v-list-item-content>
-                <v-list-item-title v-text="item.name"></v-list-item-title>
+                <v-list-item-title>{{item.name}}<v-chip class="ml-4" color="grey" text-color="black" small outlined>{{item.state[2]}} / {{item.state[1]}}</v-chip></v-list-item-title>
                 <!-- {{item.state}} -->
                 <!-- ---{{item.guid}}--- {{item.guid_from}} {{item.guid_to}} -->
               </v-list-item-content>
