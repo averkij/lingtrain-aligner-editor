@@ -135,3 +135,9 @@
 .font-josefin {
     font-family: 'Josefin Sans', sans-serif;
 }
+
+.batch-card-hover {
+    transition: all ease-in-out 0.2s;
+    box-shadow: 0px 2px 10px rgba(50,50,50,0.5) !important;
+    cursor: pointer;
+}

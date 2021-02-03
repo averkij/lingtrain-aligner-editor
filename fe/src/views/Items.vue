@@ -144,7 +144,6 @@
       <!-- PROCESSING DOCUMENTS LIST BLOCK -->
       <div class="text-h5 mt-10 font-weight-bold">Controls</div>
 
-
       <v-btn v-if="!userAlignInProgress" v-show="selected[langCodeFrom] && selected[langCodeTo]" class="success mt-6"
         :loading="isLoading.align || isLoading.alignStopping" :disabled="selectedProcessing && selectedProcessing.state[1]==selectedProcessing.state[2]"
         @click="startAlignment()">
@@ -154,32 +153,34 @@
         Stop alignment
       </v-btn>
 
-
       <v-alert v-if="!selectedProcessing || !selectedProcessing.imgs || selectedProcessing.imgs.length == 0" type="info"
         border="left" colored-border color="purple" class="mt-6" elevation="2">
         Images will start showing after the first batch completion.
       </v-alert>
       <v-row v-else class="mt-6">
         <v-col v-for="(img, i) in selectedProcessing.imgs" :key=i cols="12" sm="3">
-          <v-card>
-            <div class="grey lighten-5">
-              <v-card-title>
-                batch {{i+1}}
-                <v-spacer></v-spacer>
-                <v-chip color="grey" text-color="black" small outlined>
-                  {{DEFAULT_BATCHSIZE * i + 1}} — {{DEFAULT_BATCHSIZE * (i + 1)}}
-                </v-chip>
-              </v-card-title>
-            </div>
-            <v-divider></v-divider>
-            <v-img :src="`${API_URL}/static/img/${username}/${img}`" :lazy-src="`${API_URL}/static/proc_img_stub.jpg`">
-              <template v-slot:placeholder>
-                <v-row class="fill-height ma-0" align="center" justify="center">
-                  <v-progress-circular indeterminate color="green"></v-progress-circular>
-                </v-row>
-              </template>
-            </v-img>
-          </v-card>
+          <v-hover v-slot="{ hover }">
+            <v-card
+              :class="{ 'batch-card-hover': hover }">
+              <div class="grey lighten-5">
+                <v-card-title>
+                  batch {{i+1}}
+                  <v-spacer></v-spacer>
+                  <v-chip color="grey" text-color="black" small outlined>
+                    {{DEFAULT_BATCHSIZE * i + 1}} — {{DEFAULT_BATCHSIZE * (i + 1)}}
+                  </v-chip>
+                </v-card-title>
+              </div>
+              <v-divider></v-divider>
+              <v-img :src="`${API_URL}/static/img/${username}/${img}`" :lazy-src="`${API_URL}/static/proc_img_stub.jpg`">
+                <template v-slot:placeholder>
+                  <v-row class="fill-height ma-0" align="center" justify="center">
+                    <v-progress-circular indeterminate color="green"></v-progress-circular>
+                  </v-row>
+                </template>
+              </v-img>
+            </v-card>
+          </v-hover>
         </v-col>
       </v-row>
 
