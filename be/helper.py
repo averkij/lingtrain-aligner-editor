@@ -532,7 +532,13 @@ def get_alignments_list(username, lang_from, lang_to):
 
 def read_processing(db_path):
     """Read the processsing document"""
+    ordered_text_ids = [x[0][0] for x in get_flatten_doc_index(db_path)]
     with sqlite3.connect(db_path) as db:
+        db.execute('DROP TABLE If EXISTS temp.dl_ids')
+        db.execute(
+            'CREATE TEMP TABLE dl_ids(rank integer primary key, id integer)')
+        db.executemany('insert into temp.dl_ids(id) values(?)', [
+                       (x,) for x in ordered_text_ids])
         return db.execute("""
             SELECT
                 f.text, t.text
@@ -541,6 +547,11 @@ def read_processing(db_path):
                 join
                     processing_to t
                         on t.id=f.id
+                join
+                    temp.dl_ids ti
+                        on ti.id = f.id
+            ORDER BY
+                ti.rank
                 """).fetchall()
 
 
