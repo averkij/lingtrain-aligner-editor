@@ -16,6 +16,7 @@ import {
   GET_SPLITTED,
   GET_DOC_INDEX,
   GET_PROCESSING,
+  GET_PROCESSING_META,
   GET_CANDIDATES,
   EDIT_PROCESSING,
   STOP_ALIGNMENT,
@@ -31,6 +32,7 @@ import {
   SET_ITEMS_PROCESSING,
   SET_SPLITTED,
   SET_PROCESSING,
+  SET_PROCESSING_META,
   SET_DOC_INDEX,
   SET_CONFLICT_SPLITTED_FROM,
   SET_CONFLICT_SPLITTED_TO,
@@ -42,10 +44,11 @@ const initialState = {
   itemsProcessing: LanguageHelper.initItems(),
   splitted: LanguageHelper.initSplitted(),
   processing: LanguageHelper.initProcessing(),
+  processingMeta: {},
   docIndex: [],
   conflictSplittedFrom: [],
   conflictSplittedTo: [],
-  conflictFlowTo: []
+  conflictFlowTo: [],
 };
 
 export const state = {
@@ -122,6 +125,17 @@ export const actions = {
     await ItemsService.getProcessing(params).then(
       function (response) {
         context.commit(SET_PROCESSING, response.data);
+      },
+      function () {
+        console.log(`Didn't find processing document.`);
+      }
+    );
+    return;
+  },
+  async [GET_PROCESSING_META](context, params) {
+    await ItemsService.getProcessingMeta(params).then(
+      function (response) {
+        context.commit(SET_PROCESSING_META, response.data);
       },
       function () {
         console.log(`Didn't find processing document.`);
@@ -222,6 +236,9 @@ export const mutations = {
   [SET_PROCESSING](state, data) {
     state.processing = data;
   },
+  [SET_PROCESSING_META](state, data) {
+    state.processingMeta = data;
+  },
   [SET_DOC_INDEX](state, data) {
     state.docIndex = data.items;
   },
@@ -249,6 +266,9 @@ const getters = {
   },
   processing(state) {
     return state.processing;
+  },
+  processingMeta(state) {
+    return state.processingMeta;
   },
   docIndex(state) {
     return state.docIndex;
