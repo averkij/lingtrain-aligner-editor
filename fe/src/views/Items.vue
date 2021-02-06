@@ -127,7 +127,9 @@
                 <v-icon v-else color="teal">mdi-check</v-icon>
               </v-list-item-icon>
               <v-list-item-content>
-                <v-list-item-title>{{item.name}}<v-chip class="ml-4" color="grey" text-color="black" small outlined>{{item.state[2]}} / {{item.state[1]}}</v-chip></v-list-item-title>
+                <v-list-item-title>{{item.name}}<v-chip class="ml-4" color="grey" text-color="black" small outlined>
+                    {{item.state[2]}} / {{item.state[1]}}</v-chip>
+                </v-list-item-title>
                 <!-- {{item.state}} -->
                 <!-- ---{{item.guid}}--- {{item.guid_from}} {{item.guid_to}} -->
               </v-list-item-content>
@@ -145,26 +147,26 @@
       <div class="text-h5 mt-10 font-weight-bold">Controls</div>
 
       <v-btn v-if="!userAlignInProgress" v-show="selected[langCodeFrom] && selected[langCodeTo]" class="success mt-6"
-        :loading="isLoading.align || isLoading.alignStopping" :disabled="selectedProcessing && selectedProcessing.state[1]==selectedProcessing.state[2]"
+        :loading="isLoading.align || isLoading.alignStopping"
+        :disabled="selectedProcessing && selectedProcessing.state[1]==selectedProcessing.state[2]"
         @click="startAlignment()">
         Align next batch
       </v-btn>
       <v-btn v-else v-show="selected[langCodeFrom] && selected[langCodeTo]" class="error mt-6" @click="stopAlignment()">
         Stop alignment
       </v-btn>
-
-      <v-alert v-if="!selectedProcessing || !selectedProcessing.imgs || selectedProcessing.imgs.length == 0" type="info"
+      <v-alert v-if="!processingMeta || !processingMeta.meta || processingMeta.meta.batch_ids.length == 0" type="info"
         border="left" colored-border color="purple" class="mt-6" elevation="2">
         Images will start showing after the first batch completion.
       </v-alert>
       <v-row v-else class="mt-6">
-        <v-col v-for="(img, i) in selectedProcessing.imgs" :key=i cols="12" sm="3">
+        <v-col v-for="(batch_id, i) in processingMeta.meta.batch_ids" :key=i cols="12" sm="3">
           <v-hover v-slot="{ hover }">
-            <v-card
-              :class="{ 'batch-card-hover': hover }">
+            <v-card :class="{ 'batch-card-hover': hover }"
+              @click="showRecalculateBatchDialog=true; currentBatchId=batch_id">
               <div class="grey lighten-5">
                 <v-card-title>
-                  batch {{i+1}}
+                  batch {{batch_id+1}}
                   <v-spacer></v-spacer>
                   <v-chip color="grey" text-color="black" small outlined>
                     {{DEFAULT_BATCHSIZE * i + 1}} — {{DEFAULT_BATCHSIZE * (i + 1)}}
@@ -172,16 +174,22 @@
                 </v-card-title>
               </div>
               <v-divider></v-divider>
-              <v-img :src="`${API_URL}/static/img/${username}/${img}`" :lazy-src="`${API_URL}/static/proc_img_stub.jpg`">
+              <!-- <v-img :src="`${API_URL}/static/img/${username}/${processingMeta.meta.align_guid}.best_${batch_id}.png`"
+                :lazy-src="`${API_URL}/static/proc_img_stub.jpg`">
                 <template v-slot:placeholder>
                   <v-row class="fill-height ma-0" align="center" justify="center">
                     <v-progress-circular indeterminate color="green"></v-progress-circular>
                   </v-row>
                 </template>
-              </v-img>
+              </v-img> -->
+              <div>
+                <img width=100% :src="getImgUrl(batch_id)">
+              </div>
             </v-card>
           </v-hover>
         </v-col>
+        <RecalculateBatchDialog v-model="showRecalculateBatchDialog" :batch_id=currentBatchId
+          @recalculateBatch="recalculateBatch" />
       </v-row>
 
       <div class="text-h5 mt-10 font-weight-bold">Edit</div>
@@ -459,6 +467,7 @@
   import EditItem from "@/components/EditItem";
   import GoToDialog from "@/components/GoToDialog";
   import CreateAlignmentDialog from "@/components/CreateAlignmentDialog"
+  import RecalculateBatchDialog from "@/components/RecalculateBatchDialog"
   import {
     mapGetters
   } from "vuex";
@@ -501,6 +510,7 @@
     GET_SPLITTED,
     GET_DOC_INDEX,
     GET_PROCESSING,
+    GET_PROCESSING_META,
     GET_CANDIDATES,
     GET_CONFLICT_SPLITTED_FROM,
     GET_CONFLICT_SPLITTED_TO,
@@ -530,7 +540,6 @@
         PROC_IN_PROGRESS_DONE,
         PROC_ERROR,
         PROC_DONE,
-        batchesToAlign: [0],
         files: LanguageHelper.initGeneralVars(),
         proxyFiles: LanguageHelper.initGeneralVars(),
         selected: LanguageHelper.initGeneralVars(),
@@ -543,7 +552,8 @@
           uploadProxy: LanguageHelper.initGeneralBools(),
           download: LanguageHelper.initGeneralBools(),
           align: false,
-          processing: false
+          processing: false,
+          processingMeta: false
         },
         triggerCollapseEditItem: false,
         triggerClearCandidates: false,
@@ -552,10 +562,12 @@
         downloadThreshold: 9,
         showProxyTo: SettingsHelper.getShowProxyTo(),
         selectedListItem: 0,
+        currentBatchId: 0,
 
         //dialogs
         showGoToDialog: false,
         showCreateAlignmentDialog: false,
+        showRecalculateBatchDialog: false,
 
         //conflicts
         unusedFromLines: [],
@@ -567,6 +579,9 @@
       };
     },
     methods: {
+      getImgUrl(batch_id) {
+        return `${API_URL}/static/img/${this.username}/${this.processingMeta.meta.align_guid}.best_${batch_id}.png?rnd=${Math.random()}`;
+      },
       prepareUsedToLines() {
         let foo = new Set();
         let bar = [];
@@ -684,7 +699,7 @@
             });
           });
       },
-      startAlignment() {
+      startAlignment(batch_id = 0, shift = 0, nextOnly = true) {
         this.isLoading.align = true;
         this.initProcessingDocument();
         this.currentlyProcessingId = this.selectedProcessingId;
@@ -692,8 +707,9 @@
           .dispatch(ALIGN_SPLITTED, {
             username: this.$route.params.username,
             id: this.selectedProcessingId,
-            nextOnly: true,
-            batchIds: this.batchesToAlign,
+            nextOnly: nextOnly,
+            batchIds: [batch_id],
+            batchShift: shift,
             alignAll: ''
           })
           .then(() => {
@@ -708,6 +724,9 @@
             });
             this.fetchItemsProcessingTimer();
           });
+      },
+      recalculateBatch(batch_id, shift) {
+        this.startAlignment(batch_id, shift, false)
       },
       fetchItemsProcessingTimer() {
         setTimeout(() => {
@@ -888,8 +907,18 @@
       selectProcessing(item, fileId) {
         this.selectedListItem = fileId;
         this.isLoading.processing = true;
+        this.isLoading.processingMeta = true;
         this.selectedProcessing = item;
         this.selectedProcessingId = fileId;
+
+        this.$store.dispatch(GET_PROCESSING_META, {
+          username: this.$route.params.username,
+          langCodeFrom: this.langCodeFrom,
+          langCodeTo: this.langCodeTo,
+          fileId
+        }).then(() => {
+          this.isLoading.processingMeta = false;
+        });
 
         this.$store.dispatch(GET_DOC_INDEX, {
           username: this.$route.params.username,
@@ -1144,7 +1173,7 @@
     },
     computed: {
       ...mapGetters(["items", "itemsProcessing", "splitted", "processing", "docIndex", "conflictSplittedFrom",
-        "conflictSplittedTo", "conflictFlowTo"
+        "conflictSplittedTo", "conflictFlowTo", "processingMeta"
       ]),
       username() {
         return this.$route.params.username;
@@ -1203,7 +1232,8 @@
       SplittedPanel,
       InfoPanel,
       GoToDialog,
-      CreateAlignmentDialog
+      CreateAlignmentDialog,
+      RecalculateBatchDialog
     }
   };
 </script>

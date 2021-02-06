@@ -37,7 +37,7 @@ def get_processing_list_with_state(username, lang_from, lang_to):
             "guid_from": guid_from,
             "guid_to": guid_to,
             "state": (state_code, total_batches, done_batches),
-            "imgs": get_files_list(os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username), mask=f"{guid}.best_*.png"),
+            # "imgs": get_files_list(os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER, username), mask=f"{guid}.best_*.png"),
             # "sim_grades": get_sim_grades(file)
         })
     return res
@@ -441,6 +441,13 @@ def get_batches_count(db_path):
     return count[0]
 
 
+def get_processed_batch_ids(db_path):
+    """Get IDs of the processed batches"""
+    with sqlite3.connect(db_path) as db:
+        res = db.execute("select batch_id from batches").fetchall()
+    return res
+
+
 def increment_alignment_state(db_path, user_db_path, guid_from, guid_to, state):
     """Increment alignment progress"""
     batches_count = get_batches_count(db_path)
@@ -590,7 +597,7 @@ def get_batch(iter1, iter2, iter3, n):
         yield iter1[ndx:min(ndx + n, l1)], iter2[kdx:min(kdx + k, l3)], iter3[kdx:min(kdx + k, l3)]
 
 
-def get_batch_intersected(iter1, iter2, batch_ids, n=config.DEFAULT_BATCHSIZE, window=config.DEFAULT_WINDOW):
+def get_batch_intersected(iter1, iter2, batch_ids, batch_shift=0, n=config.DEFAULT_BATCHSIZE, window=config.DEFAULT_WINDOW):
     """Get batch with an additional window"""
     l1 = len(iter1)
     l2 = len(iter2)
@@ -607,9 +614,9 @@ def get_batch_intersected(iter1, iter2, batch_ids, n=config.DEFAULT_BATCHSIZE, w
         kdx += k
         if counter in batch_ids:
             yield iter1[ndx:min(ndx + n, l1)], \
-                iter2[max(0, kdx - window):min(kdx + k + window, l2)], \
+                iter2[max(0, kdx - window + batch_shift):min(kdx + k + window + batch_shift, l2)], \
                 list(range(ndx, min(ndx + n, l1))), \
-                list(range(max(0, kdx - window), min(kdx + k + window, l2))), \
+                list(range(max(0, kdx - window + batch_shift), min(kdx + k + window + batch_shift, l2))), \
                 counter
         counter += 1
 

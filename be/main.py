@@ -45,7 +45,7 @@ def items(username, lang):
             upload_folder = con.RAW_FOLDER
             filename = file.filename
 
-            if helper.file_exists(username, lang, filename):
+            if request.form["type"] != "proxy" and helper.file_exists(username, lang, filename):
                 return ('File already exists', 400)
 
             if request.form["type"] == "proxy":
@@ -176,15 +176,16 @@ def create_alignment(username):
 
 
 @app.route("/items/<username>/alignment/align", methods=["POST"])
-def align(username):
+def start_alignment(username):
     """Align two splitted documents"""
-
     align_guid = request.form.get("id", '')
     align_all = request.form.get("align_all", '')
     batch_ids = helper.parse_json_array(request.form.get("batch_ids", "[0]"))
+    batch_shift, _ = helper.try_parse_int(
+        request.form.get("batch_shift", 0))
 
     logging.info(
-        f"align parameters align_guid {align_guid} align_all {align_all} batch_ids {batch_ids}")
+        f"align parameters align_guid {align_guid} align_all {align_all} batch_ids {batch_ids}, batch_shift {batch_shift}")
 
     name, guid_from, guid_to, state, curr_batches, total_batches = helper.get_alignment_info(
         username, align_guid)
@@ -236,7 +237,7 @@ def align(username):
     task_list = [(lines_from_batch, lines_to_batch, line_ids_from, line_ids_to, batch_id)
                  for lines_from_batch, lines_to_batch,
                  line_ids_from, line_ids_to, batch_id
-                 in helper.get_batch_intersected(lines_from, lines_to, batch_ids)]
+                 in helper.get_batch_intersected(lines_from, lines_to, batch_ids, batch_shift)]
 
     proc_count = config.PROCESSORS_COUNT
 
@@ -357,15 +358,27 @@ def get_processing_by_ids(username, lang_from, lang_to, align_guid):
     index = helper.get_flatten_doc_index(db_path)
     index_ids = helper.parse_json_array(request.form.get("index_ids", "[]"))
 
-    print("index_ids", index_ids)
-    print("index", index)
-
     index_items = [(index[i], i) for i in index_ids]
     res = {}
     for i, item in zip(index_ids, helper.get_doc_items(index_items, db_path)):
         res[i] = item
 
     return {"items": res}
+
+
+@app.route("/items/<username>/processing/<lang_from>/<lang_to>/<align_guid>/meta", methods=["GET"])
+def get_processing_metadata(username, lang_from, lang_to, align_guid):
+    """Get processing (aligned) document metadata"""
+    db_folder = os.path.join(con.UPLOAD_FOLDER, username,
+                             con.DB_FOLDER, lang_from, lang_to)
+    db_path = os.path.join(db_folder, f'{align_guid}.db')
+    if not os.path.isfile(db_path):
+        abort(404)
+
+    batch_ids = [x[0] for x in helper.get_processed_batch_ids(db_path)]
+    meta = {"batch_ids": batch_ids, "align_guid": align_guid}
+
+    return {"meta": meta}
 
 
 @app.route("/items/<username>/splitted/from/<lang_from>/<lang_to>/<align_guid>", methods=["POST"])
