@@ -117,6 +117,12 @@ export const ItemsService = {
       `${params.username}/processing/${params.langCodeFrom}/${params.langCodeTo}/${params.fileId}/${params.linesCount}/${params.page}`
     );
   },
+  getProcessingMeta(params) {
+    return ApiService.get(
+      "items",
+      `${params.username}/processing/${params.langCodeFrom}/${params.langCodeTo}/${params.fileId}/meta`
+    );
+  },
   getProcessingByIds(params) {
     let form = new FormData();
     form.append("index_ids", params.index_ids);
@@ -159,6 +165,7 @@ export const ItemsService = {
     form.append("id", params.id);
     form.append("align_all", params.alignAll);
     form.append("batch_ids", JSON.stringify(params.batchIds))
+    form.append("batch_shift", params.batchShift)
     if (params.nextOnly) {
       console.log("calculating next batch")
       return ApiService.post(

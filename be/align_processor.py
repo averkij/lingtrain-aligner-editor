@@ -152,25 +152,25 @@ class AlignmentProcessor:
             sim_matrix_best = sim_helper.fix_inside_window(
                 sim_matrix, sim_matrix_best, fixed_window_size=2)
 
-            res_img_batch = "{0}_{1:04d}{2}".format(os.path.splitext(
+            res_img_batch = "{0}_{1}{2}".format(os.path.splitext(
                 self.res_img)[0], batch_number, os.path.splitext(self.res_img)[1])
-            res_img_batch_best = "{0}_{1:04d}{2}".format(os.path.splitext(
+            res_img_batch_best = "{0}_{1}{2}".format(os.path.splitext(
                 self.res_img_best)[0], batch_number, os.path.splitext(self.res_img_best)[1])
 
             # Visualization
-            plt.figure(figsize=(12, 6))
+            plt.figure(figsize=(4, 2))
             sns.heatmap(sim_matrix, cmap="Greens",
                         vmin=zero_treshold, cbar=False)
-            plt.savefig(res_img_batch, bbox_inches="tight")
+            plt.savefig(res_img_batch, bbox_inches="tight", pad_inches=0)
 
-            plt.figure(figsize=(12, 6))
+            plt.figure(figsize=(4, 2))
             sns.heatmap(sim_matrix_best, cmap="Greens",
                         vmin=zero_treshold, cbar=False)
-            plt.xlabel(self.lang_name_to, fontsize=30, labelpad=-40)
-            plt.ylabel(self.lang_name_from, fontsize=30, labelpad=-40)
+            plt.xlabel(self.lang_name_to, fontsize=12, labelpad=-18)
+            plt.ylabel(self.lang_name_from, fontsize=12, labelpad=-18)
             plt.tick_params(axis='both', which='both', bottom=False, top=False,
                             labelbottom=False, right=False, left=False, labelleft=False)
-            plt.savefig(res_img_batch_best, bbox_inches="tight")
+            plt.savefig(res_img_batch_best, bbox_inches="tight", pad_inches=0)
 
             # Aggregating similarities for grade calculation
             best_sim_ind = sim_matrix_best.argmax(1)
