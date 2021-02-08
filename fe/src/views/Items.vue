@@ -146,6 +146,7 @@
       <!-- PROCESSING DOCUMENTS LIST BLOCK -->
       <div class="text-h5 mt-10 font-weight-bold">Controls</div>
 
+      <!-- ALIGNMENT BUTTON -->
       <v-btn v-if="!userAlignInProgress" v-show="selected[langCodeFrom] && selected[langCodeTo]" class="success mt-6"
         :loading="isLoading.align || isLoading.alignStopping"
         :disabled="selectedProcessing && selectedProcessing.state[1]==selectedProcessing.state[2]"
@@ -155,6 +156,7 @@
       <v-btn v-else v-show="selected[langCodeFrom] && selected[langCodeTo]" class="error mt-6" @click="stopAlignment()">
         Stop alignment
       </v-btn>
+
       <v-alert v-if="!processingMeta || !processingMeta.meta || processingMeta.meta.batch_ids.length == 0" type="info"
         border="left" colored-border color="purple" class="mt-6" elevation="2">
         Images will start showing after the first batch completion.
@@ -617,6 +619,9 @@
         // let flowBreaks = new Set();
         // let flowBreakGroups = [];
 
+        if (!this.docIndex) {
+          return;
+        }
         let lastLine = this.docIndex[this.docIndex.length - 1];
         let lastLineFromIndex = JSON.parse(lastLine[1]);
         let lastLineToIndex = JSON.parse(lastLine[3]);
@@ -703,6 +708,7 @@
         this.isLoading.align = true;
         this.initProcessingDocument();
         this.currentlyProcessingId = this.selectedProcessingId;
+        this.userAlignInProgress = true;
         this.$store
           .dispatch(ALIGN_SPLITTED, {
             username: this.$route.params.username,
@@ -713,15 +719,8 @@
             alignAll: ''
           })
           .then(() => {
-            this.userAlignInProgress = true;
             this.isLoading.align = false;
-            this.$store.dispatch(FETCH_ITEMS_PROCESSING, {
-              username: this.$route.params.username,
-              langCodeFrom: this.langCodeFrom,
-              langCodeTo: this.langCodeTo
-            }).then(() => {
-              this.selectCurrentlyProcessingDocument(this.selectedProcessing);
-            });
+            console.log("fetchItemsProcessingTimer set")
             this.fetchItemsProcessingTimer();
           });
       },
@@ -755,27 +754,29 @@
         }, 5000)
       },
       initProcessingDocument() {
-        let processingItems = JSON.parse(JSON.stringify(this.itemsProcessing[this.langCodeFrom]));
+        let processingItemsCopy = JSON.parse(JSON.stringify(this.itemsProcessing[this.langCodeFrom]));
+        let selectedProcessingStateCopy = JSON.parse(JSON.stringify(this.selectedProcessing.state));
         let currentIndex = -1;
         if (this.itemsProcessingNotEmpty(this.langCodeFrom)) {
-          currentIndex = processingItems.findIndex(x => x.guid == this.selectedProcessingId);
+          currentIndex = processingItemsCopy.findIndex(x => x.guid == this.selectedProcessingId);
         }
+        selectedProcessingStateCopy[0] = this.PROC_IN_PROGRESS;
         if (currentIndex >= 0) {
-          processingItems.splice(currentIndex, 1, {
+          processingItemsCopy.splice(currentIndex, 1, {
             "imgs": [],
             "name": this.selectedProcessing.name,
-            "state": this.selectedProcessing.state
+            "state": selectedProcessingStateCopy
           });
         } else {
-          processingItems.push({
+          processingItemsCopy.push({
             "imgs": [],
             "name": this.selectedProcessing.name,
-            "state": this.selectedProcessing.state
+            "state": selectedProcessingStateCopy
           });
         }
         this.$store
           .commit(SET_ITEMS_PROCESSING, {
-            items: processingItems,
+            items: processingItemsCopy,
             langCode: this.langCodeFrom
           });
       },

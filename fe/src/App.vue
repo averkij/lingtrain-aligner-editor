@@ -116,7 +116,7 @@
 <script>
 import Footer from "@/components/Footer";
 import { LANGUAGES } from "@/common/language.helper";
-import { DEFAULT_FROM, DEFAULT_TO } from "@/common/constants";
+import { DEFAULT_FROM, DEFAULT_TO } from "@/common/language.helper";
 
 export default {
   name: "App",

@@ -269,7 +269,6 @@
       getCandidates(textType) {
         this.$emit('getCandidates', this.item.index_id, textType, 1, 6, (res, data) => {
           if (res == RESULT_OK) {
-            console.log("getCandidates", data.items)
             if (textType == "from") {
               this.transFrom = data.items;
             } else if (textType == "to") {
@@ -326,7 +325,6 @@
         if (Helper.trim(newText) != Helper.trim(this.uneditedText)) {
           this.$emit('editProcessing', this.item.index_id, newText, textType, this.item.batch_id, this.item
             .batch_index_id, (res) => {
-              console.log("edit result:", res)
               if (res == RESULT_OK) {
                 this.state = STATE_SAVED;
                 this.changed_from = false;

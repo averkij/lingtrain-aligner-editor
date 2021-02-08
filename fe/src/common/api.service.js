@@ -145,7 +145,6 @@ export const ItemsService = {
     );
   },
   getSplittedByIds(params, type) {
-    console.log("getSplittedByIds", params)
     let form = new FormData();
     form.append("ids", params.ids);
     return ApiService.post(
