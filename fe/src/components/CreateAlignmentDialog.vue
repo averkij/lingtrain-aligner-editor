@@ -5,7 +5,7 @@
         Alignment settings
       </v-card-title>
       <v-card-text class="mt-5">
-        <v-text-field label="Name" v-model="name">
+        <v-text-field label="Name" v-model="name" v-on:keyup.enter="createAlignment">
         </v-text-field>
       </v-card-text>
       <v-card-actions>
@@ -14,7 +14,7 @@
         </v-btn>
         <v-spacer></v-spacer>
         <v-btn color="primary" dark width="80px" @click="createAlignment">
-          Go
+          Create
         </v-btn>
       </v-card-actions>
     </v-card>
