@@ -16,5 +16,6 @@ ENV LISTEN_PORT 80
 COPY ./be /app
 RUN pip install -r /app/requirements.txt;
 
-RUN mkdir /app/static
+RUN mkdir /app/static /app/static/flags
+COPY ./fe/src/assets/flags /app/static/flags
 COPY --from=build-stage /app/dist /app/static
