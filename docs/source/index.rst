@@ -23,14 +23,6 @@ Lingtrain Aligner — это веб-приложение, которое пом�
 
    <iframe width="680" height="380" src="https://www.youtube.com/embed/qlX72nXcJbE?rel=0" frameborder="0" allowfullscreen></iframe>
 
-asd
-
-.. raw:: html
-
-   <iframe width="680" height="380" src="https://www.youtube.com/embed/qlX72nXcJbE?rel=0" frameborder="0"></iframe>
-
-.. raw:: html
-
    <br/><br/><br/>
 
 .. toctree::
