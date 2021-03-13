@@ -115,8 +115,8 @@
           <!-- {{itemsProcessing}} -->
         </div>
         <v-divider></v-divider>
-        <v-list class="pa-0">
-          <v-list-item-group mandatory color="gray" v-model="selectedListItem">
+        <v-list flat class="pa-0">
+          <v-list-item-group mandatory v-model="selectedListItem">
             <v-list-item v-for="(item, i) in itemsProcessing[langCodeFrom]" :key="i"
               @change="selectProcessing(item, item.guid)">
               <v-list-item-icon>
@@ -144,7 +144,9 @@
       </v-card>
 
       <!-- PROCESSING DOCUMENTS LIST BLOCK -->
-      <div class="text-h5 mt-10 font-weight-bold">Controls</div>
+      <div class="text-h5 mt-12 font-weight-bold">
+        {{selectedProcessing.name}}
+      </div>
 
       <!-- ALIGNMENT BUTTON -->
       <v-btn v-if="!userAlignInProgress" v-show="selected[langCodeFrom] && selected[langCodeTo]" class="success mt-6"
