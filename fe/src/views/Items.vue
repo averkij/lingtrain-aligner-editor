@@ -20,12 +20,12 @@
     <div class="mt-6">
       <v-row>
         <v-col cols="12" sm="6">
-          <RawPanel @uploadFile="uploadFile" @onFileChange="onFileChange" @selectAndLoadPreview="selectAndLoadPreview"
+          <RawPanel @uploadFile="uploadFile" @onFileChange="onFileChange" @selectAndLoadPreview="selectAndLoadPreview" @performDelete="performRawFileDelete"
             :info="LANGUAGES[langCodeFrom]" :items=items :isLoading=isLoading>
           </RawPanel>
         </v-col>
         <v-col cols="12" sm="6">
-          <RawPanel @uploadFile="uploadFile" @onFileChange="onFileChange" @selectAndLoadPreview="selectAndLoadPreview"
+          <RawPanel @uploadFile="uploadFile" @onFileChange="onFileChange" @selectAndLoadPreview="selectAndLoadPreview" @performDelete="performRawFileDelete"
             :info="LANGUAGES[langCodeTo]" :items=items :isLoading=isLoading>
           </RawPanel>
         </v-col>
@@ -1151,7 +1151,12 @@
             this.selectFirstProcessingDocument();
           }
         });
-      }
+      },
+
+      //deletion
+      performRawFileDelete(item) {
+        alert(item.name + " " + item.guid);
+      },
     },
     mounted() {
       this.$store.dispatch(INIT_USERSPACE, {
