@@ -20,12 +20,12 @@
     <div class="mt-6">
       <v-row>
         <v-col cols="12" sm="6">
-          <RawPanel @uploadFile="uploadFile" @onFileChange="onFileChange" @selectAndLoadPreview="selectAndLoadPreview" @performDelete="performRawFileDelete"
+          <RawPanel @uploadFile="uploadFile" @onFileChange="onFileChange" @selectAndLoadPreview="selectAndLoadPreview" @performDelete="performDeleteRawFile"
             :info="LANGUAGES[langCodeFrom]" :items=items :isLoading=isLoading>
           </RawPanel>
         </v-col>
         <v-col cols="12" sm="6">
-          <RawPanel @uploadFile="uploadFile" @onFileChange="onFileChange" @selectAndLoadPreview="selectAndLoadPreview" @performDelete="performRawFileDelete"
+          <RawPanel @uploadFile="uploadFile" @onFileChange="onFileChange" @selectAndLoadPreview="selectAndLoadPreview" @performDelete="performDeleteRawFile"
             :info="LANGUAGES[langCodeTo]" :items=items :isLoading=isLoading>
           </RawPanel>
         </v-col>
@@ -118,7 +118,9 @@
         <v-list flat class="pa-0">
           <v-list-item-group mandatory v-model="selectedListItem">
             <v-list-item v-for="(item, i) in itemsProcessing[langCodeFrom]" :key="i"
-              @change="selectProcessing(item, item.guid)">
+              @change="selectProcessing(item, item.guid)"
+              @mouseover="hoverAlignmentIndex = i"
+              @mouseleave="hoverAlignmentIndex = -1">
               <v-list-item-icon>
                 <v-icon v-if="item.state[0]==PROC_INIT || item.state[0]==PROC_IN_PROGRESS" color="blue">
                   mdi-clock-outline</v-icon>
@@ -133,7 +135,7 @@
                 <!-- {{item.state}} -->
                 <!-- ---{{item.guid}}--- {{item.guid_from}} {{item.guid_to}} -->
               </v-list-item-content>
-
+              <v-icon v-show="hoverAlignmentIndex == i" class="ml-2" @click.stop.prevent="hoveredAlignmentItem=item, showConfirmDeleteAlignmentDialog=true">mdi-close</v-icon>
               <!-- progress bar -->
               <v-progress-linear stream buffer-value="0" :value="item.state[2]/item.state[1] * 100" color="green"
                 :active="item.state[0]==PROC_INIT || item.state[0]==PROC_IN_PROGRESS" absolute bottom>
@@ -141,6 +143,9 @@
             </v-list-item>
           </v-list-item-group>
         </v-list>
+        <ConfirmDeleteDialog v-model="showConfirmDeleteAlignmentDialog"
+          :itemName=hoveredAlignmentItem.name
+          @confirmDelete="performDeleteAlignment" />
       </v-card>
 
       <!-- PROCESSING DOCUMENTS LIST BLOCK -->
@@ -472,6 +477,7 @@
   import GoToDialog from "@/components/GoToDialog";
   import CreateAlignmentDialog from "@/components/CreateAlignmentDialog"
   import RecalculateBatchDialog from "@/components/RecalculateBatchDialog"
+  import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog"
   import {
     mapGetters
   } from "vuex";
@@ -572,6 +578,7 @@
         showGoToDialog: false,
         showCreateAlignmentDialog: false,
         showRecalculateBatchDialog: false,
+        showConfirmDeleteAlignmentDialog:false,
 
         //conflicts
         unusedFromLines: [],
@@ -579,7 +586,10 @@
         // flowBreakGroups: [],
         usedFromLinesSet: new Set(),
         usedToLinesSet: new Set(),
-        usedToLinesFlow: []
+        usedToLinesFlow: [],
+
+        hoverAlignmentIndex: -1,
+        hoveredAlignmentItem: {"name": ""},
       };
     },
     methods: {
@@ -1154,8 +1164,11 @@
       },
 
       //deletion
-      performRawFileDelete(item) {
+      performDeleteRawFile(item) {
         alert(item.name + " " + item.guid);
+      },
+      performDeleteAlignment() {
+        alert(this.hoveredAlignmentItem.name + " " + this.hoveredAlignmentItem.guid);
       },
     },
     mounted() {
@@ -1244,7 +1257,8 @@
       InfoPanel,
       GoToDialog,
       CreateAlignmentDialog,
-      RecalculateBatchDialog
+      RecalculateBatchDialog,
+      ConfirmDeleteDialog
     }
   };
 </script>
