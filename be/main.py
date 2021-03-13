@@ -487,9 +487,8 @@ def edit_processing(username, lang_from, lang_to, align_guid):
     batch_index_id, _ = helper.try_parse_int(
         request.form.get("batch_index_id", -1))
 
-    print("OPERATION:", operation, "text_type:", text_type)
+    # print("OPERATION:", operation, "text_type:", text_type)
 
-    # TODO перенести в edit_doc, там чекать валидность необходимых параметров
     if index_id_is_int:
         editor.edit_doc(db_path, index_id, text, operation,
                         target, candidate_line_id, candidate_text, batch_id, batch_index_id, text_type)

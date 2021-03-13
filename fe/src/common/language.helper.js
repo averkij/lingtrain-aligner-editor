@@ -7,12 +7,14 @@ export const LANGUAGES = {
     'zh': {
         langCode: "zh",
         name: "Chinese",
-        icon: "🥢"
+        icon: "🥢",
+        noSpaceBetweenSentences: true
     },
     'jp': {
         langCode: "jp",
         name: "Japanese",
-        icon: "🍣"
+        icon: "🍣",
+        noSpaceBetweenSentences: true
     },
     'de': {
         langCode: "de",
