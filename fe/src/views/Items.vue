@@ -950,6 +950,7 @@
         });
       },
       editAddCandidateEnd(indexId, textType, candidateLineId, candidateText, batchId, batchIndexId) {
+        let langCode = textType == "from" ? this.langCodeFrom : this.langCodeTo;
         this.$store.dispatch(EDIT_PROCESSING, {
           username: this.$route.params.username,
           fileId: this.selectedProcessingId,
@@ -959,7 +960,7 @@
           batchId,
           batchIndexId,
           candidateLineId: candidateLineId,
-          candidateText: candidateText,
+          candidateText: this.LANGUAGES[langCode].noSpaceBetweenSentences ? candidateText : " " + candidateText,
           text_type: textType,
           operation: EDIT_ADD_CANDIDATE_END,
           target: "previous"
@@ -967,7 +968,8 @@
           this.refreshProcessingPage();
         });
       },
-      editAddUpEnd(indexId, editItemToText, textType, batchId, batchIndexId) {
+      editAddUpEnd(indexId, editItemText, textType, batchId, batchIndexId) {
+        let langCode = textType == "from" ? this.langCodeFrom : this.langCodeTo;
         this.$store.dispatch(EDIT_PROCESSING, {
           username: this.$route.params.username,
           fileId: this.selectedProcessingId,
@@ -976,7 +978,7 @@
           indexId,
           batchId,
           batchIndexId,
-          text: editItemToText,
+          text: this.LANGUAGES[langCode].noSpaceBetweenSentences ? editItemText : " " + editItemText,
           text_type: textType,
           operation: EDIT_ADD_PREV_END,
           target: "previous"
@@ -985,6 +987,7 @@
         });
       },
       editAddDownEnd(indexId, editItemText, textType, batchId, batchIndexId) {
+        let langCode = textType == "from" ? this.langCodeFrom : this.langCodeTo;
         this.$store.dispatch(EDIT_PROCESSING, {
           username: this.$route.params.username,
           fileId: this.selectedProcessingId,
@@ -993,7 +996,7 @@
           indexId,
           batchId,
           batchIndexId,
-          text: editItemText,
+          text: this.LANGUAGES[langCode].noSpaceBetweenSentences ? editItemText : " " + editItemText,
           text_type: textType,
           operation: EDIT_ADD_NEXT_END,
           target: "next"
