@@ -114,7 +114,7 @@
           <v-card-text>List of previosly aligned documents [{{langCodeFrom}}-{{langCodeTo}}]</v-card-text>
           <!-- {{itemsProcessing}} -->
         </div>
-        <v-divider></v-divider>
+        <v-divider/>
         <v-list flat class="pa-0">
           <v-list-item-group mandatory v-model="selectedListItem">
             <v-list-item v-for="(item, i) in itemsProcessing[langCodeFrom]" :key="i"
@@ -517,6 +517,7 @@
     FETCH_ITEMS,
     FETCH_ITEMS_PROCESSING,
     UPLOAD_FILES,
+    DELETE_DOCUMENT,
     GET_SPLITTED,
     GET_DOC_INDEX,
     GET_PROCESSING,
@@ -528,12 +529,14 @@
     STOP_ALIGNMENT,
     EDIT_PROCESSING,
     CREATE_ALIGNMENT,
+    DELETE_ALIGNMENT,
     ALIGN_SPLITTED,
     DOWNLOAD_SPLITTED,
     DOWNLOAD_PROCESSING
   } from "@/store/actions.type";
   import {
     SET_ITEMS_PROCESSING,
+    SET_SPLITTED,
   } from "@/store/mutations.type";
 
   export default {
@@ -1110,8 +1113,17 @@
         return this.itemsProcessing[langCode].length != 0;
       },
       selectFirstDocument(langCode) {
-        if (this.itemsNotEmpty(langCode) & !this.selected[langCode]) {
+        if (this.itemsNotEmpty(langCode)) {
           this.selectAndLoadPreview(langCode, this.items[langCode][0].name, this.items[langCode][0].guid);
+        } else {
+          let data = {"items": {}, "meta": {}};
+          data["items"][langCode] = []
+          data["meta"][langCode] = {}
+          this.$store.commit(SET_SPLITTED, {
+            data,
+            langCode
+          });
+          this.selected[langCode] = null;
         }
       },
       selectFirstProcessingDocument() {
@@ -1164,11 +1176,37 @@
       },
 
       //deletion
-      performDeleteRawFile(item) {
-        alert(item.name + " " + item.guid);
+      performDeleteRawFile(item, langCode) {
+        this.$store.dispatch(DELETE_DOCUMENT, {
+            username: this.$route.params.username,
+            filename: item.name,
+            guid: item.guid,
+            langCode
+          })
+          .then(() => {
+            this.$store.dispatch(FETCH_ITEMS, {
+              username: this.$route.params.username,
+              langCode: langCode
+            }).then(() => {
+              this.selectFirstDocument(langCode);
+            });
+          });
       },
       performDeleteAlignment() {
-        alert(this.hoveredAlignmentItem.name + " " + this.hoveredAlignmentItem.guid);
+        this.$store
+          .dispatch(DELETE_ALIGNMENT, {
+            username: this.$route.params.username,
+            guid: this.hoveredAlignmentItem.guid,
+          })
+          .then(() => {
+            this.$store.dispatch(FETCH_ITEMS_PROCESSING, {
+              username: this.$route.params.username,
+              langCodeFrom: this.langCodeFrom,
+              langCodeTo: this.langCodeTo
+            }).then(() => {
+              this.selectFirstProcessingDocument();
+            });
+          });
       },
     },
     mounted() {

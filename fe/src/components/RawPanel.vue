@@ -72,7 +72,7 @@ export default {
   },
   methods: {
     confirmDelete() {
-      this.$emit('performDelete', this.currentItem);
+      this.$emit('performDelete', this.currentItem, this.info.langCode);
     },
     onFileChange(event, langCode) {
       this.$emit("onFileChange", event, langCode);
