@@ -460,8 +460,13 @@ def update_batch_progress(db_path, batch_id):
             "insert or ignore into batches (batch_id, insert_ts) values (?, datetime('now'))", (batch_id,))
 
 
-def delete_alignment(user_db_path, guid):
+def delete_alignment(username, guid):
     """Mark alignment as deleted"""
+    main_db_path = os.path.join(con.UPLOAD_FOLDER, con.MAIN_DB_NAME)
+    user_db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
+    with sqlite3.connect(main_db_path) as db:
+        db.execute('update global_alignments set deleted = 1 where guid=:guid', {
+                   "guid": guid})
     with sqlite3.connect(user_db_path) as db:
         db.execute('update alignments set deleted = 1 where guid=:guid', {
                    "guid": guid})

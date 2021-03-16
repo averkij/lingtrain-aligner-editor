@@ -187,8 +187,7 @@ def delete_alignment(username):
     if not helper.alignment_guid_exists(username, align_guid):
         return ('', 400)
 
-    user_db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
-    helper.delete_alignment(user_db_path, align_guid)
+    helper.delete_alignment(username, align_guid)
 
     return ('', 200)
 
