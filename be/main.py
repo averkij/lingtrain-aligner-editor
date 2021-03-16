@@ -137,6 +137,9 @@ def create_alignment(username):
     if helper.alignment_exists(username, id_from, id_to):
         return ('', 200)
 
+    if not helper.file_exists_by_guid(username, id_from) or not helper.file_exists_by_guid(username, id_to):
+        return ('', 400)
+
     batch_size = config.DEFAULT_BATCHSIZE
     file_from, lang_from = helper.get_fileinfo(username, id_from)
     file_to, lang_to = helper.get_fileinfo(username, id_to)
@@ -172,6 +175,32 @@ def create_alignment(username):
 
     helper.register_alignment(username, lang_from, lang_to, align_guid,
                               id_from, id_to, name, total_batches)
+
+    return ('', 200)
+
+
+@app.route("/items/<username>/alignment/delete", methods=["POST"])
+def delete_alignment(username):
+    """Mark existed alignment as deleted"""
+    align_guid = request.form.get("align_guid", '')
+
+    if not helper.alignment_guid_exists(username, align_guid):
+        return ('', 400)
+
+    user_db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
+    helper.delete_alignment(user_db_path, align_guid)
+
+    return ('', 200)
+
+
+@app.route("/items/<username>/raw/delete", methods=["POST"])
+def delete_document(username):
+    """Delete uploaded file"""
+    guid = request.form.get("guid", '')
+    lang = request.form.get("lang", '')
+    filename = request.form.get("filename", '')
+
+    helper.delete_document(username, guid, lang, filename)
 
     return ('', 200)
 
@@ -229,7 +258,7 @@ def start_alignment(username):
         user_db_path, align_guid, con.PROC_IN_PROGRESS)
 
     # parallel processing
-    logging.info(f"{username}: aligning started")
+    logging.info(f"{username}: align started")
     res_img = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER,
                            username, f"{align_guid}.png")
     res_img_best = os.path.join(
@@ -294,7 +323,7 @@ def align_next_batch(username):
         user_db_path, align_guid, con.PROC_IN_PROGRESS)
 
     # parallel processing
-    logging.info(f"{username}: aligning started")
+    logging.info(f"{username}: align started")
     res_img = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER,
                            username, f"{align_guid}.png")
     res_img_best = os.path.join(

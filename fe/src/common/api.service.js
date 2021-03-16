@@ -193,6 +193,26 @@ export const ItemsService = {
       form
     );
   },
+  deleteAlignment(params) {
+    let form = new FormData();
+    form.append("align_guid", params.guid);
+    return ApiService.post(
+      "items",
+      `${params.username}/alignment/delete`,
+      form
+    );
+  },
+  deleteDocument(params) {
+    let form = new FormData();
+    form.append("guid", params.guid);
+    form.append("lang", params.langCode);
+    form.append("filename", params.filename);
+    return ApiService.post(
+      "items",
+      `${params.username}/raw/delete`,
+      form
+    );
+  },
   editProcessing(params) {
     let form = new FormData();
     form.append("text", params.text);

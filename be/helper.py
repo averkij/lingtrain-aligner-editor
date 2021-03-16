@@ -396,15 +396,24 @@ def init_user_db(username):
             db.execute(
                 'create table documents(id integer primary key, guid varchar, lang varchar, name varchar)')
             db.execute(
-                'create table alignments(id integer primary key, guid varchar, guid_from varchar, guid_to varchar, name varchar, state integer, curr_batches integer, total_batches integer)')
+                'create table alignments(id integer primary key, guid varchar, guid_from varchar, guid_to varchar, name varchar, state integer, curr_batches integer, total_batches integer, deleted integer default 0 NOT NULL)')
 
 
 def alignment_exists(username, guid_from, guid_to):
     """Check if alignment already exists"""
     db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
     with sqlite3.connect(db_path) as db:
-        cur = db.execute("select * from alignments where guid_from=:guid_from and guid_to=:guid_to", {
+        cur = db.execute("select * from alignments where guid_from=:guid_from and guid_to=:guid_to and deleted <> 1", {
                          "guid_from": guid_from, "guid_to": guid_to})
+        return bool(cur.fetchone())
+
+
+def alignment_guid_exists(username, guid):
+    """Check if alignment already exists by alignment guid"""
+    db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
+    with sqlite3.connect(db_path) as db:
+        cur = db.execute(
+            "select * from alignments where guid=:guid", {"guid": guid})
         return bool(cur.fetchone())
 
 
@@ -451,6 +460,13 @@ def update_batch_progress(db_path, batch_id):
             "insert or ignore into batches (batch_id, insert_ts) values (?, datetime('now'))", (batch_id,))
 
 
+def delete_alignment(user_db_path, guid):
+    """Mark alignment as deleted"""
+    with sqlite3.connect(user_db_path) as db:
+        db.execute('update alignments set deleted = 1 where guid=:guid', {
+                   "guid": guid})
+
+
 def get_batches_count(db_path):
     """Get amount of already processed batches"""
     with sqlite3.connect(db_path) as db:
@@ -490,6 +506,15 @@ def file_exists(username, lang, name):
         return bool(cur.fetchone())
 
 
+def file_exists_by_guid(username, guid):
+    """Check if file already exists by guid"""
+    db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
+    with sqlite3.connect(db_path) as db:
+        cur = db.execute(
+            "select * from documents where guid=:guid", {"guid": guid})
+        return bool(cur.fetchone())
+
+
 def register_file(username, lang, name):
     """Register new file in database"""
     db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
@@ -497,6 +522,23 @@ def register_file(username, lang, name):
     with sqlite3.connect(db_path) as db:
         db.execute('insert into documents(guid, lang, name) values (:guid, :lang, :name) ', {
             "guid": guid, "lang": lang, "name": name})
+
+
+def delete_document(username, guid, lang, filename):
+    """Delete uploaded document and clean database"""
+    raw_path = os.path.join(con.UPLOAD_FOLDER, username,
+                            con.RAW_FOLDER, lang, filename)
+    proxy_path = os.path.join(
+        con.UPLOAD_FOLDER, username, con.PROXY_FOLDER, lang, filename)
+
+    if os.path.isfile(raw_path):
+        os.remove(raw_path)
+    if os.path.isfile(proxy_path):
+        os.remove(proxy_path)
+
+    db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
+    with sqlite3.connect(db_path) as db:
+        db.execute('delete from documents where guid=:guid', {"guid": guid})
 
 
 def get_documents_list(username, lang=None):
@@ -542,7 +584,8 @@ def get_alignments_list(username, lang_from, lang_to):
                                     join documents d_from on d_from.guid=a.guid_from
                                     join documents d_to on d_to.guid=a.guid_to
                             where
-                                d_from.lang=:lang_from and d_to.lang=:lang_to""", {
+                                d_from.lang=:lang_from and d_to.lang=:lang_to
+                                and deleted <> 1""", {
                          "lang_from": lang_from, "lang_to": lang_to}).fetchall()
         return res
 

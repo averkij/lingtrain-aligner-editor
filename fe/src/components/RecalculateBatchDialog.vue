@@ -49,7 +49,6 @@
         this.show = false;
         this.$emit('recalculateBatch', this.batch_id, this.shift)
       },
-
     },
     computed: {
       show: {

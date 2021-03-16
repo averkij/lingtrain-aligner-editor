@@ -10,30 +10,47 @@
     <!-- <v-divider></v-divider> -->
     <v-list class="pa-0">
       <v-list-item-group mandatory color="gray">
-        <v-list-item v-for="(item, i) in items[info.langCode]" :key="i"
-          @change="selectAndLoadPreview(info.langCode, item.name, item.guid)">
+        <v-list-item
+          v-for="(item, i) in items[info.langCode]"
+          :key="i"
+          @change="selectAndLoadPreview(info.langCode, item.name, item.guid)"
+          @mouseover="hover_index = i"
+          @mouseleave="hover_index = -1"
+        >
           <v-list-item-icon>
             <v-icon>mdi-text-box-outline</v-icon>
           </v-list-item-icon>
           <v-list-item-content>
-            <v-list-item-title v-text="item.name"></v-list-item-title>
-            <!-- {{item.guid}} -->
+            <div>{{item.name}}<v-chip v-if="item.has_proxy" class="ml-2" small label color="blue" text-color="white">translated</v-chip></div>
           </v-list-item-content>
-          <v-icon v-if="item.has_proxy">mdi-translate</v-icon>
+          <v-icon v-show="hover_index == i" class="ml-2" @click.stop.prevent="currentItem=item, showConfirmDeleteDialog=true">mdi-close</v-icon>
         </v-list-item>
       </v-list-item-group>
     </v-list>
+    <ConfirmDeleteDialog v-model="showConfirmDeleteDialog"
+          :itemName=currentItem.name
+          @confirmDelete="confirmDelete" />
     <v-divider></v-divider>
     <v-card-title>Upload</v-card-title>
-    <v-card-text>Upload raw {{ info.name }} document in txt format.</v-card-text>
+    <v-card-text
+      >Upload raw {{ info.name }} document in txt format.</v-card-text
+    >
     <v-card-actions>
-      <v-file-input outlined dense accept=".txt" @change="onFileChange($event, info.langCode)">
+      <v-file-input
+        outlined
+        dense
+        accept=".txt"
+        @change="onFileChange($event, info.langCode)"
+      >
       </v-file-input>
     </v-card-actions>
     <v-divider></v-divider>
     <v-card-actions>
-      <v-btn @click="uploadFile(info.langCode)" :loading="isLoading.upload[info.langCode]"
-        :disabled="isLoading.upload[info.langCode]">
+      <v-btn
+        @click="uploadFile(info.langCode)"
+        :loading="isLoading.upload[info.langCode]"
+        :disabled="isLoading.upload[info.langCode]"
+      >
         Upload
       </v-btn>
     </v-card-actions>
@@ -41,20 +58,35 @@
 </template>
 
 <script>
-  export default {
-    name: "RawPanel",
-    props: ["info", "isLoading", "items"],
-    methods: {
-      onFileChange(event, langCode) {
-        this.$emit('onFileChange', event, langCode)
-      },
-      uploadFile(langCode) {
-        this.$emit('uploadFile', langCode)
-      },
-      selectAndLoadPreview(langCode, item, id) {
-        this.$emit('selectAndLoadPreview', langCode, item, id)
-      }
+import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog"
+
+export default {
+  name: "RawPanel",
+  props: ["info", "isLoading", "items"],
+  data() {
+    return {
+      hover_index: -1,
+      showConfirmDeleteDialog: false,
+      currentItem: {"name": ""}
+    };
+  },
+  methods: {
+    confirmDelete() {
+      this.$emit('performDelete', this.currentItem, this.info.langCode);
     },
-    computed: {}
-  };
+    onFileChange(event, langCode) {
+      this.$emit("onFileChange", event, langCode);
+    },
+    uploadFile(langCode) {
+      this.$emit("uploadFile", langCode);
+    },
+    selectAndLoadPreview(langCode, item, id) {
+      this.$emit("selectAndLoadPreview", langCode, item, id);
+    },
+  },
+  computed: {},
+  components: {
+    ConfirmDeleteDialog
+  }
+};
 </script>

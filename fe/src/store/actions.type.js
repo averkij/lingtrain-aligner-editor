@@ -2,6 +2,7 @@ export const LOGIN = "login";
 export const LOGOUT = "logout";
 
 export const UPLOAD_FILES = "upload_files";
+export const DELETE_DOCUMENT = "delete_document";
 
 export const INIT_USERSPACE = "init_userspace";
 export const FETCH_ITEMS = "fetch_items";
@@ -18,6 +19,7 @@ export const GET_CONFLICT_SPLITTED_TO = "get_conflict_splitted_to";
 export const GET_CONFLICT_FLOW_TO = "get_conflict_flow_to";
 
 export const CREATE_ALIGNMENT = "create_alignment"
+export const DELETE_ALIGNMENT = "delete_alignment"
 export const STOP_ALIGNMENT = "stop_alignment";
 
 export const EDIT_PROCESSING = "edit_processing";

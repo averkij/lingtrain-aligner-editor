@@ -11,6 +11,7 @@ import {
   FETCH_ITEMS,
   FETCH_ITEMS_PROCESSING,
   UPLOAD_FILES,
+  DELETE_DOCUMENT,
   DOWNLOAD_SPLITTED,
   DOWNLOAD_PROCESSING,
   GET_SPLITTED,
@@ -22,6 +23,7 @@ import {
   STOP_ALIGNMENT,
   ALIGN_SPLITTED,
   CREATE_ALIGNMENT,
+  DELETE_ALIGNMENT,
   GET_CONFLICT_SPLITTED_FROM,
   GET_CONFLICT_SPLITTED_TO,
   GET_CONFLICT_FLOW_TO
@@ -104,6 +106,7 @@ export const actions = {
     const {
       data
     } = await ItemsService.getSplitted(params);
+    console.log(data)
     context.commit(SET_SPLITTED, {
       data: data,
       langCode: params.langCode
@@ -213,6 +216,20 @@ export const actions = {
     },
     () => {
       console.log("alignment creation error")
+    });
+  },
+  async [DELETE_ALIGNMENT](context, params) {
+    await ItemsService.deleteAlignment(params).then(() => {
+    },
+    () => {
+      console.log("alignment deletion error")
+    });
+  },
+  async [DELETE_DOCUMENT](context, params) {
+    await ItemsService.deleteDocument(params).then(() => {
+    },
+    () => {
+      console.log("document deletion error")
     });
   }
 };
