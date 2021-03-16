@@ -28,6 +28,7 @@ CORS(app)
 @app.route("/items/<username>/init", methods=["GET"])
 def init_userspace(username):
     """Prepare user workspace"""
+    helper.init_main_db()
     helper.init_user_db(username)
     return ('', 200)
 
@@ -169,7 +170,7 @@ def create_alignment(username):
     if config.TEST_RESTRICTION_MAX_BATCHES > 0:
         total_batches = min(config.TEST_RESTRICTION_MAX_BATCHES, total_batches)
 
-    helper.register_alignment(username, align_guid,
+    helper.register_alignment(username, lang_from, lang_to, align_guid,
                               id_from, id_to, name, total_batches)
 
     return ('', 200)

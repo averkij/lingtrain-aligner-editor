@@ -17,6 +17,7 @@ TYPE_FROM = "from"
 TYPE_TO = "to"
 
 USER_DB_NAME = "user.db"
+MAIN_DB_NAME = "main.db"
 
 PROC_INIT = 0
 PROC_IN_PROGRESS = 1
