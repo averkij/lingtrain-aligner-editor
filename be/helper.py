@@ -95,9 +95,9 @@ def init_document_db(db_path):
         os.remove(db_path)
     with sqlite3.connect(db_path) as db:
         db.execute(
-            'create table splitted_from(id integer primary key, text nvarchar)')
+            'create table splitted_from(id integer primary key, text nvarchar, exclude integer)')
         db.execute(
-            'create table splitted_to(id integer primary key, text nvarchar)')
+            'create table splitted_to(id integer primary key, text nvarchar, exclude integer)')
         db.execute(
             'create table proxy_from(id integer primary key, text nvarchar)')
         db.execute('create table proxy_to(id integer primary key, text nvarchar)')
@@ -118,15 +118,15 @@ def fill_document_db(db_path, splitted_from, splitted_to, proxy_from, proxy_to):
         with open(splitted_from, mode="r", encoding="utf-8") as input_path:
             lines = input_path.readlines()
         with sqlite3.connect(db_path) as db:
-            db.executemany("insert into splitted_from(text) values (?)", [
-                           (x.strip(),) for x in lines])
+            db.executemany("insert into splitted_from(text, exclude) values (?,?)", [
+                           (x.strip(), 0) for x in lines])
 
     if os.path.isfile(splitted_to):
         with open(splitted_to, mode="r", encoding="utf-8") as input_path:
             lines = input_path.readlines()
         with sqlite3.connect(db_path) as db:
-            db.executemany("insert into splitted_to(text) values (?)", [
-                           (x.strip(),) for x in lines])
+            db.executemany("insert into splitted_to(text, exclude) values (?,?)", [
+                           (x.strip(), 0) for x in lines])
 
     if os.path.isfile(proxy_from):
         with open(proxy_from, mode="r", encoding="utf-8") as input_path:
@@ -339,10 +339,10 @@ def get_splitted_from_by_id(db_path, ids):
     """Get lines from splitted_from by ids"""
     res = []
     with sqlite3.connect(db_path) as db:
-        for id, text_from, proxy_from in db.execute(
-            f'select f.id, f.text, pf.text from splitted_from f left join proxy_from pf on pf.id = f.id where f.id in ({",".join([str(x) for x in ids])})'
+        for id, text_from, proxy_from, exclude in db.execute(
+            f'select f.id, f.text, pf.text, exclude from splitted_from f left join proxy_from pf on pf.id = f.id where f.id in ({",".join([str(x) for x in ids])})'
         ):
-            res.append((id, text_from, proxy_from))
+            res.append((id, text_from, proxy_from, exclude))
     return res
 
 
@@ -350,10 +350,10 @@ def get_splitted_to_by_id(db_path, ids):
     """Get lines from splitted_to by ids"""
     res = []
     with sqlite3.connect(db_path) as db:
-        for id, text_to, proxy_to in db.execute(
-            f'select t.id, t.text, pt.text from splitted_to t left join proxy_to pt on pt.id = t.id where t.id in ({",".join([str(x) for x in ids])})'
+        for id, text_to, proxy_to, exclude in db.execute(
+            f'select t.id, t.text, pt.text, exclude from splitted_to t left join proxy_to pt on pt.id = t.id where t.id in ({",".join([str(x) for x in ids])})'
         ):
-            res.append((id, text_to, proxy_to))
+            res.append((id, text_to, proxy_to, exclude))
     return res
 
 

@@ -20,3 +20,5 @@ be/models/labse.bin
 be/models/sentence_transformers_xlm_100.bin
 be/models/sentence_transformers-v2.bin
 docs/source/_build
+be/data
+be/static/img
