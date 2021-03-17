@@ -133,7 +133,7 @@ class AlignmentProcessor:
         # use_proxy_to = self.lines_proxy_to != None #and len(self.lines_proxy_to)>=len(lines_to)
         #print("use_proxy_to", use_proxy_to, len(lines_proxy_to), len(lines_to))
 
-        logging.info(f"Aligning started for {self.db_path}.")
+        logging.info(f"Alignment started for {self.db_path}.")
         try:
             print("batch:", batch_number)
             logging.info(f"Batch {batch_number}. Calculating vectors.")
