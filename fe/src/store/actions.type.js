@@ -23,6 +23,7 @@ export const DELETE_ALIGNMENT = "delete_alignment"
 export const STOP_ALIGNMENT = "stop_alignment";
 
 export const EDIT_PROCESSING = "edit_processing";
+export const EDIT_PROCESSING_MARK_UNUSED = "edit_processing_mark_unused";
 
 export const DOWNLOAD_PROCESSING = "download_processing";
 export const DOWNLOAD_SPLITTED = "download_splitted";

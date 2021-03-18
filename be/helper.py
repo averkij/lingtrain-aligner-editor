@@ -389,27 +389,23 @@ def get_splitted_to(db_path):
 def switch_excluded_splitted_to(db_path, id):
     """Mark splitted_to line as unused"""
     with sqlite3.connect(db_path) as db:
-        excluded = db.execute("select excluded from splitted_to where id=:id", {
-                              "id": id}).fetchone()
-
-        print("EXCLUDED", excluded)
-
-        db.execute('update splitted_to set excluded=:excluded where id=:id', {
-            "excluded": (excluded + 1) % 2, "id": id})
-    return res
+        exclude = db.execute("select exclude from splitted_to where id=:id", {
+            "id": id}).fetchone()
+        if exclude:
+            db.execute('update splitted_to set exclude=:exclude where id=:id', {
+                "exclude": (exclude[0] + 1) % 2, "id": id})
+    return
 
 
 def switch_excluded_splitted_from(db_path, id):
     """Mark splitted_from line as unused"""
     with sqlite3.connect(db_path) as db:
-        excluded = db.execute("select excluded from splitted_from where id=:id", {
-                              "id": id}).fetchone()
-
-        print("EXCLUDED", excluded)
-
-        db.execute('update splitted_from set excluded=:excluded where id=:id', {
-            "excluded": (excluded + 1) % 2, "id": id})
-    return res
+        exclude = db.execute("select exclude from splitted_from where id=:id", {
+            "id": id}).fetchone()
+        if exclude:
+            db.execute('update splitted_from set exclude=:exclude where id=:id', {
+                "exclude": (exclude[0] + 1) % 2, "id": id})
+    return
 
 
 def get_texts_length(db_path):
@@ -462,12 +458,12 @@ def alignment_guid_exists(username, guid):
 def register_alignment(username, lang_from, lang_to, guid, guid_from, guid_to, name, total_batches):
     """Register new alignment in user.db and main.db"""
     main_db_path = os.path.join(con.UPLOAD_FOLDER, con.MAIN_DB_NAME)
-    db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
+    user_db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
     if not alignment_exists(username,  guid_from, guid_to):
         with sqlite3.connect(main_db_path) as main_db:
             main_db.execute('insert into global_alignments(guid, username, lang_from, lang_to, name, state, insert_ts, deleted) values (:guid, :username, :lang_from, :lang_to, :name, 2, :insert_ts, 0) ', {
                 "guid": guid, "username": username, "lang_from": lang_from, "lang_to": lang_to, "name": name, "insert_ts": datetime.datetime.utcnow().strftime('%Y-%m-%d_%H:%M:%S')})
-        with sqlite3.connect(db_path) as db:
+        with sqlite3.connect(user_db_path) as db:
             db.execute('insert into alignments(guid, guid_from, guid_to, lang_from, lang_to, name, state, curr_batches, total_batches) values (:guid, :guid_from, :guid_to, :lang_from, :lang_to, :name, 2, 0, :total_batches) ', {
                        "guid": guid, "guid_from": guid_from, "guid_to": guid_to, "lang_from": lang_from, "lang_to": lang_to, "name": name, "total_batches": total_batches})
     return
@@ -475,8 +471,8 @@ def register_alignment(username, lang_from, lang_to, guid, guid_from, guid_to, n
 
 def get_alignment_id(username, guid_from, guid_to):
     """Return alignment id"""
-    db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
-    with sqlite3.connect(db_path) as db:
+    user_db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
+    with sqlite3.connect(user_db_path) as db:
         res = db.execute("select guid from alignments where guid_from=:guid_from and guid_to=:guid_to", {
                          "guid_from": guid_from, "guid_to": guid_to}).fetchone()
         return res[0] if res else None

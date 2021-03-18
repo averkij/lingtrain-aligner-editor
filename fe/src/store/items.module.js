@@ -20,6 +20,7 @@ import {
   GET_PROCESSING_META,
   GET_CANDIDATES,
   EDIT_PROCESSING,
+  EDIT_PROCESSING_MARK_UNUSED,
   STOP_ALIGNMENT,
   ALIGN_SPLITTED,
   CREATE_ALIGNMENT,
@@ -203,6 +204,13 @@ export const actions = {
       }
     );
     return;
+  },
+  async [EDIT_PROCESSING_MARK_UNUSED](context, params) {
+    await ItemsService.editProcessingMarkUnused(params).then(() => {
+    },
+    () => {
+      console.log("mark as unused error")
+    });
   },
   async [ALIGN_SPLITTED](context, params) {
     await ItemsService.startAlignment(params).then(() => {

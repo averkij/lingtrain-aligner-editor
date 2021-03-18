@@ -154,7 +154,7 @@
       </div>
 
       <!-- ALIGNMENT BUTTON -->
-      <v-btn v-if="!userAlignInProgress" v-show_="selected[langCodeFrom] && selected[langCodeTo]" class="success mt-6"
+      <v-btn v-if="!userAlignInProgress" class="success mt-6"
         :loading="isLoading.align || isLoading.alignStopping"
         :disabled="selectedProcessing && selectedProcessing.state[1]==selectedProcessing.state[2]"
         @click="startAlignment()">
@@ -368,13 +368,15 @@
                           {{ line }}
                         </div>
                         <v-divider class="d-table-cell" vertical></v-divider>
-                        <div class="d-table-cell pa-2">{{ conflictSplittedFrom[line].t}}
+                        <div class="d-table-cell pa-2" style="width:100%">{{ conflictSplittedFrom[line].t}}
                           <div v-if="conflictSplittedFrom[line].p"
                             class="mt-3 proxy-to-subtitles grey lighten-3 font-weight-medium">
                             {{conflictSplittedFrom[line].p}}
                           </div>
                         </div>
-                        <div class="d-table-cell pa-2">
+                        <v-divider class="d-table-cell" vertical></v-divider>
+                        <div class="d-table-cell grey lighten-5 pl-2 pt-2 text-center">
+                          <v-checkbox hide-details class="ma-1 pa-0" v-model="conflictSplittedFrom[line].e" @click.stop.prevent="markUnused('from', line)"></v-checkbox>
                         </div>
                       </div>
                     </v-col>
@@ -401,11 +403,15 @@
                           {{ line }}
                         </div>
                         <v-divider class="d-table-cell" vertical></v-divider>
-                        <div class="d-table-cell pa-2">{{ conflictSplittedTo[line].t}}
+                        <div class="d-table-cell pa-2" style="width:100%">{{ conflictSplittedTo[line].t}}
                           <div v-if="conflictSplittedTo[line].p"
                             class="mt-3 proxy-to-subtitles grey lighten-3 font-weight-medium">
                             {{conflictSplittedTo[line].p}}
                           </div>
+                        </div>
+                        <v-divider class="d-table-cell" vertical></v-divider>
+                        <div class="d-table-cell grey lighten-5 pl-2 pt-2 text-center">
+                          <v-checkbox hide-details class="ma-1 pa-0" v-model="conflictSplittedTo[line].e" @click.stop.prevent="markUnused('to', line)"></v-checkbox>
                         </div>
                       </div>
                     </v-col>
@@ -528,6 +534,7 @@
     // GET_CONFLICT_FLOW_TO,
     STOP_ALIGNMENT,
     EDIT_PROCESSING,
+    EDIT_PROCESSING_MARK_UNUSED,
     CREATE_ALIGNMENT,
     DELETE_ALIGNMENT,
     ALIGN_SPLITTED,
@@ -1094,6 +1101,23 @@
           }).catch(() => {
             callback(RESULT_ERROR)
           });
+      },
+      markUnused(textType, lineId) {
+        if (textType == "from") {
+          this.conflictSplittedFrom[lineId].e = !this.conflictSplittedFrom[lineId].e;
+        } else {
+          this.conflictSplittedTo[lineId].e = !this.conflictSplittedTo[lineId].e;
+        }
+        this.$store.dispatch(EDIT_PROCESSING_MARK_UNUSED, {
+          username: this.$route.params.username,
+          guid: this.selectedProcessingId,
+          langCodeFrom: this.langCodeFrom,
+          langCodeTo: this.langCodeTo,
+          lineId,
+          textType
+        }).then(() => {
+          console.log("Marked as unused")
+        });
       },
       //dialogs
       goToPage(pageNumber) {

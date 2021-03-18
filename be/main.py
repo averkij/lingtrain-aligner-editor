@@ -410,7 +410,7 @@ def get_splitted_from_by_ids(username, lang_from, lang_to, align_guid):
             res[id] = {
                 "t": text,
                 "p": proxy if proxy else '',
-                "e": exclude
+                "e": exclude == 1
             }
     return {"items": res}
 
@@ -431,7 +431,7 @@ def get_splitted_to_by_ids(username, lang_from, lang_to, align_guid):
             res[id] = {
                 "t": text,
                 "p": proxy if proxy else '',
-                "e": exclude
+                "e": exclude == 1
             }
 
     return {"items": res}
@@ -576,10 +576,28 @@ def stop_alignment(username, lang_from, lang_to, aling_id):
     return ('', 200)
 
 
+@app.route("/items/<username>/edit/exclude/<lang_from>/<lang_to>/<aling_id>", methods=["POST"])
+def switch_excluded(username, lang_from, lang_to, aling_id):
+    """Switch excluded flag for unused string"""
+    db_folder = os.path.join(con.UPLOAD_FOLDER, username,
+                             con.DB_FOLDER, lang_from, lang_to)
+    db_path = os.path.join(db_folder, f'{aling_id}.db')
+
+    line_id = request.form.get("line_id", -1)
+    text_type = request.form.get("text_type", con.TYPE_FROM)
+
+    print("EXCLUDING", text_type, aling_id, lang_from, lang_to, line_id)
+
+    if text_type == "from":
+        helper.switch_excluded_splitted_from(db_path, line_id)
+    else:
+        helper.switch_excluded_splitted_to(db_path, line_id)
+    return ('', 200)
+
+
 @app.route("/debug/items", methods=["GET"])
 def show_items_tree():
     """Show all files in data folder"""
-
     tree_path = os.path.join(tempfile.gettempdir(), "items_tree.txt")
     logging.debug(f"Temp file for tree structure: {tree_path}.")
     with open(tree_path, mode="w", encoding="utf-8") as tree_out:
@@ -592,9 +610,8 @@ def show_items_tree():
                 tree_out.write(f"{subindent}{file}" + "\n")
     return send_file(tree_path)
 
+
 # Not API calls treated like static queries
-
-
 @app.route("/<path:path>")
 def route_frontend(path):
     """Route static requests"""
