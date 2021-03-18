@@ -218,8 +218,8 @@ def start_alignment(username):
 
     name, guid_from, guid_to, state, curr_batches, total_batches = helper.get_alignment_info(
         username, align_guid)
-    file_from, lang_from = helper.get_fileinfo(username, guid_from)
-    file_to, lang_to = helper.get_fileinfo(username, guid_to)
+    _, lang_from = helper.get_alignment_fileinfo_from(username, guid_from)
+    _, lang_to = helper.get_alignment_fileinfo_to(username, guid_to)
 
     db_folder = os.path.join(con.UPLOAD_FOLDER, username,
                              con.DB_FOLDER, lang_from, lang_to)
@@ -227,20 +227,13 @@ def start_alignment(username):
     user_db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
 
     logging.info(
-        f"align parameters align_guid {align_guid} align_all {align_all} batch_ids {batch_ids} name {name} guid_from {guid_from} guid_to {guid_to} total_batches {total_batches}")
+        f"align parameters START align_guid {align_guid} align_all {align_all} batch_ids {batch_ids} name {name} guid_from {guid_from} guid_to {guid_to} total_batches {total_batches}")
 
-    splitted_from = os.path.join(
-        con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_from, file_from)
-    splitted_to = os.path.join(
-        con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_to, file_to)
-
-    with open(splitted_from, mode="r", encoding="utf-8") as input_from, \
-            open(splitted_to, mode="r", encoding="utf-8") as input_to:
-        lines_from = input_from.readlines()
-        lines_to = input_to.readlines()
+    lines_from = helper.get_splitted_from(db_path)
+    lines_to = helper.get_splitted_to(db_path)
 
     logging.info(f"[{username}]. Cleaning images.")
-    helper.clean_img_user_foler(username, file_from)
+    # helper.clean_img_user_foler(username, align_guid)
 
     if align_all:
         batch_ids = list(range(total_batches))
@@ -281,13 +274,11 @@ def start_alignment(username):
 @app.route("/items/<username>/alignment/align/next", methods=["POST"])
 def align_next_batch(username):
     """Align next batch of two splitted documents"""
-
     align_guid = request.form.get("id", '')
-
     name, guid_from, guid_to, state, curr_batches, total_batches = helper.get_alignment_info(
         username, align_guid)
-    file_from, lang_from = helper.get_fileinfo(username, guid_from)
-    file_to, lang_to = helper.get_fileinfo(username, guid_to)
+    _, lang_from = helper.get_alignment_fileinfo_from(username, guid_from)
+    _, lang_to = helper.get_alignment_fileinfo_to(username, guid_to)
 
     db_folder = os.path.join(con.UPLOAD_FOLDER, username,
                              con.DB_FOLDER, lang_from, lang_to)
@@ -298,20 +289,13 @@ def align_next_batch(username):
     batch_ids = [batches_count]
 
     logging.info(
-        f"align parameters align_guid {align_guid} batch_ids {batch_ids} name {name} guid_from {guid_from} guid_to {guid_to} total_batches {total_batches}")
+        f"align parameters NEXT align_guid {align_guid} batch_ids {batch_ids} name {name} guid_from {guid_from} guid_to {guid_to} total_batches {total_batches}")
 
-    splitted_from = os.path.join(
-        con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_from, file_from)
-    splitted_to = os.path.join(
-        con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_to, file_to)
-
-    with open(splitted_from, mode="r", encoding="utf-8") as input_from, \
-            open(splitted_to, mode="r", encoding="utf-8") as input_to:
-        lines_from = input_from.readlines()
-        lines_to = input_to.readlines()
+    lines_from = helper.get_splitted_from(db_path)
+    lines_to = helper.get_splitted_to(db_path)
 
     logging.info(f"[{username}]. Cleaning images.")
-    helper.clean_img_user_foler(username, file_from)
+    # helper.clean_img_user_foler(username, align_guid)
 
     # exit if batch ids is empty
     batch_ids = [x for x in batch_ids if x < total_batches][:total_batches]

@@ -154,7 +154,7 @@
       </div>
 
       <!-- ALIGNMENT BUTTON -->
-      <v-btn v-if="!userAlignInProgress" v-show="selected[langCodeFrom] && selected[langCodeTo]" class="success mt-6"
+      <v-btn v-if="!userAlignInProgress" v-show_="selected[langCodeFrom] && selected[langCodeTo]" class="success mt-6"
         :loading="isLoading.align || isLoading.alignStopping"
         :disabled="selectedProcessing && selectedProcessing.state[1]==selectedProcessing.state[2]"
         @click="startAlignment()">

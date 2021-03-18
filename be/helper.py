@@ -62,10 +62,10 @@ def get_sim_grades(processing_file):
     return docs["sim_grades"]
 
 
-def clean_img_user_foler(username, file):
+def clean_img_user_foler(username, align_guid):
     """Clean user folder with images"""
     imgs = get_files_list_with_path(os.path.join(
-        con.STATIC_FOLDER, con.IMG_FOLDER, username), mask=f"{os.path.basename(file)}.best_*.png")
+        con.STATIC_FOLDER, con.IMG_FOLDER, username), mask=f"{align_guid}.best_*.png")
     for img in imgs:
         if os.path.isfile(img):
             os.remove(img)
@@ -353,7 +353,7 @@ def get_splitted_from_by_id(db_path, ids):
     res = []
     with sqlite3.connect(db_path) as db:
         for id, text_from, proxy_from, exclude in db.execute(
-            f'select f.id, f.text, pf.text, exclude from splitted_from f left join proxy_from pf on pf.id = f.id where f.id in ({",".join([str(x) for x in ids])})'
+            f'select f.id, f.text, pf.text, f.exclude from splitted_from f left join proxy_from pf on pf.id = f.id where f.id in ({",".join([str(x) for x in ids])})'
         ):
             res.append((id, text_from, proxy_from, exclude))
     return res
@@ -364,9 +364,51 @@ def get_splitted_to_by_id(db_path, ids):
     res = []
     with sqlite3.connect(db_path) as db:
         for id, text_to, proxy_to, exclude in db.execute(
-            f'select t.id, t.text, pt.text, exclude from splitted_to t left join proxy_to pt on pt.id = t.id where t.id in ({",".join([str(x) for x in ids])})'
+            f'select t.id, t.text, pt.text, t.exclude from splitted_to t left join proxy_to pt on pt.id = t.id where t.id in ({",".join([str(x) for x in ids])})'
         ):
             res.append((id, text_to, proxy_to, exclude))
+    return res
+
+
+def get_splitted_from(db_path):
+    """Get lines from splitted_from"""
+    with sqlite3.connect(db_path) as db:
+        res = db.execute(
+            f'select f.text from splitted_from f order by f.id').fetchall()
+    return [x[0] for x in res]
+
+
+def get_splitted_to(db_path):
+    """Get lines from splitted_to"""
+    with sqlite3.connect(db_path) as db:
+        res = db.execute(
+            f'select t.text from splitted_to t order by t.id').fetchall()
+    return [x[0] for x in res]
+
+
+def switch_excluded_splitted_to(db_path, id):
+    """Mark splitted_to line as unused"""
+    with sqlite3.connect(db_path) as db:
+        excluded = db.execute("select excluded from splitted_to where id=:id", {
+                              "id": id}).fetchone()
+
+        print("EXCLUDED", excluded)
+
+        db.execute('update splitted_to set excluded=:excluded where id=:id', {
+            "excluded": (excluded + 1) % 2, "id": id})
+    return res
+
+
+def switch_excluded_splitted_from(db_path, id):
+    """Mark splitted_from line as unused"""
+    with sqlite3.connect(db_path) as db:
+        excluded = db.execute("select excluded from splitted_from where id=:id", {
+                              "id": id}).fetchone()
+
+        print("EXCLUDED", excluded)
+
+        db.execute('update splitted_from set excluded=:excluded where id=:id', {
+            "excluded": (excluded + 1) % 2, "id": id})
     return res
 
 
@@ -394,9 +436,9 @@ def init_user_db(username):
         logging.info(f"creating user db: {db_path}")
         with sqlite3.connect(db_path) as db:
             db.execute(
-                'create table documents(id integer primary key, guid varchar, lang varchar, name varchar)')
+                'create table documents(id integer primary key, guid text, lang text, name text)')
             db.execute(
-                'create table alignments(id integer primary key, guid varchar, guid_from varchar, guid_to varchar, name varchar, state integer, curr_batches integer, total_batches integer, deleted integer default 0 NOT NULL)')
+                'create table alignments(id integer primary key, guid text, guid_from text, guid_to text, lang_from text, lang_to text, name text, state integer, curr_batches integer, total_batches integer, deleted integer default 0 NOT NULL)')
 
 
 def alignment_exists(username, guid_from, guid_to):
@@ -426,8 +468,8 @@ def register_alignment(username, lang_from, lang_to, guid, guid_from, guid_to, n
             main_db.execute('insert into global_alignments(guid, username, lang_from, lang_to, name, state, insert_ts, deleted) values (:guid, :username, :lang_from, :lang_to, :name, 2, :insert_ts, 0) ', {
                 "guid": guid, "username": username, "lang_from": lang_from, "lang_to": lang_to, "name": name, "insert_ts": datetime.datetime.utcnow().strftime('%Y-%m-%d_%H:%M:%S')})
         with sqlite3.connect(db_path) as db:
-            db.execute('insert into alignments(guid, guid_from, guid_to, name, state, curr_batches, total_batches) values (:guid, :guid_from, :guid_to, :name, 2, 0, :total_batches) ', {
-                       "guid": guid, "guid_from": guid_from, "guid_to": guid_to, "name": name, "total_batches": total_batches})
+            db.execute('insert into alignments(guid, guid_from, guid_to, lang_from, lang_to, name, state, curr_batches, total_batches) values (:guid, :guid_from, :guid_to, :lang_from, :lang_to, :name, 2, 0, :total_batches) ', {
+                       "guid": guid, "guid_from": guid_from, "guid_to": guid_to, "lang_from": lang_from, "lang_to": lang_to, "name": name, "total_batches": total_batches})
     return
 
 
@@ -571,6 +613,24 @@ def get_fileinfo(username, guid):
     return filename[0] if filename else None
 
 
+def get_alignment_fileinfo_from(username, guid):
+    """Get file (from) info by id from alignments table"""
+    db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
+    with sqlite3.connect(db_path) as db:
+        res = db.execute("select guid_from, lang_from from alignments where guid_from=:guid", {
+            "guid": guid}).fetchone()
+    return ([res[0], res[1]]) if res else None
+
+
+def get_alignment_fileinfo_to(username, guid):
+    """Get file (to) info by id from alignments table"""
+    db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
+    with sqlite3.connect(db_path) as db:
+        res = db.execute("select guid_to, lang_to from alignments where guid_to=:guid", {
+            "guid": guid}).fetchone()
+    return ([res[0], res[1]]) if res else None
+
+
 def get_alignment_info(username, guid):
     """Get alignment info by id"""
     db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
@@ -584,13 +644,10 @@ def get_alignments_list(username, lang_from, lang_to):
     with sqlite3.connect(db_path) as db:
         res = db.execute("""select
                                 a.guid, a.name, a.guid_from, a.guid_to, a.state, a.curr_batches, a.total_batches
-                            from
-                                alignments a
-                                    join documents d_from on d_from.guid=a.guid_from
-                                    join documents d_to on d_to.guid=a.guid_to
+                            from alignments a
                             where
-                                d_from.lang=:lang_from and d_to.lang=:lang_to
-                                and deleted <> 1""", {
+                                a.lang_from=:lang_from and a.lang_to=:lang_to
+                                and a.deleted <> 1""", {
                          "lang_from": lang_from, "lang_to": lang_to}).fetchall()
         return res
 
