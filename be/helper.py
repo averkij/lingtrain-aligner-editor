@@ -1,5 +1,6 @@
 """Misc helper functions"""
 
+import datetime
 import glob
 import json
 import logging
@@ -87,6 +88,18 @@ def create_folders(username, lang):
                                   con.PROCESSING_FOLDER, lang)).mkdir(parents=True, exist_ok=True)
         pathlib.Path(os.path.join(con.UPLOAD_FOLDER, username,
                                   con.DONE_FOLDER, lang)).mkdir(parents=True, exist_ok=True)
+
+
+def init_main_db():
+    """Init main database"""
+    pathlib.Path(os.path.join(con.UPLOAD_FOLDER)
+                 ).mkdir(parents=True, exist_ok=True)
+    main_db_path = os.path.join(con.UPLOAD_FOLDER, con.MAIN_DB_NAME)
+    if not os.path.isfile(main_db_path):
+        logging.info(f"creating main db: {main_db_path}")
+        with sqlite3.connect(main_db_path) as db:
+            db.execute(
+                'create table global_alignments(id integer primary key, username text, lang_from text, lang_to text, guid text, name varchar, state integer, insert_ts text, deleted integer)')
 
 
 def init_document_db(db_path):
@@ -404,10 +417,14 @@ def alignment_guid_exists(username, guid):
         return bool(cur.fetchone())
 
 
-def register_alignment(username, guid, guid_from, guid_to, name, total_batches):
-    """Register new alignment in database"""
+def register_alignment(username, lang_from, lang_to, guid, guid_from, guid_to, name, total_batches):
+    """Register new alignment in user.db and main.db"""
+    main_db_path = os.path.join(con.UPLOAD_FOLDER, con.MAIN_DB_NAME)
     db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
     if not alignment_exists(username,  guid_from, guid_to):
+        with sqlite3.connect(main_db_path) as main_db:
+            main_db.execute('insert into global_alignments(guid, username, lang_from, lang_to, name, state, insert_ts, deleted) values (:guid, :username, :lang_from, :lang_to, :name, 2, :insert_ts, 0) ', {
+                "guid": guid, "username": username, "lang_from": lang_from, "lang_to": lang_to, "name": name, "insert_ts": datetime.datetime.utcnow().strftime('%Y-%m-%d_%H:%M:%S')})
         with sqlite3.connect(db_path) as db:
             db.execute('insert into alignments(guid, guid_from, guid_to, name, state, curr_batches, total_batches) values (:guid, :guid_from, :guid_to, :name, 2, 0, :total_batches) ', {
                        "guid": guid, "guid_from": guid_from, "guid_to": guid_to, "name": name, "total_batches": total_batches})
@@ -443,8 +460,13 @@ def update_batch_progress(db_path, batch_id):
             "insert or ignore into batches (batch_id, insert_ts) values (?, datetime('now'))", (batch_id,))
 
 
-def delete_alignment(user_db_path, guid):
+def delete_alignment(username, guid):
     """Mark alignment as deleted"""
+    main_db_path = os.path.join(con.UPLOAD_FOLDER, con.MAIN_DB_NAME)
+    user_db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
+    with sqlite3.connect(main_db_path) as db:
+        db.execute('update global_alignments set deleted = 1 where guid=:guid', {
+                   "guid": guid})
     with sqlite3.connect(user_db_path) as db:
         db.execute('update alignments set deleted = 1 where guid=:guid', {
                    "guid": guid})

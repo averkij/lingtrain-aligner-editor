@@ -28,6 +28,7 @@ CORS(app)
 @app.route("/items/<username>/init", methods=["GET"])
 def init_userspace(username):
     """Prepare user workspace"""
+    helper.init_main_db()
     helper.init_user_db(username)
     return ('', 200)
 
@@ -172,7 +173,7 @@ def create_alignment(username):
     if config.TEST_RESTRICTION_MAX_BATCHES > 0:
         total_batches = min(config.TEST_RESTRICTION_MAX_BATCHES, total_batches)
 
-    helper.register_alignment(username, align_guid,
+    helper.register_alignment(username, lang_from, lang_to, align_guid,
                               id_from, id_to, name, total_batches)
 
     return ('', 200)
@@ -186,8 +187,7 @@ def delete_alignment(username):
     if not helper.alignment_guid_exists(username, align_guid):
         return ('', 400)
 
-    user_db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
-    helper.delete_alignment(user_db_path, align_guid)
+    helper.delete_alignment(username, align_guid)
 
     return ('', 200)
 
@@ -257,7 +257,7 @@ def start_alignment(username):
         user_db_path, align_guid, con.PROC_IN_PROGRESS)
 
     # parallel processing
-    logging.info(f"{username}: aligning started")
+    logging.info(f"{username}: align started")
     res_img = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER,
                            username, f"{align_guid}.png")
     res_img_best = os.path.join(
@@ -322,7 +322,7 @@ def align_next_batch(username):
         user_db_path, align_guid, con.PROC_IN_PROGRESS)
 
     # parallel processing
-    logging.info(f"{username}: aligning started")
+    logging.info(f"{username}: align started")
     res_img = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER,
                            username, f"{align_guid}.png")
     res_img_best = os.path.join(
