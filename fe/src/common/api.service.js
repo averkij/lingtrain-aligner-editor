@@ -231,4 +231,14 @@ export const ItemsService = {
       form
     );
   },
+  editProcessingMarkUnused(params) {
+    let form = new FormData();
+    form.append("text_type", params.textType);
+    form.append("line_id", params.lineId);
+    return ApiService.post(
+      "items",
+      `${params.username}/edit/exclude/${params.langCodeFrom}/${params.langCodeTo}/${params.guid}`,
+      form
+    );
+  },
 };

@@ -154,7 +154,7 @@
       </div>
 
       <!-- ALIGNMENT BUTTON -->
-      <v-btn v-if="!userAlignInProgress" v-show="selected[langCodeFrom] && selected[langCodeTo]" class="success mt-6"
+      <v-btn v-if="!userAlignInProgress" class="success mt-6"
         :loading="isLoading.align || isLoading.alignStopping"
         :disabled="selectedProcessing && selectedProcessing.state[1]==selectedProcessing.state[2]"
         @click="startAlignment()">
@@ -225,7 +225,7 @@
             <v-spacer></v-spacer>
 
             <v-icon>mdi-translate</v-icon>
-            <v-switch value="true" v-model="showProxyTo" class="mx-2"></v-switch>
+            <v-switch color="green" value="true" v-model="showProxyTo" class="mx-2"></v-switch>
             <!-- <div>showTranslation: {{clientSettings}}</div> -->
 
             <v-btn icon @click="collapseEditItems">
@@ -353,14 +353,18 @@
         <div v-else>
           <v-card v-if="unusedFromLines && unusedFromLines.length > 0" class="mt-6">
             <div class="blue lighten-5">
-              <v-card-title>{{LANGUAGES[langCodeFrom].name}}</v-card-title>
+              <v-card-title>{{LANGUAGES[langCodeFrom].name}}
+                <v-spacer></v-spacer>
+                <span class="text-button blue--text">hide marked</span>
+                <v-switch value="true" v-model="hideMarkedFrom" class="ml-2"></v-switch>
+              </v-card-title>
               <v-card-text>{{unusedFromLines.length}} lines
               </v-card-text>
             </div>
             <v-divider></v-divider>
             <div v-for="(line,i) in unusedFromLines" :key="i">
               <template>
-                <div>
+                <div v-show="!hideMarkedFrom || (hideMarkedFrom && !conflictSplittedFrom[line].e)">
                   <v-row justify="center" no-gutters>
                     <v-col class="text-left" cols="12">
                       <div class="d-table fill-height">
@@ -368,32 +372,39 @@
                           {{ line }}
                         </div>
                         <v-divider class="d-table-cell" vertical></v-divider>
-                        <div class="d-table-cell pa-2">{{ conflictSplittedFrom[line].t}}
+                        <div class="d-table-cell pa-2" style="width:100%"
+                            :class="[conflictSplittedFrom[line].e ? ['grey','grey--text','lighten-5']:'']">{{ conflictSplittedFrom[line].t}}
                           <div v-if="conflictSplittedFrom[line].p"
                             class="mt-3 proxy-to-subtitles grey lighten-3 font-weight-medium">
                             {{conflictSplittedFrom[line].p}}
                           </div>
                         </div>
-                        <div class="d-table-cell pa-2">
+                        <v-divider class="d-table-cell" vertical></v-divider>
+                        <div class="d-table-cell grey lighten-5 pl-2 pt-2 text-center">
+                          <v-checkbox hide-details color="blue"  class="ma-1 pa-0" v-model="conflictSplittedFrom[line].e" @click.stop.prevent="markUnused('from', line)"></v-checkbox>
                         </div>
                       </div>
                     </v-col>
                   </v-row>
+                  <v-divider></v-divider>
                 </div>
-                <v-divider></v-divider>
               </template>
             </div>
           </v-card>
           <v-card v-if="unusedToLines && unusedToLines.length > 0" class="mt-6">
             <div class="blue lighten-5">
-              <v-card-title>{{LANGUAGES[langCodeTo].name}}</v-card-title>
+              <v-card-title>{{LANGUAGES[langCodeTo].name}}
+                <v-spacer></v-spacer>
+                <span class="text-button blue--text">hide marked</span>
+                <v-switch value="true" v-model="hideMarkedTo" class="ml-2"></v-switch>
+              </v-card-title>
               <v-card-text>{{unusedToLines.length}} lines
               </v-card-text>
             </div>
             <v-divider></v-divider>
             <div v-for="(line,i) in unusedToLines" :key="i">
               <template>
-                <div>
+                <div v-show="!hideMarkedTo || (hideMarkedTo && !conflictSplittedTo[line].e)">
                   <v-row justify="center" no-gutters>
                     <v-col class="text-left" cols="12">
                       <div class="d-table fill-height">
@@ -401,23 +412,26 @@
                           {{ line }}
                         </div>
                         <v-divider class="d-table-cell" vertical></v-divider>
-                        <div class="d-table-cell pa-2">{{ conflictSplittedTo[line].t}}
+                        <div class="d-table-cell pa-2" style="width:100%"
+                          :class="[conflictSplittedTo[line].e ? ['grey','grey--text','lighten-5']:'']">{{ conflictSplittedTo[line].t}}
                           <div v-if="conflictSplittedTo[line].p"
                             class="mt-3 proxy-to-subtitles grey lighten-3 font-weight-medium">
                             {{conflictSplittedTo[line].p}}
                           </div>
                         </div>
+                        <v-divider class="d-table-cell" vertical></v-divider>
+                        <div class="d-table-cell grey lighten-5 pl-2 pt-2 text-center">
+                          <v-checkbox hide-details color="blue" class="ma-1 pa-0" v-model="conflictSplittedTo[line].e" @click.stop.prevent="markUnused('to', line)"></v-checkbox>
+                        </div>
                       </div>
                     </v-col>
                   </v-row>
+                  <v-divider></v-divider>
                 </div>
-                <v-divider></v-divider>
               </template>
             </div>
           </v-card>
         </div>
-
-
       </div>
 
       <div class="text-h4 mt-10 font-weight-bold">
@@ -528,6 +542,7 @@
     // GET_CONFLICT_FLOW_TO,
     STOP_ALIGNMENT,
     EDIT_PROCESSING,
+    EDIT_PROCESSING_MARK_UNUSED,
     CREATE_ALIGNMENT,
     DELETE_ALIGNMENT,
     ALIGN_SPLITTED,
@@ -574,6 +589,8 @@
         satisfactionEmojis: ['😍', '😄', '😁', '😊', '🙂', '😐', '🙁', '☹️', '😢', '😭'],
         downloadThreshold: 9,
         showProxyTo: SettingsHelper.getShowProxyTo(),
+        hideMarkedTo: SettingsHelper.getHideMarkedTo(),
+        hideMarkedFrom: SettingsHelper.getHideMarkedFrom(),
         selectedListItem: 0,
         currentBatchId: 0,
 
@@ -1095,6 +1112,23 @@
             callback(RESULT_ERROR)
           });
       },
+      markUnused(textType, lineId) {
+        if (textType == "from") {
+          this.conflictSplittedFrom[lineId].e = !this.conflictSplittedFrom[lineId].e;
+        } else {
+          this.conflictSplittedTo[lineId].e = !this.conflictSplittedTo[lineId].e;
+        }
+        this.$store.dispatch(EDIT_PROCESSING_MARK_UNUSED, {
+          username: this.$route.params.username,
+          guid: this.selectedProcessingId,
+          langCodeFrom: this.langCodeFrom,
+          langCodeTo: this.langCodeTo,
+          lineId,
+          textType
+        }).then(() => {
+          console.log("Marked as unused")
+        });
+      },
       //dialogs
       goToPage(pageNumber) {
         this.onProcessingPageChange(pageNumber);
@@ -1215,13 +1249,25 @@
       }).then(() => {
         this.fetchAll();
       });
-      if (localStorage.showProxyTo) {
-        this.showProxyTo = localStorage.showProxyTo;
-      }
+      // if (localStorage.showProxyTo) {
+      //   this.showProxyTo = localStorage.showProxyTo;
+      // }
+      // if (localStorage.hideMarkedTo) {
+      //   this.hideMarkedTo = localStorage.hideMarkedTo;
+      // }
+      // if (localStorage.hideMarkedFrom) {
+      //   this.hideMarkedFrom = localStorage.hideMarkedFrom;
+      // }
     },
     watch: {
       showProxyTo(value) {
         localStorage.showProxyTo = value
+      },
+      hideMarkedTo(value) {
+        localStorage.hideMarkedTo = value
+      },
+      hideMarkedFrom(value) {
+        localStorage.hideMarkedFrom = value
       },
       langCodeFrom() {
         this.fetchAll();
