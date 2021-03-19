@@ -355,8 +355,8 @@
             <div class="blue lighten-5">
               <v-card-title>{{LANGUAGES[langCodeFrom].name}}
                 <v-spacer></v-spacer>
-                <span class="text-button blue--text">hide marked</span>
-                <v-switch value="true" v-model="hideMarkedFrom" class="ml-2"></v-switch>
+                <span class="text-button blue--text">show all</span>
+                <v-switch value="true" false-value="false" v-model="showAllFrom" class="ml-2"></v-switch>
               </v-card-title>
               <v-card-text>{{unusedFromLines.length}} lines
               </v-card-text>
@@ -364,7 +364,7 @@
             <v-divider></v-divider>
             <div v-for="(line,i) in unusedFromLines" :key="i">
               <template>
-                <div v-show="!hideMarkedFrom || (hideMarkedFrom && !conflictSplittedFrom[line].e)">
+                <div v-show="showAllFrom == 'true' || !conflictSplittedFrom[line].e">
                   <v-row justify="center" no-gutters>
                     <v-col class="text-left" cols="12">
                       <div class="d-table fill-height">
@@ -381,7 +381,7 @@
                         </div>
                         <v-divider class="d-table-cell" vertical></v-divider>
                         <div class="d-table-cell grey lighten-5 pl-2 pt-2 text-center">
-                          <v-checkbox hide-details color="blue"  class="ma-1 pa-0" v-model="conflictSplittedFrom[line].e" @click.stop.prevent="markUnused('from', line)"></v-checkbox>
+                          <v-checkbox hide-details color="blue" class="ma-1 pa-0" v-model="conflictSplittedFrom[line].e" @click.stop.prevent="markUnused('from', line)"></v-checkbox>
                         </div>
                       </div>
                     </v-col>
@@ -395,8 +395,8 @@
             <div class="blue lighten-5">
               <v-card-title>{{LANGUAGES[langCodeTo].name}}
                 <v-spacer></v-spacer>
-                <span class="text-button blue--text">hide marked</span>
-                <v-switch value="true" v-model="hideMarkedTo" class="ml-2"></v-switch>
+                <span class="text-button blue--text">show all</span>
+                <v-switch value="true" v-model="showAllTo" class="ml-2"></v-switch>
               </v-card-title>
               <v-card-text>{{unusedToLines.length}} lines
               </v-card-text>
@@ -404,7 +404,7 @@
             <v-divider></v-divider>
             <div v-for="(line,i) in unusedToLines" :key="i">
               <template>
-                <div v-show="!hideMarkedTo || (hideMarkedTo && !conflictSplittedTo[line].e)">
+                <div v-show="showAllTo == 'true' || !conflictSplittedTo[line].e">
                   <v-row justify="center" no-gutters>
                     <v-col class="text-left" cols="12">
                       <div class="d-table fill-height">
@@ -589,8 +589,8 @@
         satisfactionEmojis: ['😍', '😄', '😁', '😊', '🙂', '😐', '🙁', '☹️', '😢', '😭'],
         downloadThreshold: 9,
         showProxyTo: SettingsHelper.getShowProxyTo(),
-        hideMarkedTo: SettingsHelper.getHideMarkedTo(),
-        hideMarkedFrom: SettingsHelper.getHideMarkedFrom(),
+        showAllTo: SettingsHelper.getShowAllTo(),
+        showAllFrom: SettingsHelper.getShowAllFrom(),
         selectedListItem: 0,
         currentBatchId: 0,
 
@@ -1252,22 +1252,31 @@
       // if (localStorage.showProxyTo) {
       //   this.showProxyTo = localStorage.showProxyTo;
       // }
-      // if (localStorage.hideMarkedTo) {
-      //   this.hideMarkedTo = localStorage.hideMarkedTo;
+      // if (localStorage.showAllTo) {
+      //   this.showAllTo = localStorage.showAllTo;
       // }
-      // if (localStorage.hideMarkedFrom) {
-      //   this.hideMarkedFrom = localStorage.hideMarkedFrom;
+      // if (localStorage.showAllFrom) {
+      //   this.showAllFrom = localStorage.showAllFrom;
+      // } else {
+      //   this.showAllFrom = false;
       // }
     },
     watch: {
       showProxyTo(value) {
         localStorage.showProxyTo = value
       },
-      hideMarkedTo(value) {
-        localStorage.hideMarkedTo = value
+      showAllTo(value) {
+        console.log("watch value", value )
+        console.log("watch showAllTo", localStorage.showAllTo )
+        localStorage.showAllTo = value ? true : false;
+
+        console.log("watch showAllTo storage", localStorage.showAllTo )
       },
-      hideMarkedFrom(value) {
-        localStorage.hideMarkedFrom = value
+      showAllFrom(value) {
+        console.log("watch value", value )
+        console.log("watch showAllFrom", localStorage.showAllFrom )
+        localStorage.showAllFrom = value ? true : false;
+        console.log("watch showAllFrom storage", localStorage.showAllFrom )
       },
       langCodeFrom() {
         this.fetchAll();
