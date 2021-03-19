@@ -1266,17 +1266,10 @@
         localStorage.showProxyTo = value
       },
       showAllTo(value) {
-        console.log("watch value", value )
-        console.log("watch showAllTo", localStorage.showAllTo )
         localStorage.showAllTo = value ? true : false;
-
-        console.log("watch showAllTo storage", localStorage.showAllTo )
       },
       showAllFrom(value) {
-        console.log("watch value", value )
-        console.log("watch showAllFrom", localStorage.showAllFrom )
         localStorage.showAllFrom = value ? true : false;
-        console.log("watch showAllFrom storage", localStorage.showAllFrom )
       },
       langCodeFrom() {
         this.fetchAll();
