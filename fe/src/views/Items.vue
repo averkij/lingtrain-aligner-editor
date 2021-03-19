@@ -1249,17 +1249,6 @@
       }).then(() => {
         this.fetchAll();
       });
-      // if (localStorage.showProxyTo) {
-      //   this.showProxyTo = localStorage.showProxyTo;
-      // }
-      // if (localStorage.showAllTo) {
-      //   this.showAllTo = localStorage.showAllTo;
-      // }
-      // if (localStorage.showAllFrom) {
-      //   this.showAllFrom = localStorage.showAllFrom;
-      // } else {
-      //   this.showAllFrom = false;
-      // }
     },
     watch: {
       showProxyTo(value) {
