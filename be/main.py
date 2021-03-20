@@ -89,7 +89,7 @@ def download_splitted(username, lang, guid):
     if not os.path.isfile(path):
         abort(404)
     logging.info(f"[{username}]. Document found. Path: {path}. Sent to user.")
-    return send_file(path, as_attachment=True)
+    return send_file(path)
 
 
 @app.route("/items/<username>/splitted/<lang>/<guid>/<int:count>/<int:page>", methods=["GET"])
@@ -586,8 +586,6 @@ def switch_excluded(username, lang_from, lang_to, aling_id):
     line_id = request.form.get("line_id", -1)
     text_type = request.form.get("text_type", con.TYPE_FROM)
 
-    print("EXCLUDING", text_type, aling_id, lang_from, lang_to, line_id)
-
     if text_type == "from":
         helper.switch_excluded_splitted_from(db_path, line_id)
     else:
@@ -609,6 +607,22 @@ def show_items_tree():
             for file in files:
                 tree_out.write(f"{subindent}{file}" + "\n")
     return send_file(tree_path)
+
+
+@app.route("/debug/text/<username>/<lang>/<int:index>", methods=["GET"])
+def show_file(username, lang, index):
+    """Show text file"""
+    files_dir = os.path.join(
+        con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang)
+    files = os.listdir(files_dir)
+
+    if not files or len(files) < index+1:
+        return ('', 200)
+
+    # delete
+    print(os.path.join(files_dir, files[index]))
+
+    return send_file(os.path.join(files_dir, files[index]))
 
 
 # Not API calls treated like static queries

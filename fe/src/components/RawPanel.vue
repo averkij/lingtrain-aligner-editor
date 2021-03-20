@@ -21,15 +21,35 @@
             <v-icon>mdi-text-box-outline</v-icon>
           </v-list-item-icon>
           <v-list-item-content>
-            <div>{{item.name}}<v-chip v-if="item.has_proxy" class="ml-2" small label color="blue" text-color="white">translated</v-chip></div>
+            <div>
+              {{ item.name
+              }}<v-chip
+                v-if="item.has_proxy"
+                class="ml-2"
+                small
+                label
+                color="blue"
+                text-color="white"
+                >translated</v-chip
+              >
+            </div>
           </v-list-item-content>
-          <v-icon v-show="hover_index == i" class="ml-2" @click.stop.prevent="currentItem=item, showConfirmDeleteDialog=true">mdi-close</v-icon>
+          <v-icon
+            v-show="hover_index == i"
+            class="ml-2"
+            @click.stop.prevent="
+              (currentItem = item), (showConfirmDeleteDialog = true)
+            "
+            >mdi-close</v-icon
+          >
         </v-list-item>
       </v-list-item-group>
     </v-list>
-    <ConfirmDeleteDialog v-model="showConfirmDeleteDialog"
-          :itemName=currentItem.name
-          @confirmDelete="confirmDelete" />
+    <ConfirmDeleteDialog
+      v-model="showConfirmDeleteDialog"
+      :itemName="currentItem.name"
+      @confirmDelete="confirmDelete"
+    />
     <v-divider></v-divider>
     <v-card-title>Upload</v-card-title>
     <v-card-text
@@ -51,14 +71,14 @@
         :loading="isLoading.upload[info.langCode]"
         :disabled="isLoading.upload[info.langCode]"
       >
-        Upload
+        <v-icon left color="grey">mdi-cloud-upload</v-icon>Upload
       </v-btn>
     </v-card-actions>
   </v-card>
 </template>
 
 <script>
-import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog"
+import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 
 export default {
   name: "RawPanel",
@@ -67,12 +87,12 @@ export default {
     return {
       hover_index: -1,
       showConfirmDeleteDialog: false,
-      currentItem: {"name": ""}
+      currentItem: { name: "" },
     };
   },
   methods: {
     confirmDelete() {
-      this.$emit('performDelete', this.currentItem, this.info.langCode);
+      this.$emit("performDelete", this.currentItem, this.info.langCode);
     },
     onFileChange(event, langCode) {
       this.$emit("onFileChange", event, langCode);
@@ -86,7 +106,7 @@ export default {
   },
   computed: {},
   components: {
-    ConfirmDeleteDialog
-  }
+    ConfirmDeleteDialog,
+  },
 };
 </script>

@@ -260,7 +260,7 @@
             <v-tooltip bottom>
               <template v-slot:activator="{ on, attrs }">
                 <v-btn class="mt-1" v-bind="attrs" v-on="on" @click="showGoToDialog=true">
-                  Go to
+                  <v-icon left color="grey">mdi-page-next-outline</v-icon>Go to
                 </v-btn>
               </template>
               <span>Go to the specific page</span>
@@ -476,7 +476,7 @@
           </v-row>
         </div>
         <div class="text-h5 mt-10 font-weight-bold">Corpora in TMX format</div>
-        <v-btn class="primary ma-5" @click="downloadProcessingTmx()">Download</v-btn>
+        <v-btn class="primary mt-5" @click="downloadProcessingTmx()"><v-icon left color="white">mdi-download</v-icon>Download</v-btn>
       </div>
     </div>
   </div>
@@ -896,12 +896,13 @@
           callback(RESULT_ERROR)
         });
       },
-      downloadSplitted(langCode) {
+      downloadSplitted(langCode, openInBrowser) {
         this.$store.dispatch(DOWNLOAD_SPLITTED, {
           fileId: this.selectedIds[langCode],
           fileName: this.selected[langCode],
           username: this.$route.params.username,
-          langCode
+          langCode,
+          openInBrowser
         });
       },
       downloadProcessing(langCode) {
