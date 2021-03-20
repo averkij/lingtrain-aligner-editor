@@ -32,7 +32,8 @@
       </div>
       <v-divider></v-divider>
       <v-card-actions>
-        <v-btn @click="downloadSplitted(info.langCode)">Download</v-btn>
+        <v-btn @click="downloadSplitted(info.langCode, false)"><v-icon left color="grey">mdi-download</v-icon>Download</v-btn>
+        <v-btn @click="downloadSplitted(info.langCode, true)"><v-icon left color="grey">mdi-open-in-new</v-icon>Open</v-btn>
         <v-spacer></v-spacer>
         <v-tooltip bottom>
           <template v-slot:activator="{ on, attrs }">
@@ -57,7 +58,7 @@
       <v-card-actions>
         <v-btn @click="uploadProxyFile(info.langCode)" :loading="isLoading.uploadProxy[info.langCode]"
           :disabled="isLoading.uploadProxy[info.langCode]">
-          Upload
+          <v-icon left color="grey">mdi-cloud-upload</v-icon>Upload
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -84,8 +85,8 @@
       onPreviewPageChange(page, langCode) {
         this.$emit("onPreviewPageChange", page, langCode);
       },
-      downloadSplitted(langCode) {
-        this.$emit("downloadSplitted", langCode);
+      downloadSplitted(langCode, openInBrowser) {
+        this.$emit("downloadSplitted", langCode, openInBrowser);
       },
     },
     components: {

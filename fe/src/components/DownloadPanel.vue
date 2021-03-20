@@ -11,7 +11,7 @@
     <v-card-actions>
       <v-btn @click="downloadFile(info.langCode)" :loading="isLoading.download[info.langCode]"
         :disabled="isLoading.download[info.langCode]">
-        Download
+        <v-icon left color="grey">mdi-download</v-icon>Download
       </v-btn>
     </v-card-actions>
   </v-card>

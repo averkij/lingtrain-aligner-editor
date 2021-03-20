@@ -84,10 +84,12 @@ export const ItemsService = {
       "items",
       `${params.username}/splitted/${params.langCode}/${params.fileId}/download`
     ).then((response) => {
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const url = window.URL.createObjectURL(new Blob([response.data],{encoding:"UTF-8",type:"text/plain;charset=UTF-8"}));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', params.fileName);
+      if (!params.openInBrowser) {
+        link.setAttribute('download', params.fileName);
+      }
       document.body.appendChild(link);
       link.click();
     });
