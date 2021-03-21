@@ -25,12 +25,12 @@ Lingtrain Aligner — это веб-приложение, которое пом�
 
    <br/><br/><br/>
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Введение
+.. .. toctree::
+..    :maxdepth: 2
+..    :caption: Введение
 
-   ui
-   languages
+..    ui
+..    languages
 
 .. toctree::
    :maxdepth: 2
