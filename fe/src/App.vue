@@ -33,9 +33,9 @@
         </v-col>
 
         <v-col v-if="showLanguageBar" cols="12" sm="5" class="text-right">
-          <v-app-bar-title class="pa-2 font-josefin">{{
+          <div class="pa-2 font-josefin d-inline-block">{{
             LANGUAGES[langCodeFrom].name
-          }}</v-app-bar-title>
+          }}</div>
           <v-menu offset-y>
             <template v-slot:activator="{ on, attrs }">
               <v-btn icon color="yellow" v-bind="attrs" v-on="on">
@@ -73,9 +73,9 @@
               </v-list-item>
             </v-list>
           </v-menu>
-          <v-app-bar-title class="pa-2 font-josefin">{{
+          <div class="pa-2 font-josefin d-inline-block">{{
             LANGUAGES[langCodeTo].name
-          }}</v-app-bar-title>
+          }}</div>
         </v-col>
       </v-row>
     </v-app-bar>
