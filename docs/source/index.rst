@@ -40,6 +40,7 @@ Lingtrain Aligner — это веб-приложение, которое пом�
    upload
    trans-hint
    create-alignment
+   edit
 
 .. toctree::
    :maxdepth: 2
