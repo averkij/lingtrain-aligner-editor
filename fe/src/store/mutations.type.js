@@ -7,3 +7,4 @@ export const SET_DOC_INDEX = "set_doc_index";
 export const SET_CONFLICT_SPLITTED_FROM = "get_conflict_splitted_from";
 export const SET_CONFLICT_SPLITTED_TO = "get_conflict_splitted_to";
 export const SET_CONFLICT_FLOW_TO = "get_conflict_flow_to";
+export const SET_CONTENTS = "set_contents";

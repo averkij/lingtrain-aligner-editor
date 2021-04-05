@@ -156,6 +156,15 @@ def fill_document_db(db_path, splitted_from, splitted_to, proxy_from, proxy_to):
                            (x.strip(),) for x in lines])
 
 
+def get_contents():
+    """Get alignments list from main database"""
+    main_db_path = os.path.join(con.UPLOAD_FOLDER, con.MAIN_DB_NAME)
+    with sqlite3.connect(main_db_path) as db:
+        res = db.execute(
+            f'select g.username, g.lang_from, g.lang_to, g.guid, g.name, g.insert_ts from global_alignments g where g.deleted <> 1 order by g.username').fetchall()
+    return res
+
+
 def create_doc_index(db, data):
     """Create document index in database"""
     batch_ids = [batch_id for batch_id, x, y in data]

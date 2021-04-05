@@ -29,3 +29,5 @@ export const DOWNLOAD_PROCESSING = "download_processing";
 export const DOWNLOAD_SPLITTED = "download_splitted";
 
 export const ALIGN_SPLITTED = "align_splitted";
+
+export const GET_CONTENTS = "get_contents";

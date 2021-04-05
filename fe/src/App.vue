@@ -10,6 +10,12 @@
         <v-list-item-group v-model="group" active-class="blue--text text--accent-4">
           <v-list-item>
             <v-list-item-icon>
+              <v-icon>mdi-view-list-outline</v-icon>
+            </v-list-item-icon>
+            <v-list-item-title @click.stop.prevent="openContents()">Contents</v-list-item-title>
+          </v-list-item>
+          <v-list-item>
+            <v-list-item-icon>
               <v-icon>mdi-github</v-icon>
             </v-list-item-icon>
             <v-list-item-title @click.stop.prevent="goToGithub()">Github</v-list-item-title>
@@ -133,6 +139,11 @@
       },
       goToGithub() {
         window.open("https://github.com/averkij/lingtrain-aligner", '_blank');
+      },
+      openContents() {
+        this.$router.push({
+          path: `/contents`,
+        });
       }
     },
     computed: {

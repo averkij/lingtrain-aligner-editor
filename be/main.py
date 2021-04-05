@@ -593,6 +593,13 @@ def switch_excluded(username, lang_from, lang_to, aling_id):
     return ('', 200)
 
 
+@app.route("/items/contents", methods=["GET"])
+def show_contents():
+    """Return alignments list across all users"""
+    contents = helper.get_contents()
+    return {"items": contents}
+
+
 @app.route("/debug/items", methods=["GET"])
 def show_items_tree():
     """Show all files in data folder"""

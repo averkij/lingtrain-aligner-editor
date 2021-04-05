@@ -28,7 +28,12 @@ const routes = [
   {
     path: "/user/:username/items",
     redirect: `/user/:username/items/${DEFAULT_FROM}/${DEFAULT_TO}`
-  }
+  },
+  {
+    path: "/contents",
+    name: "contents",
+    component: () => import("@/views/Contents")
+  },
 ];
 
 const router = new VueRouter({
