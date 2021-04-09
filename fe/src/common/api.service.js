@@ -243,4 +243,10 @@ export const ItemsService = {
       form
     );
   },
+  getContents() {
+    return ApiService.get(
+      "items",
+      `contents`
+    );
+  }
 };

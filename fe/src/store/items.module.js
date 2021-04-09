@@ -27,7 +27,8 @@ import {
   DELETE_ALIGNMENT,
   GET_CONFLICT_SPLITTED_FROM,
   GET_CONFLICT_SPLITTED_TO,
-  GET_CONFLICT_FLOW_TO
+  GET_CONFLICT_FLOW_TO,
+  GET_CONTENTS
 } from "./actions.type";
 
 import {
@@ -39,7 +40,8 @@ import {
   SET_DOC_INDEX,
   SET_CONFLICT_SPLITTED_FROM,
   SET_CONFLICT_SPLITTED_TO,
-  SET_CONFLICT_FLOW_TO
+  SET_CONFLICT_FLOW_TO,
+  SET_CONTENTS
 } from "./mutations.type";
 
 const initialState = {
@@ -52,6 +54,7 @@ const initialState = {
   conflictSplittedFrom: [],
   conflictSplittedTo: [],
   conflictFlowTo: [],
+  contents:[],
 };
 
 export const state = {
@@ -239,6 +242,17 @@ export const actions = {
     () => {
       console.log("document deletion error")
     });
+  },
+  async [GET_CONTENTS](context, params) {
+    await ItemsService.getContents(params).then(
+      function (response) {
+        context.commit(SET_CONTENTS, response.data);
+      },
+      function () {
+        console.log(`GET_CONTENTS error.`);
+      }
+    );
+    return;
   }
 };
 
@@ -277,6 +291,9 @@ export const mutations = {
     console.log("SET_CONFLICT_FLOW_TO:", data.items)
     state.conflictFlowTo = data.items;
   },
+  [SET_CONTENTS](state, data) {
+    state.contents = data.items;
+  }
 };
 
 const getters = {
@@ -306,7 +323,10 @@ const getters = {
   },
   conflictFlowTo(state) {
     return state.conflictFlowTo;
-  }
+  },
+  contents(state) {
+    return state.contents;
+  },
 };
 
 export default {
