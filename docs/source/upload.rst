@@ -3,9 +3,9 @@
 
 .. raw:: html
 
-    <iframe width="680" height="380" src="https://www.youtube.com/embed/NbEB9l8IQp8?rel=0" frameborder="0" allowfullscreen></iframe>
+  <iframe width="680" height="380" src="https://www.youtube.com/embed/NbEB9l8IQp8?rel=0" frameborder="0" allowfullscreen></iframe>
 
-    <br/><br/><br/>
+  <br/><br/><br/>
 
 Выбор языка
 -----------
