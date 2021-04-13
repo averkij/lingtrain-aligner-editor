@@ -15,6 +15,7 @@ import output
 from align_processor import AlignmentProcessor
 from flask import Flask, abort, request, send_file
 from flask_cors import CORS
+import vis_helper
 
 helper.configure_logging()
 
