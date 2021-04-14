@@ -1,15 +1,4 @@
-be/__pycache__/aligner.cpython-38.pyc
-be/__pycache__/config.cpython-38.pyc
-be/__pycache__/constants.cpython-38.pyc
-be/__pycache__/editor.cpython-38.pyc
-be/__pycache__/helper.cpython-38.pyc
-be/__pycache__/language_helper.cpython-38.pyc
-be/__pycache__/model_dispatcher.cpython-38.pyc
-be/__pycache__/output_templates.cpython-38.pyc
-be/__pycache__/output.cpython-38.pyc
-be/__pycache__/sim_helper.cpython-38.pyc
-be/__pycache__/splitter.cpython-38.pyc
-be/__pycache__/state_manager.cpython-38.pyc
+be/**/*.pyc
 be/models/__pycache__/sententense_transformers_models.cpython-38.pyc
 be/__pycache__/translation_helper.cpython-38.pyc
 .vscode/.ropeproject/objectdb
