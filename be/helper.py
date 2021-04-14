@@ -232,6 +232,32 @@ def get_doc_index(db):
     return res
 
 
+def get_doc_index_original(db_path):
+    """Get document index"""
+    res = []
+    try:
+        with sqlite3.connect(db_path) as db:
+            cur = db.execute('SELECT contents FROM doc_index')
+            res = json.loads(cur.fetchone()[0])
+    except:
+        logging.warning("can not fetch index db")
+    return res
+
+
+def get_flatten_doc_index_with_batch_id(db_path):
+    """Get document index"""
+    res = []
+    try:
+        with sqlite3.connect(db_path) as db:
+            cur = db.execute('SELECT contents FROM doc_index')
+            data = json.loads(cur.fetchone()[0])
+        for batch_id, sub_index in enumerate(data):
+            res.extend(list(zip(sub_index, range(len(sub_index)), [batch_id]*len(sub_index))))
+    except:
+        logging.warning("can not fetch flatten index")
+    return res
+
+    
 def rewrite_processing_batches(db, data):
     """Insert or rewrite batched data"""
     for batch_id, texts_from, texts_to in data:

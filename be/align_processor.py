@@ -15,6 +15,7 @@ import model_dispatcher
 import numpy as np
 import seaborn as sns
 import sim_helper
+import vis_helper
 from matplotlib import pyplot as plt
 from scipy import spatial
 
@@ -146,46 +147,11 @@ class AlignmentProcessor:
             # Similarity matrix
             logging.debug(f"Calculating similarity matrix.")
             sim_matrix = get_sim_matrix(vectors1, vectors2)
-            sim_matrix_best = sim_helper.best_per_row(sim_matrix)
+            sim_matrix_best = sim_helper.best_per_row_with_ones(sim_matrix)
 
-            # Heuristics
-            sim_matrix_best = sim_helper.fix_inside_window(
-                sim_matrix, sim_matrix_best, fixed_window_size=2)
+            vis_helper.save_pic(sim_matrix_best, self.lang_name_to, self.lang_name_from, self.res_img_best, batch_number)
 
-            res_img_batch = "{0}_{1}{2}".format(os.path.splitext(
-                self.res_img)[0], batch_number, os.path.splitext(self.res_img)[1])
-            res_img_batch_best = "{0}_{1}{2}".format(os.path.splitext(
-                self.res_img_best)[0], batch_number, os.path.splitext(self.res_img_best)[1])
-
-            # Visualization
-            plt.figure(figsize=(4, 2))
-            sns.heatmap(sim_matrix, cmap="Greens",
-                        vmin=zero_treshold, cbar=False)
-            plt.savefig(res_img_batch, bbox_inches="tight", pad_inches=0)
-
-            plt.figure(figsize=(4, 2))
-            sns.heatmap(sim_matrix_best, cmap="Greens",
-                        vmin=zero_treshold, cbar=False)
-            plt.xlabel(self.lang_name_to, fontsize=12, labelpad=-18)
-            plt.ylabel(self.lang_name_from, fontsize=12, labelpad=-18)
-            plt.tick_params(axis='both', which='both', bottom=False, top=False,
-                            labelbottom=False, right=False, left=False, labelleft=False)
-            plt.savefig(res_img_batch_best, bbox_inches="tight", pad_inches=0)
-
-            # Aggregating similarities for grade calculation
             best_sim_ind = sim_matrix_best.argmax(1)
-            sims.extend(sim_matrix_best[range(
-                best_sim_ind.shape[0]), best_sim_ind])
-
-            # lines_proxy_to_batch = [''] * len(lines_to_batch)
-            # if use_proxy_to:
-            #     lines_proxy_to_batch = self.lines_proxy_to[line_ids_to[0]:line_ids_to[-1]+1]
-
-            # Actual work
-            logging.debug(f"Processing lines.")
-            # get_processed(lines_from_batch, lines_to_batch, lines_proxy_to_batch, line_ids_from, line_ids_to, \
-            #     sim_matrix, sim_matrix_best, best_sim_ind, zero_treshold, batch_number, batch_size, self.db_path)
-
             texts_from = []
             texts_to = []
 
@@ -201,10 +167,6 @@ class AlignmentProcessor:
 
             self.queue_out.put(
                 (con.PROC_DONE, batch_number, texts_from, texts_to))
-
-            #sim_grades = calc_sim_grades(sims)
-            # docs["sim_grades"] = sim_grades
-
         except Exception as e:
             logging.error(e, exc_info=True)
             self.queue_out.put((con.PROC_ERROR, [], []))
