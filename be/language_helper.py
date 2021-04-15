@@ -20,8 +20,10 @@ PT_CODE = "pt"
 HU_CODE = "hu"
 CZ_CODE = "cz"
 JP_CODE = "jp"
+# bashkir
+BA_CODE = "ba"
 LANGUAGES = [RU_CODE, ZH_CODE, DE_CODE, EN_CODE, FR_CODE,
-             IT_CODE, TR_CODE, ES_CODE, PL_CODE, PT_CODE, HU_CODE, CZ_CODE, JP_CODE]
+             IT_CODE, TR_CODE, ES_CODE, PL_CODE, PT_CODE, HU_CODE, CZ_CODE, JP_CODE, BA_CODE]
 
 # pattern_ru_orig = re.compile(r'[a-zA-Z\(\)\[\]\/\<\>•\'\n]+')
 pattern_ru_orig = re.compile(r'[\(\)\[\]\/\<\>•\'\n]+')
