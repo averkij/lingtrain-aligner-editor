@@ -102,60 +102,6 @@ def init_main_db():
                 'create table global_alignments(id integer primary key, username text, lang_from text, lang_to text, guid text, name varchar, state integer, insert_ts text, deleted integer)')
 
 
-def init_document_db(db_path):
-    """Init document database (alignment) with tables structure"""
-    if os.path.isfile(db_path):
-        os.remove(db_path)
-    with sqlite3.connect(db_path) as db:
-        db.execute(
-            'create table splitted_from(id integer primary key, text nvarchar, exclude integer)')
-        db.execute(
-            'create table splitted_to(id integer primary key, text nvarchar, exclude integer)')
-        db.execute(
-            'create table proxy_from(id integer primary key, text nvarchar)')
-        db.execute('create table proxy_to(id integer primary key, text nvarchar)')
-        db.execute(
-            'create table processing_from(id integer primary key, batch_id integer, text_ids varchar, initial_id integer, text nvarchar)')
-        db.execute(
-            'create table processing_to(id integer primary key, batch_id integer, text_ids varchar, initial_id integer, text nvarchar)')
-        db.execute(
-            'create table doc_index(id integer primary key, contents varchar)')
-        db.execute(
-            'create table batches(id integer primary key, batch_id integer unique, insert_ts text)')
-
-
-def fill_document_db(db_path, splitted_from, splitted_to, proxy_from, proxy_to):
-    """Fill document database (alignment) with prepared document lines"""
-    lines = []
-    if os.path.isfile(splitted_from):
-        with open(splitted_from, mode="r", encoding="utf-8") as input_path:
-            lines = input_path.readlines()
-        with sqlite3.connect(db_path) as db:
-            db.executemany("insert into splitted_from(text, exclude) values (?,?)", [
-                           (x.strip(), 0) for x in lines])
-
-    if os.path.isfile(splitted_to):
-        with open(splitted_to, mode="r", encoding="utf-8") as input_path:
-            lines = input_path.readlines()
-        with sqlite3.connect(db_path) as db:
-            db.executemany("insert into splitted_to(text, exclude) values (?,?)", [
-                           (x.strip(), 0) for x in lines])
-
-    if os.path.isfile(proxy_from):
-        with open(proxy_from, mode="r", encoding="utf-8") as input_path:
-            lines = input_path.readlines()
-        with sqlite3.connect(db_path) as db:
-            db.executemany("insert into proxy_from(text) values (?)", [
-                           (x.strip(),) for x in lines])
-
-    if os.path.isfile(proxy_to):
-        with open(proxy_to, mode="r", encoding="utf-8") as input_path:
-            lines = input_path.readlines()
-        with sqlite3.connect(db_path) as db:
-            db.executemany("insert into proxy_to(text) values (?)", [
-                           (x.strip(),) for x in lines])
-
-
 def get_contents():
     """Get alignments list from main database"""
     main_db_path = os.path.join(con.UPLOAD_FOLDER, con.MAIN_DB_NAME)
@@ -252,12 +198,13 @@ def get_flatten_doc_index_with_batch_id(db_path):
             cur = db.execute('SELECT contents FROM doc_index')
             data = json.loads(cur.fetchone()[0])
         for batch_id, sub_index in enumerate(data):
-            res.extend(list(zip(sub_index, range(len(sub_index)), [batch_id]*len(sub_index))))
+            res.extend(
+                list(zip(sub_index, range(len(sub_index)), [batch_id]*len(sub_index))))
     except:
         logging.warning("can not fetch flatten index")
     return res
 
-    
+
 def rewrite_processing_batches(db, data):
     """Insert or rewrite batched data"""
     for batch_id, texts_from, texts_to in data:

@@ -9,14 +9,13 @@ from multiprocessing import Process, Queue
 
 import config
 import constants as con
+import engine
 import helper
 import matplotlib
 import model_dispatcher
 import numpy as np
-import seaborn as sns
 import sim_helper
 import vis_helper
-from matplotlib import pyplot as plt
 from scipy import spatial
 
 # https://stackoverflow.com/questions/49921721/runtimeerror-main-thread-is-not-in-main-loop-with-matplotlib-and-flask
@@ -29,15 +28,13 @@ FINISH_PROCESS = "finish_process"
 class AlignmentProcessor:
     """Processor with parallel texts alignment logic"""
 
-    def __init__(self, proc_count, db_path, user_db_path, res_img, res_img_best, lang_name_from, lang_name_to, guid_from, guid_to):
+    def __init__(self, proc_count, db_path, user_db_path, res_img_best, lang_name_from, lang_name_to, guid_from, guid_to):
         self.proc_count = proc_count
         self.queue_in = Queue()
         self.queue_out = Queue()
         self.db_path = db_path
         self.user_db_path = user_db_path
-        self.res_img = res_img
         self.res_img_best = res_img_best
-        # self.lines_proxy_to = lines_proxy_to
         self.lang_name_from = lang_name_from
         self.lang_name_to = lang_name_to
         self.tasks_count = 0
@@ -130,26 +127,25 @@ class AlignmentProcessor:
         zero_treshold = 0
         sims = []
 
-        # use_proxy_to = False
-        # use_proxy_to = self.lines_proxy_to != None #and len(self.lines_proxy_to)>=len(lines_to)
-        #print("use_proxy_to", use_proxy_to, len(lines_proxy_to), len(lines_to))
-
         logging.info(f"Alignment started for {self.db_path}.")
         try:
-            print("batch:", batch_number)
             logging.info(f"Batch {batch_number}. Calculating vectors.")
 
-            vectors1 = [*get_line_vectors(lines_from_batch)]
-            vectors2 = [*get_line_vectors(lines_to_batch)]
+            vectors1 = [*engine.get_line_vectors(lines_from_batch)]
+            vectors2 = [*engine.get_line_vectors(lines_to_batch)]
+
             logging.debug(
                 f"Batch {batch_number}. Vectors calculated. len(vectors1)={len(vectors1)}. len(vectors2)={len(vectors2)}.")
 
             # Similarity matrix
             logging.debug(f"Calculating similarity matrix.")
+
             sim_matrix = get_sim_matrix(vectors1, vectors2)
             sim_matrix_best = sim_helper.best_per_row_with_ones(sim_matrix)
 
-            vis_helper.save_pic(sim_matrix_best, self.lang_name_to, self.lang_name_from, self.res_img_best, batch_number)
+            # save picture
+            vis_helper.save_pic(sim_matrix_best, self.lang_name_to,
+                                self.lang_name_from, self.res_img_best, batch_number)
 
             best_sim_ind = sim_matrix_best.argmax(1)
             texts_from = []
@@ -183,11 +179,6 @@ def calc_sim_grades(sims):
         res[round(key*100)] = 0
         key += 0.01
     return res
-
-
-def get_line_vectors(lines):
-    """Calculate embedding of the string"""
-    return model_dispatcher.models[config.MODEL].embed(lines)
 
 
 def get_sim_matrix(vec1, vec2, window=config.DEFAULT_WINDOW):

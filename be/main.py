@@ -9,13 +9,14 @@ import uuid
 import config
 import constants as con
 import editor
+import engine
 import helper
 import language_helper
 import output
+import vis_helper
 from align_processor import AlignmentProcessor
 from flask import Flask, abort, request, send_file
 from flask_cors import CORS
-import vis_helper
 
 helper.configure_logging()
 
@@ -161,11 +162,8 @@ def create_alignment(username):
 
     helper.check_folder(db_folder)
 
-    if not os.path.isfile(db_path):
-        logging.info(f"Initializing database {db_path}")
-        helper.init_document_db(db_path)
-        helper.fill_document_db(db_path, splitted_from,
-                                splitted_to, proxy_from, proxy_to)
+    engine.fill_document_db(db_path, splitted_from,
+                            splitted_to, proxy_from, proxy_to)
 
     len_from, _ = helper.get_texts_length(db_path)
 
@@ -252,8 +250,6 @@ def start_alignment(username):
 
     # parallel processing
     logging.info(f"{username}: align started")
-    res_img = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER,
-                           username, f"{align_guid}.png")
     res_img_best = os.path.join(
         con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{align_guid}.best.png")
 
@@ -265,7 +261,7 @@ def start_alignment(username):
     proc_count = config.PROCESSORS_COUNT
 
     proc = AlignmentProcessor(
-        proc_count, db_path, user_db_path, res_img, res_img_best, lang_from, lang_to, guid_from, guid_to)
+        proc_count, db_path, user_db_path, res_img_best, lang_from, lang_to, guid_from, guid_to)
     proc.add_tasks(task_list)
     proc.start()
 
@@ -308,8 +304,6 @@ def align_next_batch(username):
 
     # parallel processing
     logging.info(f"{username}: align started")
-    res_img = os.path.join(con.STATIC_FOLDER, con.IMG_FOLDER,
-                           username, f"{align_guid}.png")
     res_img_best = os.path.join(
         con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{align_guid}.best.png")
 
@@ -321,7 +315,7 @@ def align_next_batch(username):
     proc_count = config.PROCESSORS_COUNT
 
     proc = AlignmentProcessor(
-        proc_count, db_path, user_db_path, res_img, res_img_best, lang_from, lang_to, guid_from, guid_to)
+        proc_count, db_path, user_db_path, res_img_best, lang_from, lang_to, guid_from, guid_to)
     proc.add_tasks(task_list)
     proc.start()
 
