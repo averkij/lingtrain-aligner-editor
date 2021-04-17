@@ -1,11 +1,11 @@
-"""Language helper functions"""
+"""Texts splitter part of the engine"""
+
 
 import os
 import re
 
-import constants as con
+# import constants as con
 import razdel
-from konoha import SentenceTokenizer
 
 RU_CODE = "ru"
 ZH_CODE = "zh"
@@ -20,10 +20,10 @@ PT_CODE = "pt"
 HU_CODE = "hu"
 CZ_CODE = "cz"
 JP_CODE = "jp"
-# bashkir
-BA_CODE = "ba"
 LANGUAGES = [RU_CODE, ZH_CODE, DE_CODE, EN_CODE, FR_CODE,
-             IT_CODE, TR_CODE, ES_CODE, PL_CODE, PT_CODE, HU_CODE, CZ_CODE, JP_CODE, BA_CODE]
+             IT_CODE, TR_CODE, ES_CODE, PL_CODE, PT_CODE, HU_CODE, CZ_CODE, JP_CODE]
+
+PARAGRAPH_MARK = "%%%%%"
 
 # pattern_ru_orig = re.compile(r'[a-zA-Z\(\)\[\]\/\<\>•\'\n]+')
 pattern_ru_orig = re.compile(r'[\(\)\[\]\/\<\>•\'\n]+')
@@ -69,12 +69,6 @@ def split_jp(line):
     return list(re.findall(r'[^!?。！？\.\!\?・]+[!?。！？\.\!\?・]?', line, flags=re.U))
 
 
-def split_jp_konoha(line):
-    """Split line in Japanese with konoha"""
-    tokenizer = SentenceTokenizer()
-    return tokenizer.tokenize(line)
-
-
 def preprocess(line, re_list, splitter):
     """Preprocess general line"""
     for pat, val in re_list:
@@ -82,9 +76,12 @@ def preprocess(line, re_list, splitter):
     return splitter(line)
 
 
-def split_by_sentences(lines, langcode):
+def split_by_sentences(lines, langcode, add_paragraph_mark=False):
     """Split line by sentences using language specific rules"""
-    line = ' '.join(lines)
+    if add_paragraph_mark:
+        line = detect_paragraphs_and_join(lines, langcode)
+    else:
+        line = ' '.join(lines)
     if langcode == RU_CODE:
         sentences = preprocess(line, [
             (pattern_ru_orig, ''),
@@ -111,7 +108,7 @@ def split_by_sentences(lines, langcode):
             (pat_comma, '。'),
             (pattern_jp, '')
         ],
-            split_jp_konoha)
+            split_jp)
         return sentences
 
     # apply default splitting
@@ -122,14 +119,17 @@ def split_by_sentences(lines, langcode):
     return sentences
 
 
-def split_by_sentences_and_save(filename, langcode, username):
-    """Split raw text file by sentences and save"""
-    raw = os.path.join(con.UPLOAD_FOLDER, username,
-                       con.RAW_FOLDER, langcode, filename)
-    splitted = os.path.join(con.UPLOAD_FOLDER, username,
-                            con.SPLITTED_FOLDER, langcode, filename)
+def detect_paragraphs_and_join(lines, langcode):
+    for i, line in enumerate(lines):
+        if line.endswith((".\n", "!\n", "?\n")):
+            lines[i] = line[:-2] + PARAGRAPH_MARK + "."
+    return ' '.join(lines)
 
-    with open(raw, mode='r', encoding='utf-8') as input_file, open(splitted, mode='w', encoding='utf-8') as out_file:
+
+def split_by_sentences_and_save(raw_path, splitted_path, filename, langcode, username):
+    """Split raw text file by sentences and save"""
+
+    with open(raw_path, mode='r', encoding='utf-8') as input_file, open(splitted_path, mode='w', encoding='utf-8') as out_file:
         if is_lang_code_valid(langcode):
             sentences = split_by_sentences(
                 input_file.readlines(), langcode)
