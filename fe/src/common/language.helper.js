@@ -4,6 +4,11 @@ export const LANGUAGES = {
         name: "Russian",
         icon: "⚽️"
     },
+    'ba': {
+        langCode: "ba",
+        name: "Bashkir",
+        icon: "🌹"
+    },
     'zh': {
         langCode: "zh",
         name: "Chinese",
