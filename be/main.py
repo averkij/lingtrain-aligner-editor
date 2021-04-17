@@ -9,16 +9,17 @@ import uuid
 import config
 import constants as con
 import editor
-import engine
-import helper
-import language_helper
+import editor_helper
+import main_db_helper
+import misc
 import output
-import vis_helper
+import user_db_helper
 from align_processor import AlignmentProcessor
 from flask import Flask, abort, request, send_file
 from flask_cors import CORS
+from lingtrain_aligner import aligner, helper, splitter
 
-helper.configure_logging()
+misc.configure_logging()
 
 
 #from mlflow import log_metric
@@ -30,8 +31,8 @@ CORS(app)
 @app.route("/items/<username>/init", methods=["GET"])
 def init_userspace(username):
     """Prepare user workspace"""
-    helper.init_main_db()
-    helper.init_user_db(username)
+    main_db_helper.init_main_db()
+    user_db_helper.init_user_db(username)
     return ('', 200)
 
 
@@ -40,7 +41,7 @@ def items(username, lang):
     """Get uploaded user raw documents"""
 
     # TODO add language code validation
-    helper.create_folders(username, lang)
+    misc.create_folders(username, lang)
     # load documents
     if request.method == "POST":
         if lang in request.files:
@@ -48,14 +49,14 @@ def items(username, lang):
             upload_folder = con.RAW_FOLDER
             filename = file.filename
 
-            if request.form["type"] != "proxy" and helper.file_exists(username, lang, filename):
+            if request.form["type"] != "proxy" and user_db_helper.file_exists(username, lang, filename):
                 return ('File already exists', 400)
 
             if request.form["type"] == "proxy":
                 upload_folder = con.PROXY_FOLDER
                 filename = request.form["rawFileName"]
             else:
-                helper.register_file(username, lang, filename)
+                user_db_helper.register_file(username, lang, filename)
 
             logging.info(
                 f"[{username}]. Loading document {file.filename}.")
@@ -64,14 +65,18 @@ def items(username, lang):
             file.save(upload_path)
 
             if request.form["type"] == "raw":
-                language_helper.split_by_sentences_and_save(
-                    filename, lang, username)
+                raw_path = os.path.join(con.UPLOAD_FOLDER, username,
+                                        con.RAW_FOLDER, lang, filename)
+                splitted_path = os.path.join(con.UPLOAD_FOLDER, username,
+                                             con.SPLITTED_FOLDER, lang, filename)
+                splitter.split_by_sentences_and_save(raw_path, splitted_path,
+                                                     filename, lang, username)
             logging.info(f"[{username}]. Success. {filename} is loaded.")
         return ('', 200)
     # return documents list
     files = {
         "items": {
-            lang: helper.get_raw_files(username, lang)
+            lang: misc.get_raw_files(username, lang)
         }
     }
     return files
@@ -81,9 +86,9 @@ def items(username, lang):
 def download_splitted(username, lang, guid):
     """Download splitted document file"""
     logging.info(f"[{username}]. Downloading {lang} {guid} splitted document.")
-    files = helper.get_files_list(os.path.join(
+    files = misc.get_files_list(os.path.join(
         con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang))
-    filename = helper.get_filename(username, guid)
+    filename = misc.get_filename(username, guid)
     if not filename:
         abort(404)
     path = os.path.join(con.UPLOAD_FOLDER, username,
@@ -97,9 +102,9 @@ def download_splitted(username, lang, guid):
 @app.route("/items/<username>/splitted/<lang>/<guid>/<int:count>/<int:page>", methods=["GET"])
 def splitted(username, lang, guid, count, page):
     """Get splitted document page"""
-    files = helper.get_files_list(os.path.join(
+    files = misc.get_files_list(os.path.join(
         con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang))
-    filename = helper.get_filename(username, guid)
+    filename = misc.get_filename(username, guid)
     if not filename:
         return {"items": {lang: []}}
     path = os.path.join(con.UPLOAD_FOLDER, username,
@@ -136,15 +141,15 @@ def create_alignment(username):
     id_to = request.form.get("id_to", '')
     name = request.form.get("name", '')
 
-    if helper.alignment_exists(username, id_from, id_to):
+    if user_db_helper.alignment_exists(username, id_from, id_to):
         return ('', 200)
 
-    if not helper.file_exists_by_guid(username, id_from) or not helper.file_exists_by_guid(username, id_to):
+    if not user_db_helper.file_exists_by_guid(username, id_from) or not user_db_helper.file_exists_by_guid(username, id_to):
         return ('', 400)
 
     batch_size = config.DEFAULT_BATCHSIZE
-    file_from, lang_from = helper.get_fileinfo(username, id_from)
-    file_to, lang_to = helper.get_fileinfo(username, id_to)
+    file_from, lang_from = misc.get_fileinfo(username, id_from)
+    file_to, lang_to = misc.get_fileinfo(username, id_to)
 
     splitted_from = os.path.join(
         con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_from, file_from)
@@ -160,20 +165,20 @@ def create_alignment(username):
                              con.DB_FOLDER, lang_from, lang_to)
     db_path = os.path.join(db_folder, f"{align_guid}.db")
 
-    helper.check_folder(db_folder)
+    misc.check_folder(db_folder)
 
-    engine.fill_document_db(db_path, splitted_from,
-                            splitted_to, proxy_from, proxy_to)
+    aligner.fill_db_from_files(db_path, splitted_from,
+                               splitted_to, proxy_from, proxy_to)
 
-    len_from, _ = helper.get_texts_length(db_path)
+    len_from, _ = misc.get_texts_length(db_path)
 
     is_last = len_from % batch_size > 0
     total_batches = len_from//batch_size + 1 if is_last else 0
     if config.TEST_RESTRICTION_MAX_BATCHES > 0:
         total_batches = min(config.TEST_RESTRICTION_MAX_BATCHES, total_batches)
 
-    helper.register_alignment(username, lang_from, lang_to, align_guid,
-                              id_from, id_to, name, total_batches)
+    user_db_helper.register_alignment(username, lang_from, lang_to, align_guid,
+                                      id_from, id_to, name, total_batches)
 
     return ('', 200)
 
@@ -183,10 +188,10 @@ def delete_alignment(username):
     """Mark existed alignment as deleted"""
     align_guid = request.form.get("align_guid", '')
 
-    if not helper.alignment_guid_exists(username, align_guid):
+    if not user_db_helper.alignment_guid_exists(username, align_guid):
         return ('', 400)
 
-    helper.delete_alignment(username, align_guid)
+    user_db_helper.delete_alignment(username, align_guid)
 
     return ('', 200)
 
@@ -198,7 +203,7 @@ def delete_document(username):
     lang = request.form.get("lang", '')
     filename = request.form.get("filename", '')
 
-    helper.delete_document(username, guid, lang, filename)
+    user_db_helper.delete_document(username, guid, lang, filename)
 
     return ('', 200)
 
@@ -208,17 +213,18 @@ def start_alignment(username):
     """Align two splitted documents"""
     align_guid = request.form.get("id", '')
     align_all = request.form.get("align_all", '')
-    batch_ids = helper.parse_json_array(request.form.get("batch_ids", "[0]"))
-    batch_shift, _ = helper.try_parse_int(
+    batch_ids = misc.parse_json_array(request.form.get("batch_ids", "[0]"))
+    batch_shift, _ = misc.try_parse_int(
         request.form.get("batch_shift", 0))
 
     logging.info(
         f"align parameters align_guid {align_guid} align_all {align_all} batch_ids {batch_ids}, batch_shift {batch_shift}")
 
-    name, guid_from, guid_to, state, curr_batches, total_batches = helper.get_alignment_info(
+    name, guid_from, guid_to, state, curr_batches, total_batches = user_db_helper.get_alignment_info(
         username, align_guid)
-    _, lang_from = helper.get_alignment_fileinfo_from(username, guid_from)
-    _, lang_to = helper.get_alignment_fileinfo_to(username, guid_to)
+    _, lang_from = user_db_helper.get_alignment_fileinfo_from(
+        username, guid_from)
+    _, lang_to = user_db_helper.get_alignment_fileinfo_to(username, guid_to)
 
     db_folder = os.path.join(con.UPLOAD_FOLDER, username,
                              con.DB_FOLDER, lang_from, lang_to)
@@ -228,11 +234,11 @@ def start_alignment(username):
     logging.info(
         f"align parameters START align_guid {align_guid} align_all {align_all} batch_ids {batch_ids} name {name} guid_from {guid_from} guid_to {guid_to} total_batches {total_batches}")
 
-    lines_from = helper.get_splitted_from(db_path)
-    lines_to = helper.get_splitted_to(db_path)
+    lines_from = aligner.get_splitted_from(db_path)
+    lines_to = aligner.get_splitted_to(db_path)
 
     logging.info(f"[{username}]. Cleaning images.")
-    # helper.clean_img_user_foler(username, align_guid)
+    # misc.clean_img_user_foler(username, align_guid)
 
     if align_all:
         batch_ids = list(range(total_batches))
@@ -242,10 +248,10 @@ def start_alignment(username):
     if not batch_ids:
         abort(404)
     if align_all:
-        helper.update_alignment_state(
+        user_db_helper.update_alignment_state(
             user_db_path, guid_from, guid_to, con.PROC_INIT, 0, total_batches)
 
-    helper.update_alignment_state_by_align_id(
+    user_db_helper.update_alignment_state_by_align_id(
         user_db_path, align_guid, con.PROC_IN_PROGRESS)
 
     # parallel processing
@@ -256,12 +262,12 @@ def start_alignment(username):
     task_list = [(lines_from_batch, lines_to_batch, line_ids_from, line_ids_to, batch_id)
                  for lines_from_batch, lines_to_batch,
                  line_ids_from, line_ids_to, batch_id
-                 in helper.get_batch_intersected(lines_from, lines_to, batch_ids, batch_shift)]
+                 in misc.get_batch_intersected(lines_from, lines_to, batch_ids, batch_shift)]
 
     proc_count = config.PROCESSORS_COUNT
 
     proc = AlignmentProcessor(
-        proc_count, db_path, user_db_path, res_img_best, lang_from, lang_to, guid_from, guid_to)
+        proc_count, db_path, user_db_path, res_img_best, lang_from, lang_to, guid_from, guid_to, model_name=config.MODEL, window=config.DEFAULT_WINDOW)
     proc.add_tasks(task_list)
     proc.start()
 
@@ -272,34 +278,35 @@ def start_alignment(username):
 def align_next_batch(username):
     """Align next batch of two splitted documents"""
     align_guid = request.form.get("id", '')
-    name, guid_from, guid_to, state, curr_batches, total_batches = helper.get_alignment_info(
+    name, guid_from, guid_to, state, curr_batches, total_batches = user_db_helper.get_alignment_info(
         username, align_guid)
-    _, lang_from = helper.get_alignment_fileinfo_from(username, guid_from)
-    _, lang_to = helper.get_alignment_fileinfo_to(username, guid_to)
+    _, lang_from = user_db_helper.get_alignment_fileinfo_from(
+        username, guid_from)
+    _, lang_to = user_db_helper.get_alignment_fileinfo_to(username, guid_to)
 
     db_folder = os.path.join(con.UPLOAD_FOLDER, username,
                              con.DB_FOLDER, lang_from, lang_to)
     db_path = os.path.join(db_folder, f"{align_guid}.db")
     user_db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
 
-    batches_count = helper.get_batches_count(db_path)
+    batches_count = user_db_helper.get_batches_count(db_path)
     batch_ids = [batches_count]
 
     logging.info(
         f"align parameters NEXT align_guid {align_guid} batch_ids {batch_ids} name {name} guid_from {guid_from} guid_to {guid_to} total_batches {total_batches}")
 
-    lines_from = helper.get_splitted_from(db_path)
-    lines_to = helper.get_splitted_to(db_path)
+    lines_from = aligner.get_splitted_from(db_path)
+    lines_to = aligner.get_splitted_to(db_path)
 
     logging.info(f"[{username}]. Cleaning images.")
-    # helper.clean_img_user_foler(username, align_guid)
+    # misc.clean_img_user_foler(username, align_guid)
 
     # exit if batch ids is empty
     batch_ids = [x for x in batch_ids if x < total_batches][:total_batches]
     if not batch_ids:
         abort(404)
 
-    helper.update_alignment_state_by_align_id(
+    user_db_helper.update_alignment_state_by_align_id(
         user_db_path, align_guid, con.PROC_IN_PROGRESS)
 
     # parallel processing
@@ -310,12 +317,12 @@ def align_next_batch(username):
     task_list = [(lines_from_batch, lines_to_batch, line_ids_from, line_ids_to, batch_id)
                  for lines_from_batch, lines_to_batch,
                  line_ids_from, line_ids_to, batch_id
-                 in helper.get_batch_intersected(lines_from, lines_to, batch_ids)]
+                 in misc.get_batch_intersected(lines_from, lines_to, batch_ids)]
 
     proc_count = config.PROCESSORS_COUNT
 
     proc = AlignmentProcessor(
-        proc_count, db_path, user_db_path, res_img_best, lang_from, lang_to, guid_from, guid_to)
+        proc_count, db_path, user_db_path, res_img_best, lang_from, lang_to, guid_from, guid_to, model_name=config.MODEL, window=config.DEFAULT_WINDOW)
     proc.add_tasks(task_list)
     proc.start()
 
@@ -364,7 +371,7 @@ def get_processing_by_ids(username, lang_from, lang_to, align_guid):
         abort(404)
 
     index = helper.get_flatten_doc_index(db_path)
-    index_ids = helper.parse_json_array(request.form.get("index_ids", "[]"))
+    index_ids = misc.parse_json_array(request.form.get("index_ids", "[]"))
 
     index_items = [(index[i], i) for i in index_ids]
     res = {}
@@ -383,7 +390,7 @@ def get_processing_metadata(username, lang_from, lang_to, align_guid):
     if not os.path.isfile(db_path):
         abort(404)
 
-    batch_ids = [x[0] for x in helper.get_processed_batch_ids(db_path)]
+    batch_ids = [x[0] for x in user_db_helper.get_processed_batch_ids(db_path)]
     meta = {"batch_ids": batch_ids, "align_guid": align_guid}
 
     return {"meta": meta}
@@ -397,7 +404,7 @@ def get_splitted_from_by_ids(username, lang_from, lang_to, align_guid):
     db_path = os.path.join(db_folder, f'{align_guid}.db')
     if not os.path.isfile(db_path):
         abort(404)
-    text_ids = helper.parse_json_array(request.form.get("ids", "[]"))
+    text_ids = misc.parse_json_array(request.form.get("ids", "[]"))
 
     res = {}
     if text_ids:
@@ -418,7 +425,7 @@ def get_splitted_to_by_ids(username, lang_from, lang_to, align_guid):
     db_path = os.path.join(db_folder, f'{align_guid}.db')
     if not os.path.isfile(db_path):
         abort(404)
-    text_ids = helper.parse_json_array(request.form.get("ids", "[]"))
+    text_ids = misc.parse_json_array(request.form.get("ids", "[]"))
 
     res = {}
     if text_ids:
@@ -449,15 +456,15 @@ def get_processing_candidates(username, lang_from, lang_to, align_guid, text_typ
 
     direction = 3 if text_type == con.TYPE_TO else 1
     if index_id > 0:
-        line_ids = helper.parse_json_array(index[index_id-1][direction])
+        line_ids = misc.parse_json_array(index[index_id-1][direction])
     else:
-        line_ids = helper.parse_json_array(index[index_id][direction])
+        line_ids = misc.parse_json_array(index[index_id][direction])
 
     while index_id > 0:
         print("line_ids", line_ids)
         if not line_ids:
             index_id -= 1
-            line_ids = helper.parse_json_array(index[index_id][direction])
+            line_ids = misc.parse_json_array(index[index_id][direction])
         else:
             break
 
@@ -469,7 +476,8 @@ def get_processing_candidates(username, lang_from, lang_to, align_guid, text_typ
     id_from = line_id - count_before
     id_to = line_id + count_after
 
-    candidates = helper.get_candidates_page(db_path, text_type, id_from, id_to)
+    candidates = editor_helper.get_candidates_page(
+        db_path, text_type, id_from, id_to)
 
     return {"items": candidates}
 
@@ -483,18 +491,18 @@ def edit_processing(username, lang_from, lang_to, align_guid):
     if not os.path.isfile(db_path):
         abort(404)
 
-    index_id, index_id_is_int = helper.try_parse_int(
+    index_id, index_id_is_int = misc.try_parse_int(
         request.form.get("index_id", -1))
     text = request.form.get("text", '')
     text_type = request.form.get("text_type", con.TYPE_TO)
     operation = request.form.get("operation", "")
     target = request.form.get("target", "")
-    candidate_line_id, _ = helper.try_parse_int(
+    candidate_line_id, _ = misc.try_parse_int(
         request.form.get("candidate_line_id", -1))
     candidate_text = request.form.get("candidate_text", '')
-    batch_id, _ = helper.try_parse_int(
+    batch_id, _ = misc.try_parse_int(
         request.form.get("batch_id", -1))
-    batch_index_id, _ = helper.try_parse_int(
+    batch_index_id, _ = misc.try_parse_int(
         request.form.get("batch_index_id", -1))
 
     # print("OPERATION:", operation, "text_type:", text_type)
@@ -521,7 +529,7 @@ def download_processsing(username, lang_from, lang_to, align_guid, lang, file_fo
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     download_folder = os.path.join(
         con.UPLOAD_FOLDER, username, con.DOWNLOAD_FOLDER)
-    helper.check_folder(download_folder)
+    misc.check_folder(download_folder)
     download_file = os.path.join(download_folder, "{0}_{1}_{2}.{3}".format(
         align_guid, lang, timestamp, file_format))
 
@@ -550,10 +558,10 @@ def list_processing(username, lang_from, lang_to):
         return con.EMPTY_FILES
     processing_folder = os.path.join(
         con.UPLOAD_FOLDER, username, con.PROCESSING_FOLDER, lang_from, lang_to)
-    helper.check_folder(processing_folder)
+    misc.check_folder(processing_folder)
     files = {
         "items": {
-            lang_from: helper.get_processing_list_with_state(
+            lang_from: misc.get_processing_list_with_state(
                 username, lang_from, lang_to)
         }
     }
@@ -566,7 +574,7 @@ def stop_alignment(username, lang_from, lang_to, aling_id):
     logging.info(
         f"[{username}]. Stopping alignment for {lang_from}-{lang_to}.")
     user_db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
-    helper.update_alignment_state_by_align_id(
+    user_db_helper.update_alignment_state_by_align_id(
         user_db_path, aling_id, con.PROC_IN_PROGRESS_DONE)
     return ('', 200)
 
@@ -582,16 +590,16 @@ def switch_excluded(username, lang_from, lang_to, aling_id):
     text_type = request.form.get("text_type", con.TYPE_FROM)
 
     if text_type == "from":
-        helper.switch_excluded_splitted_from(db_path, line_id)
+        editor_helper.switch_excluded_splitted_from(db_path, line_id)
     else:
-        helper.switch_excluded_splitted_to(db_path, line_id)
+        editor_helper.switch_excluded_splitted_to(db_path, line_id)
     return ('', 200)
 
 
 @app.route("/items/contents", methods=["GET"])
 def show_contents():
     """Return alignments list across all users"""
-    contents = helper.get_contents()
+    contents = main_db_helper.get_contents()
     return {"items": contents}
 
 

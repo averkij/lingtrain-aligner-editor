@@ -1,22 +1,15 @@
 """Alignment processor"""
 
 import logging
-import os
 import queue
 import sqlite3
 import time
 from multiprocessing import Process, Queue
 
-import config
 import constants as con
-import engine
-import helper
 import matplotlib
-import model_dispatcher
-import numpy as np
-import sim_helper
-import vis_helper
-from scipy import spatial
+import user_db_helper
+from lingtrain_aligner import aligner
 
 # https://stackoverflow.com/questions/49921721/runtimeerror-main-thread-is-not-in-main-loop-with-matplotlib-and-flask
 matplotlib.use('Agg')
@@ -28,7 +21,7 @@ FINISH_PROCESS = "finish_process"
 class AlignmentProcessor:
     """Processor with parallel texts alignment logic"""
 
-    def __init__(self, proc_count, db_path, user_db_path, res_img_best, lang_name_from, lang_name_to, guid_from, guid_to):
+    def __init__(self, proc_count, db_path, user_db_path, res_img_best, lang_name_from, lang_name_to, guid_from, guid_to, model_name, window):
         self.proc_count = proc_count
         self.queue_in = Queue()
         self.queue_out = Queue()
@@ -40,6 +33,8 @@ class AlignmentProcessor:
         self.tasks_count = 0
         self.guid_from = guid_from
         self.guid_to = guid_to
+        self.model_name = model_name
+        self.window = window
 
     def add_tasks(self, task_list):
         """Add batches with string arrays for the further processing"""
@@ -66,7 +61,7 @@ class AlignmentProcessor:
 
                     print("task_index", task_index)
 
-                    self.process_batch(*task)
+                    self.process_batch_wrapper(*task)
 
                 except Exception as e:
                     print('task failed. ' + str(e))
@@ -83,13 +78,14 @@ class AlignmentProcessor:
 
             if result_code == con.PROC_DONE:
                 result.append((batch_number, texts_from, texts_to))
-                helper.update_batch_progress(self.db_path, batch_number)
-                helper.increment_alignment_state(
+                with sqlite3.connect(self.db_path) as db:
+                    aligner.update_batch_progress(db, batch_number)
+                user_db_helper.increment_alignment_state(
                     self.db_path, self.user_db_path, self.guid_from, self.guid_to, con.PROC_IN_PROGRESS)
 
             elif result_code == con.PROC_ERROR:
                 error_occured = True
-                helper.increment_alignment_state(
+                user_db_helper.increment_alignment_state(
                     self.db_path, self.user_db_path, self.guid_from, self.guid_to, con.PROC_ERROR)
                 break
 
@@ -99,14 +95,14 @@ class AlignmentProcessor:
         result.sort()
         with sqlite3.connect(self.db_path) as db:
             logging.info(f"writing {len(result)} batches to {self.db_path}")
-            helper.rewrite_processing_batches(db, result)
+            aligner.rewrite_processing_batches(db, result)
 
             logging.info(f"creating index for {self.db_path}")
-            helper.create_doc_index(db, result)
+            aligner.create_doc_index(db, result)
 
         if not error_occured:
             print("finishing. no error occured")
-            helper.update_alignment_state(
+            user_db_helper.update_alignment_state(
                 self.user_db_path, self.guid_from, self.guid_to, con.PROC_IN_PROGRESS_DONE)
         else:
             print("finishing with error")
@@ -122,72 +118,15 @@ class AlignmentProcessor:
         for w in workers:
             w.start()
 
-    def process_batch(self, lines_from_batch, lines_to_batch, line_ids_from, line_ids_to, batch_number):
-        """Do the actual alignment process logic"""
-        zero_treshold = 0
-        sims = []
-
+    def process_batch_wrapper(self, lines_from_batch, lines_to_batch, line_ids_from, line_ids_to, batch_number):
         logging.info(f"Alignment started for {self.db_path}.")
         try:
-            logging.info(f"Batch {batch_number}. Calculating vectors.")
-
-            vectors1 = [*engine.get_line_vectors(lines_from_batch)]
-            vectors2 = [*engine.get_line_vectors(lines_to_batch)]
-
-            logging.debug(
-                f"Batch {batch_number}. Vectors calculated. len(vectors1)={len(vectors1)}. len(vectors2)={len(vectors2)}.")
-
-            # Similarity matrix
-            logging.debug(f"Calculating similarity matrix.")
-
-            sim_matrix = get_sim_matrix(vectors1, vectors2)
-            sim_matrix_best = sim_helper.best_per_row_with_ones(sim_matrix)
-
-            # save picture
-            vis_helper.save_pic(sim_matrix_best, self.lang_name_to,
-                                self.lang_name_from, self.res_img_best, batch_number)
-
-            best_sim_ind = sim_matrix_best.argmax(1)
-            texts_from = []
-            texts_to = []
-
-            for line_from_id in range(sim_matrix.shape[0]):
-                id_from = line_ids_from[line_from_id]
-                text_from = lines_from_batch[line_from_id]
-                id_to = line_ids_to[best_sim_ind[line_from_id]]
-                text_to = lines_to_batch[best_sim_ind[line_from_id]]
-
-                texts_from.append(
-                    (f'[{id_from+1}]', id_from+1, text_from.strip()))
-                texts_to.append((f'[{id_to+1}]', id_to+1, text_to.strip()))
+            texts_from, texts_to = aligner.process_batch(lines_from_batch, lines_to_batch, line_ids_from, line_ids_to, batch_number, self.model_name, self.window,
+                                                         save_pic=True, lang_name_from=self.lang_name_from, lang_name_to=self.lang_name_to, img_path=self.res_img_best)
 
             self.queue_out.put(
                 (con.PROC_DONE, batch_number, texts_from, texts_to))
+
         except Exception as e:
             logging.error(e, exc_info=True)
             self.queue_out.put((con.PROC_ERROR, [], []))
-
-
-def calc_sim_grades(sims):
-    """Calculate similarity gradations"""
-    key, res = 0, {}
-    for i, sim in enumerate(sorted(sims)):
-        while key < sim:
-            res[round(key*100)] = len(sims) - i
-            key += 0.01
-    while len(res) <= 100:
-        res[round(key*100)] = 0
-        key += 0.01
-    return res
-
-
-def get_sim_matrix(vec1, vec2, window=config.DEFAULT_WINDOW):
-    """Calculate similarity matrix"""
-    sim_matrix = np.zeros((len(vec1), len(vec2)))
-    k = len(vec1)/len(vec2)
-    for i, vector1 in enumerate(vec1):
-        for j, vector2 in enumerate(vec2):
-            if (j*k > i-window) & (j*k < i+window):
-                sim = 1 - spatial.distance.cosine(vector1, vector2)
-                sim_matrix[i, j] = max(sim, 0.01)
-    return sim_matrix

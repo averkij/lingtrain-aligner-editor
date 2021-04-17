@@ -3,12 +3,12 @@
 import json
 import os
 
-import helper
 import numpy as np
+from lingtrain_aligner import helper
 from matplotlib import pyplot as plt
 
 
-def visualize_alignment_by_db(db_path, output_path, lang_name_from="ru", lang_name_to="de", batch_size=0):
+def visualize_alignment_by_db(db_path, output_path, lang_name_from="ru", lang_name_to="de", batch_size=0, size=(260, 260)):
     """Visualize alignment using ids from the database"""
     if batch_size > 0:
         index = helper.get_clear_flatten_doc_index(db_path)
@@ -22,11 +22,11 @@ def visualize_alignment_by_db(db_path, output_path, lang_name_from="ru", lang_na
 
         x_max, y_max = max(xs), max(ys)
         is_last = x_max % batch_size > 0
-        total_batches = x_max//batch_size + 1 if is_last else 0
+        total_batches = x_max//batch_size + (1 if is_last else 0)
         batches = [[[], []] for _ in range(total_batches)]
 
         for x, y in zip(xs, ys):
-            batch_id = x // batch_size
+            batch_id = (x-1) // batch_size
             batches[batch_id][0].append(x)
             batches[batch_id][1].append(y)
     else:
@@ -51,17 +51,16 @@ def visualize_alignment_by_db(db_path, output_path, lang_name_from="ru", lang_na
         for x, y in zip(batch[0], batch[1]):
             align_matrix[x-x_min - 1, y-y_min - 1] = 1
         save_pic(align_matrix, lang_name_to, lang_name_from,
-                 output_path, batch_number=i)
+                 output_path, batch_number=i, size=size)
 
 
-def save_pic(align_matrix, lang_name_to, lang_name_from, output_path, batch_number):
+def save_pic(align_matrix, lang_name_to, lang_name_from, output_path, batch_number, size=(260, 260)):
     """Save the resulted picture"""
     output = "{0}_{1}{2}".format(os.path.splitext(output_path)[
                                  0], batch_number, os.path.splitext(output_path)[1])
-    plt.figure(figsize=(3, 3))
 
     my_dpi = 100
-    plt.figure(figsize=(260/my_dpi, 260/my_dpi), dpi=my_dpi)
+    plt.figure(figsize=(size[0]/my_dpi, size[1]/my_dpi), dpi=my_dpi)
 
     plt.imshow(align_matrix, cmap='Greens', interpolation='nearest')
     plt.xlabel(lang_name_to, fontsize=12, labelpad=-18)
@@ -70,3 +69,5 @@ def save_pic(align_matrix, lang_name_to, lang_name_from, output_path, batch_numb
                     labelbottom=False, right=False, left=False, labelleft=False)
     plt.savefig(output, dpi=my_dpi)
     # plt.savefig(output, bbox_inches="tight", pad_inches=0, dpi=my_dpi)
+
+    plt.show()
