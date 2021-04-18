@@ -76,12 +76,9 @@ def get_candidates_page(db_path, text_type, id_from, id_to):
         if text_type == con.TYPE_FROM:
             for id, splitted, proxy in db.execute(
                 '''SELECT
-                    sf.id, sf.text, pf.text
+                    sf.id, sf.text, sf.proxy_text
                 FROM
                     splitted_from sf
-                    left join
-                        proxy_from pf
-                            on pf.id=sf.id
                 WHERE
                     sf.id >= :id_from and sf.id <= :id_to
                 ''', {"id_from": id_from, "id_to": id_to}
@@ -90,12 +87,9 @@ def get_candidates_page(db_path, text_type, id_from, id_to):
         elif text_type == con.TYPE_TO:
             for id, splitted, proxy in db.execute(
                 '''SELECT
-                    st.id, st.text, pt.text
+                    st.id, st.text, st.proxy_text
                 FROM
                     splitted_to st
-                    left join
-                        proxy_to pt
-                            on pt.id=st.id
                 WHERE
                     st.id >= :id_from and st.id <= :id_to
                 ''', {"id_from": id_from, "id_to": id_to}

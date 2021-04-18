@@ -126,13 +126,13 @@ def detect_paragraphs_and_join(lines, langcode):
     return ' '.join(lines)
 
 
-def split_by_sentences_and_save(raw_path, splitted_path, filename, langcode, username):
+def split_by_sentences_and_save(raw_path, splitted_path, filename, langcode, username, add_paragraph_mark=False):
     """Split raw text file by sentences and save"""
 
     with open(raw_path, mode='r', encoding='utf-8') as input_file, open(splitted_path, mode='w', encoding='utf-8') as out_file:
         if is_lang_code_valid(langcode):
             sentences = split_by_sentences(
-                input_file.readlines(), langcode)
+                input_file.readlines(), langcode, add_paragraph_mark)
         else:
             raise Exception("Unknown language code.")
 

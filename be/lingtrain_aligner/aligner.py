@@ -236,12 +236,9 @@ def init_document_db(db_path):
         os.remove(db_path)
     with sqlite3.connect(db_path) as db:
         db.execute(
-            'create table splitted_from(id integer primary key, text nvarchar, exclude integer, paragraph integer)')
+            'create table splitted_from(id integer primary key, text text, proxy_text text, exclude integer, paragraph integer)')
         db.execute(
-            'create table splitted_to(id integer primary key, text nvarchar, exclude integer, paragraph integer)')
-        db.execute(
-            'create table proxy_from(id integer primary key, text nvarchar)')
-        db.execute('create table proxy_to(id integer primary key, text nvarchar)')
+            'create table splitted_to(id integer primary key, text text, proxy_text text, exclude integer, paragraph integer)')
         db.execute(
             'create table processing_from(id integer primary key, batch_id integer, text_ids varchar, initial_id integer, text nvarchar)')
         db.execute(
@@ -261,30 +258,36 @@ def fill_db_from_files(db_path, splitted_from, splitted_to, proxy_from, proxy_to
     if os.path.isfile(splitted_from):
         with open(splitted_from, mode="r", encoding="utf-8") as input_path:
             lines = input_path.readlines()
+        lines = handle_paragraph_marks(
+            lines, mark=splitter.PARAGRAPH_MARK)
+        lines_proxy = []
+        if os.path.isfile(proxy_from):
+            with open(proxy_from, mode="r", encoding="utf-8") as input_path:
+                lines_proxy = input_path.readlines()
+        if len(lines) == len(lines_proxy):
+            data = zip(lines, lines_proxy)
+        else:
+            data = zip(lines, ['' for _ in range(len(lines))])
         with sqlite3.connect(db_path) as db:
-            db.executemany("insert into splitted_from(text, exclude) values (?,?)", [
-                           (x.strip(), 0) for x in lines])
+            db.executemany("insert into splitted_from(text, proxy_text, exclude, paragraph) values (?,?,?,?)", [
+                           (text[0].strip(), proxy.strip(), 0, text[1]) for text, proxy in data])
 
     if os.path.isfile(splitted_to):
         with open(splitted_to, mode="r", encoding="utf-8") as input_path:
             lines = input_path.readlines()
+        lines = handle_paragraph_marks(
+            lines, mark=splitter.PARAGRAPH_MARK)
+        lines_proxy = []
+        if os.path.isfile(proxy_to):
+            with open(proxy_to, mode="r", encoding="utf-8") as input_path:
+                lines_proxy = input_path.readlines()
+        if len(lines) == len(lines_proxy):
+            data = zip(lines, lines_proxy)
+        else:
+            data = zip(lines, ['' for _ in range(len(lines))])
         with sqlite3.connect(db_path) as db:
-            db.executemany("insert into splitted_to(text, exclude) values (?,?)", [
-                           (x.strip(), 0) for x in lines])
-
-    if os.path.isfile(proxy_from):
-        with open(proxy_from, mode="r", encoding="utf-8") as input_path:
-            lines = input_path.readlines()
-        with sqlite3.connect(db_path) as db:
-            db.executemany("insert into proxy_from(text) values (?)", [
-                           (x.strip(),) for x in lines])
-
-    if os.path.isfile(proxy_to):
-        with open(proxy_to, mode="r", encoding="utf-8") as input_path:
-            lines = input_path.readlines()
-        with sqlite3.connect(db_path) as db:
-            db.executemany("insert into proxy_to(text) values (?)", [
-                           (x.strip(),) for x in lines])
+            db.executemany("insert into splitted_to(text, proxy_text, exclude, paragraph) values (?,?,?,?)", [
+                           (text[0].strip(), proxy.strip(), 0, text[1]) for text, proxy in data])
 
 
 def fill_db(db_path, splitted_from=[], splitted_to=[], proxy_from=[], proxy_to=[]):
@@ -295,30 +298,30 @@ def fill_db(db_path, splitted_from=[], splitted_to=[], proxy_from=[], proxy_to=[
     if len(splitted_from) > 0:
         splitted_from = handle_paragraph_marks(
             splitted_from, mark=splitter.PARAGRAPH_MARK)
+        if len(splitted_from) == len(proxy_from):
+            data = zip(splitted_from, proxy_from)
+        else:
+            data = zip(splitted_from, ['' for _ in range(len(splitted_from))])
         with sqlite3.connect(db_path) as db:
-            db.executemany("insert into splitted_from(text, exclude, paragraph) values (?,?,?)", [
-                           (x.strip(), 0, paragraph) for x, paragraph in splitted_from])
+            db.executemany("insert into splitted_from(text, proxy_text, exclude, paragraph) values (?,?,?,?)", [
+                           (text[0].strip(), proxy.strip(), 0, text[1]) for text, proxy in data])
     if len(splitted_to) > 0:
         splitted_to = handle_paragraph_marks(
             splitted_to, mark=splitter.PARAGRAPH_MARK)
+        if len(splitted_to) == len(proxy_to):
+            data = zip(splitted_to, proxy_to)
+        else:
+            data = zip(splitted_to, ['' for _ in range(len(splitted_to))])
         with sqlite3.connect(db_path) as db:
-            db.executemany("insert into splitted_to(text, exclude, paragraph) values (?,?,?)", [
-                           (x.strip(), 0, paragraph) for x, paragraph in splitted_to])
-    if len(proxy_from) > 0:
-        with sqlite3.connect(db_path) as db:
-            db.executemany("insert into proxy_from(text) values (?)", [
-                           (x.strip(),) for x in proxy_from])
-    if len(proxy_to) > 0:
-        with sqlite3.connect(db_path) as db:
-            db.executemany("insert into proxy_to(text) values (?)", [
-                           (x.strip(),) for x in proxy_to])
+            db.executemany("insert into splitted_to(text, proxy_text, exclude, paragraph) values (?,?,?,?)", [
+                           (text[0].strip(), proxy.strip(), 0, text[1]) for text, proxy in data])
 
 
 def handle_paragraph_marks(lines, mark):
     res = []
     par_count = 0
     for line in lines:
-        if line.endswith((mark+".", mark+"!", mark+"?")):
+        if line.strip().endswith((mark+".", mark+"!", mark+"?")):
             par_count += 1
             line = line.replace(mark, "")
         res.append((line, par_count))

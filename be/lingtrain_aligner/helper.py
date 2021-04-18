@@ -106,7 +106,7 @@ def get_splitted_from_by_id(db_path, ids):
     res = []
     with sqlite3.connect(db_path) as db:
         for id, text_from, proxy_from, exclude in db.execute(
-            f'select f.id, f.text, pf.text, f.exclude from splitted_from f left join proxy_from pf on pf.id = f.id where f.id in ({",".join([str(x) for x in ids])})'
+            f'select f.id, f.text, f.proxy_text, f.exclude from splitted_from f where f.id in ({",".join([str(x) for x in ids])})'
         ):
             res.append((id, text_from, proxy_from, exclude))
     return res
@@ -117,7 +117,7 @@ def get_splitted_to_by_id(db_path, ids):
     res = []
     with sqlite3.connect(db_path) as db:
         for id, text_to, proxy_to, exclude in db.execute(
-            f'select t.id, t.text, pt.text, t.exclude from splitted_to t left join proxy_to pt on pt.id = t.id where t.id in ({",".join([str(x) for x in ids])})'
+            f'select t.id, t.text, t.proxy_text, t.exclude from splitted_to t where t.id in ({",".join([str(x) for x in ids])})'
         ):
             res.append((id, text_to, proxy_to, exclude))
     return res
@@ -129,7 +129,7 @@ def get_splitted_from_by_id_range(db_path, start_id, end_id):
     res = defaultdict(int)
     with sqlite3.connect(db_path) as db:
         for id, text_from, proxy_from in db.execute(
-            f'select f.id, f.text, pf.text from splitted_from f left join proxy_from pf on pf.id = f.id where f.id in ({",".join([str(x) for x in ids])})'
+            f'select f.id, f.text, f.proxy_text from splitted_from f where f.id in ({",".join([str(x) for x in ids])})'
         ):
             res[id] = text_from
     return res
@@ -141,7 +141,7 @@ def get_splitted_to_by_id_range(db_path, start_id, end_id):
     res = defaultdict(int)
     with sqlite3.connect(db_path) as db:
         for id, text_to, proxy_to in db.execute(
-            f'select t.id, t.text, pt.text from splitted_to t left join proxy_to pt on pt.id = t.id where t.id in ({",".join([str(x) for x in ids])})'
+            f'select t.id, t.text, t.proxy_text from splitted_to t where t.id in ({",".join([str(x) for x in ids])})'
         ):
             res[id] = text_to
     return res
@@ -158,17 +158,17 @@ def get_doc_page(db_path, text_ids):
                        (x,) for x in text_ids])
         for batch_id, text_from, text_to, proxy_from, proxy_to in db.execute(
             '''SELECT
-                f.batch_id, f.text, t.text, pf.text, pt.text
+                f.batch_id, f.text, t.text, pf.proxy_text, pt.proxy_text
             FROM
                 processing_from f
                 join
                     processing_to t
                         on t.id=f.id
                 left join
-                    proxy_from pf
+                    splitted_from pf
                         on pf.id=f.initial_id
                 left join
-                    proxy_to pt
+                    splitted_to pt
                         on pt.id=t.initial_id
                 join
                     temp.text_ids ti

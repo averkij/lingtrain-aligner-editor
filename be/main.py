@@ -70,7 +70,7 @@ def items(username, lang):
                 splitted_path = os.path.join(con.UPLOAD_FOLDER, username,
                                              con.SPLITTED_FOLDER, lang, filename)
                 splitter.split_by_sentences_and_save(raw_path, splitted_path,
-                                                     filename, lang, username)
+                                                     filename, lang, username, add_paragraph_mark=True)
             logging.info(f"[{username}]. Success. {filename} is loaded.")
         return ('', 200)
     # return documents list
