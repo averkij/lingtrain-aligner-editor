@@ -205,15 +205,13 @@ def get_doc_items(index_items, db_path):
             "line_id_from": data[0][0][1],  # array with ids
             # primary key in DB (processing_from)
             "processing_from_id": data[0][0][0],
-            "proxy_from_array": get_proxy_dict(splitted_from),
             # to
             "text_to": texts[1],
             "line_id_to": data[0][0][3],  # array with ids
             # primary key in DB (processing_to)
             "processing_to_id": data[0][0][2],
-            "proxy_to_array": get_proxy_dict(splitted_to),
         })
-    return res
+    return res, get_proxy_dict(splitted_from), get_proxy_dict(splitted_to)
 
 
 def get_processing_from(db_path):

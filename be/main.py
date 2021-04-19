@@ -368,12 +368,12 @@ def get_processing(username, lang_from, lang_to, align_guid, count, page):
 
     shift = (page-1)*count
     pages = list(zip(index[shift:shift+count], range(shift, shift+count)))
-    res = helper.get_doc_items(pages, db_path)
+    res, proxy_from_dict, proxy_to_dict = helper.get_doc_items(pages, db_path)
 
     lines_count = len(index)
     total_pages = (lines_count//count) + (1 if lines_count % count != 0 else 0)
     meta = {"page": page, "total_pages": total_pages}
-    return {"items": res, "meta": meta}
+    return {"items": res, "meta": meta, "proxy_from_dict": proxy_from_dict, "proxy_to_dict": proxy_to_dict}
 
 
 @app.route("/items/<username>/processing/<lang_from>/<lang_to>/<align_guid>", methods=["POST"])
@@ -390,10 +390,13 @@ def get_processing_by_ids(username, lang_from, lang_to, align_guid):
 
     index_items = [(index[i], i) for i in index_ids]
     res = {}
-    for i, item in zip(index_ids, helper.get_doc_items(index_items, db_path)):
+    data, proxy_from_dict, proxy_to_dict = helper.get_doc_items(
+        index_items, db_path)
+
+    for i, item in zip(index_ids, data):
         res[i] = item
 
-    return {"items": res}
+    return {"items": res, "proxy_from_dict": proxy_from_dict, "proxy_to_dict": proxy_to_dict}
 
 
 @app.route("/items/<username>/processing/<lang_from>/<lang_to>/<align_guid>/meta", methods=["GET"])
