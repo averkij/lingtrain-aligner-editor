@@ -129,4 +129,4 @@ class AlignmentProcessor:
 
         except Exception as e:
             logging.error(e, exc_info=True)
-            self.queue_out.put((con.PROC_ERROR, [], []))
+            self.queue_out.put((con.PROC_ERROR, [], [], []))

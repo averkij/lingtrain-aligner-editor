@@ -62,9 +62,9 @@
                   </v-textarea>
 
                   <!-- PROXY TRANSLATION TEXT -->
-                  <div v-if="showProxyTo == 'true' && item.proxy_from"
+                  <div v-if="showProxyTo == 'true'"
                     class="mt-3 proxy-to-subtitles grey lighten-3 font-weight-medium">
-                    {{item.proxy_from}}
+                    {{getProxyFromTexts()}}
                   </div>
                 </div>
 
@@ -170,9 +170,9 @@
                   <!-- prevItemLineId {{prevSelectedLineId}} -->
 
                   <!-- PROXY TRANSLATION TEXT -->
-                  <div v-if="showProxyTo == 'true' && item.proxy_to"
+                  <div v-if="showProxyTo == 'true'"
                     class="mt-3 proxy-to-subtitles grey lighten-3 font-weight-medium">
-                    {{item.proxy_to}}
+                    {{getProxyToTexts()}}
                   </div>
                 </div>
                 <div class="d-table-cell" style="width:15px">
@@ -366,6 +366,20 @@
       },
       isLineIdFromSelected(id) {
         return JSON.parse(this.item.line_id_from).includes(id);
+      },
+      getProxyFromTexts() {
+        let res = JSON.parse(this.item.line_id_from).map(function (num) {
+          return this.item.proxy_from_array[num]
+        }, this).join(" ")
+
+        return res
+      },
+      getProxyToTexts() {
+        let res = JSON.parse(this.item.line_id_to).map(function (num) {
+          return this.item.proxy_to_array[num]
+        }, this).join(" ")
+
+        return res
       }
     },
     computed: {
