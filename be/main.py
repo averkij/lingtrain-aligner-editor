@@ -173,10 +173,14 @@ def create_alignment(username):
     with open(raw_to, "r", encoding="utf8") as input_to:
         lines_to = splitter.split_by_sentences(
             input_to.readlines(), lang_to, add_paragraph_mark=True)
-    with open(raw_from, "r", encoding="utf8") as input_proxy_from:
-        lines_proxy_from = input_proxy_from.readlines()
-    with open(raw_to, "r", encoding="utf8") as input_proxy_to:
-        lines_proxy_to = input_proxy_to.readlines()
+
+    lines_proxy_from, lines_proxy_to = [], []
+    if os.path.isfile(proxy_from):
+        with open(proxy_from, "r", encoding="utf8") as input_proxy_from:
+            lines_proxy_from = input_proxy_from.readlines()
+    if os.path.isfile(proxy_to):
+        with open(proxy_to, "r", encoding="utf8") as input_proxy_to:
+            lines_proxy_to = input_proxy_to.readlines()
 
     aligner.fill_db(db_path, lines_from, lines_to,
                     lines_proxy_from, lines_proxy_to)

@@ -116,6 +116,10 @@ def split_by_sentences(lines, langcode, add_paragraph_mark=False):
         *DEFAULT_PREPROCESSING
     ],
         split_by_razdel)
+
+    if sentences[-1].strip() == '':
+        return sentences[:-1]
+
     return sentences
 
 
@@ -138,7 +142,7 @@ def split_by_sentences_and_save(raw_path, splitted_path, filename, langcode, use
 
         count = 1
         for x in sentences:
-            if count < len(sentences)-1:
+            if count < len(sentences):
                 out_file.write(x.strip() + "\n")
             else:
                 out_file.write(x.strip())
