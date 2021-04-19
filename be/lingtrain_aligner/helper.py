@@ -156,20 +156,14 @@ def get_doc_page(db_path, text_ids):
             'CREATE TEMP TABLE text_ids(rank integer primary key, id integer)')
         db.executemany('insert into temp.text_ids(id) values(?)', [
                        (x,) for x in text_ids])
-        for batch_id, text_from, text_to, proxy_from, proxy_to in db.execute(
+        for batch_id, text_from, text_to in db.execute(
             '''SELECT
-                f.batch_id, f.text, t.text, pf.proxy_text, pt.proxy_text
+                f.batch_id, f.text, t.text
             FROM
                 processing_from f
                 join
                     processing_to t
                         on t.id=f.id
-                left join
-                    splitted_from pf
-                        on pf.id=f.initial_id
-                left join
-                    splitted_to pt
-                        on pt.id=t.initial_id
                 join
                     temp.text_ids ti
                         on ti.id = f.id
@@ -177,30 +171,47 @@ def get_doc_page(db_path, text_ids):
                 ti.rank
             '''
         ):
-            res.append((text_from, text_to, proxy_from, proxy_to, batch_id))
+            res.append((text_from, text_to, batch_id))
+    return res
+
+
+def get_proxy_dict(items):
+    """Get proxy sentences as array"""
+    res = dict()
+    for item in items:
+        res[item[0]] = item[2]
     return res
 
 
 def get_doc_items(index_items, db_path):
     """Get document items by ids"""
     res = []
+
+    from_ids, to_ids = set(), set()
+    for item in index_items:
+        from_ids.update(json.loads(item[0][0][1]))
+        to_ids.update(json.loads(item[0][0][3]))
+
+    splitted_from = get_splitted_from_by_id(db_path, from_ids)
+    splitted_to = get_splitted_to_by_id(db_path, to_ids)
+
     for i, (data, texts) in enumerate(zip(index_items, get_doc_page(db_path, [x[0][0][0] for x in index_items]))):
         res.append({
             "index_id": data[1],  # absolute position in index
             # from
-            "batch_id": texts[4],
+            "batch_id": texts[2],
             "batch_index_id": data[0][1],    # relative position in index batch
             "text_from": texts[0],
             "line_id_from": data[0][0][1],  # array with ids
             # primary key in DB (processing_from)
             "processing_from_id": data[0][0][0],
-            "proxy_from": texts[2],
+            "proxy_from_array": get_proxy_dict(splitted_from),
             # to
             "text_to": texts[1],
             "line_id_to": data[0][0][3],  # array with ids
             # primary key in DB (processing_to)
             "processing_to_id": data[0][0][2],
-            "proxy_to": texts[3],
+            "proxy_to_array": get_proxy_dict(splitted_to),
         })
     return res
 
