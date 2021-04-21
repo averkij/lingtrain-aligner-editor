@@ -243,7 +243,8 @@
             @editAddEmptyLineAfter="editAddEmptyLineAfter" @editClearLine="editClearLine" @getCandidates="getCandidates"
             @editAddCandidateEnd="editAddCandidateEnd" :item="line"
             :prevItem="i == 0 ? processing.items[0] : processing.items[i-1]" :collapse="triggerCollapseEditItem"
-            :clearCandidates="triggerClearCandidates" :showProxyTo="showProxyTo" :panelColor="'green'">
+            :clearCandidates="triggerClearCandidates" :showProxyTo="showProxyTo" :panelColor="'green'"
+            :proxy_from_dict="processing.proxy_from_dict" :proxy_to_dict="processing.proxy_to_dict">
           </EditItem>
           <v-divider></v-divider>
         </div>
