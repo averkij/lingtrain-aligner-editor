@@ -373,6 +373,7 @@ def get_processing(username, lang_from, lang_to, align_guid, count, page):
     lines_count = len(index)
     total_pages = (lines_count//count) + (1 if lines_count % count != 0 else 0)
     meta = {"page": page, "total_pages": total_pages}
+    
     return {"items": res, "meta": meta}
 
 
@@ -444,7 +445,7 @@ def get_splitted_to_by_ids(username, lang_from, lang_to, align_guid):
 
     res = {}
     if text_ids:
-        for id, text, proxy, exclude in helper.get_splitted_to_by_id(db_path, text_ids):
+        for id, text, proxy, exclude, _ in helper.get_splitted_to_by_id(db_path, text_ids):
             res[id] = {
                 "t": text,
                 "p": proxy if proxy else '',
