@@ -100,7 +100,26 @@ class AlignmentProcessor:
             logging.info(f"creating index for {self.db_path}")
             aligner.create_doc_index(db, result)
 
+        # resolve conflicts (experemental)
+        # strategy 1
+        print("strategy 1")
+        steps = 3
+        for i in range(steps):
+            conflicts, rest = resolver.get_all_conflicts(
+                self.db_path, min_chain_length=2+i, max_conflicts_len=6*(i+1), batch_id=-1)
+            resolver.resolve_all_conflicts(
+                self.db_path, conflicts, self.model_name, show_logs=False)
 
+        # strategy 2
+        print("strategy 2")
+        conflicts, rest = resolver.get_all_conflicts(
+            self.db_path, min_chain_length=2, max_conflicts_len=18, batch_id=-1)
+        resolver.resolve_all_conflicts(
+            self.db_path, conflicts, self.model_name, show_logs=False)
+
+        for batch_id, x, y in result:
+            vis_helper.visualize_alignment_by_db(
+                self.db_path, self.res_img_best, lang_name_from=self.lang_name_from, lang_name_to=self.lang_name_to, batch_ids=[batch_id])
 
         if not error_occured:
             print("finishing. no error occured")
