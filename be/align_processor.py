@@ -9,7 +9,7 @@ from multiprocessing import Process, Queue
 import constants as con
 import matplotlib
 import user_db_helper
-from lingtrain_aligner import aligner
+from lingtrain_aligner import aligner, resolver, vis_helper
 
 # https://stackoverflow.com/questions/49921721/runtimeerror-main-thread-is-not-in-main-loop-with-matplotlib-and-flask
 matplotlib.use('Agg')
@@ -99,6 +99,8 @@ class AlignmentProcessor:
 
             logging.info(f"creating index for {self.db_path}")
             aligner.create_doc_index(db, result)
+
+
 
         if not error_occured:
             print("finishing. no error occured")

@@ -249,7 +249,7 @@
   } from "@/common/helper"
   export default {
     name: "EditItem",
-    props: ["item", "collapse", "clearCandidates", "showProxyTo", "prevItem", "fileId", "panelColor"],
+    props: ["item", "collapse", "clearCandidates", "showProxyTo", "prevItem", "fileId", "panelColor", "proxy_from_dict", "proxy_to_dict"],
     data() {
       return {
         state: STATE_SAVED,
@@ -369,14 +369,14 @@
       },
       getProxyFromTexts() {
         let res = JSON.parse(this.item.line_id_from).map(function (num) {
-          return this.item.proxy_from_array[num]
+          return this.proxy_from_dict[num]
         }, this).join(" ")
 
         return res
       },
       getProxyToTexts() {
         let res = JSON.parse(this.item.line_id_to).map(function (num) {
-          return this.item.proxy_to_array[num]
+          return this.proxy_to_dict[num]
         }, this).join(" ")
 
         return res
