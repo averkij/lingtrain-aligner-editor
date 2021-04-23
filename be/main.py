@@ -447,7 +447,7 @@ def get_splitted_to_by_ids(username, lang_from, lang_to, align_guid):
 
     res = {}
     if text_ids:
-        for id, text, proxy, exclude in helper.get_splitted_to_by_id(db_path, text_ids):
+        for id, text, proxy, exclude, _ in helper.get_splitted_to_by_id(db_path, text_ids):
             res[id] = {
                 "t": text,
                 "p": proxy if proxy else '',
