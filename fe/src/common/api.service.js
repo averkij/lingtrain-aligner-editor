@@ -195,6 +195,17 @@ export const ItemsService = {
       form
     );
   },
+  resolveConflicts(params) {
+    let form = new FormData();
+    form.append("id", params.id);
+    form.append("resolve_all", params.resolveAll);
+    form.append("batch_ids", JSON.stringify(params.batchIds))
+    return ApiService.post(
+      "items",
+      `${params.username}/alignment/resolve`,
+      form
+    );
+  },
   deleteAlignment(params) {
     let form = new FormData();
     form.append("align_guid", params.guid);

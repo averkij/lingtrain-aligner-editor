@@ -17,7 +17,7 @@ import user_db_helper
 from align_processor import AlignmentProcessor
 from flask import Flask, abort, request, send_file
 from flask_cors import CORS
-from lingtrain_aligner import aligner, helper, splitter
+from lingtrain_aligner import aligner, helper, splitter, resolver, vis_helper
 
 misc.configure_logging()
 
@@ -342,6 +342,66 @@ def align_next_batch(username):
     proc.start()
 
     return con.EMPTY_LINES
+
+
+@app.route("/items/<username>/alignment/resolve", methods=["POST"])
+def resolve_conflicts(username):
+    """Found and resolve conflicts in document"""
+    align_guid = request.form.get("id", '')
+    resolve_all = request.form.get("resolve_all", '')
+    batch_ids = misc.parse_json_array(request.form.get("batch_ids", "[0]"))
+    name, guid_from, guid_to, state, curr_batches, total_batches = user_db_helper.get_alignment_info(
+        username, align_guid)
+    _, lang_from = user_db_helper.get_alignment_fileinfo_from(
+        username, guid_from)
+    _, lang_to = user_db_helper.get_alignment_fileinfo_to(username, guid_to)
+    db_folder = os.path.join(con.UPLOAD_FOLDER, username,
+                             con.DB_FOLDER, lang_from, lang_to)
+    db_path = os.path.join(db_folder, f"{align_guid}.db")
+    user_db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
+
+    if resolve_all:
+        batch_ids = list(range(total_batches))
+
+    # exit if batch ids is empty
+    batch_ids = [x for x in batch_ids if x < total_batches][:total_batches]
+    if not batch_ids:
+        abort(404)
+    if resolve_all:
+        user_db_helper.update_alignment_state(
+            user_db_path, guid_from, guid_to, con.PROC_INIT, 0, total_batches)
+
+    user_db_helper.update_alignment_state_by_align_id(
+        user_db_path, align_guid, con.PROC_IN_PROGRESS)
+
+    res_img_best = os.path.join(
+        con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{align_guid}.best.png")
+
+    #conflicts resolving strategy
+    steps = 3
+    print("resolving conflicts strategy 1. batch_ids:", batch_ids)
+    print("", batch_ids)
+    for batch_id in batch_ids:
+        for i in range(steps):
+            conflicts, rest = resolver.get_all_conflicts(
+                db_path, min_chain_length=2+i, max_conflicts_len=6*(i+1), batch_id=batch_id)
+            resolver.resolve_all_conflicts(
+                db_path, conflicts, config.MODEL, show_logs=False)
+
+    print("resolving conflicts strategy 2. batch_ids:", batch_ids)
+    for batch_id in batch_ids:
+        conflicts, rest = resolver.get_all_conflicts(
+            db_path, min_chain_length=2, max_conflicts_len=18, batch_id=batch_id)
+        resolver.resolve_all_conflicts(
+            db_path, conflicts, config.MODEL, show_logs=False)
+
+    vis_helper.visualize_alignment_by_db(
+        db_path, res_img_best, lang_name_from=lang_from, lang_name_to=lang_to, batch_ids=batch_ids)
+
+    user_db_helper.update_alignment_state(
+        user_db_path, guid_from, guid_to, con.PROC_IN_PROGRESS_DONE)
+
+    return ('', 200)
 
 
 @app.route("/items/<username>/processing/<lang_from>/<lang_to>/<align_guid>/index", methods=["GET"])

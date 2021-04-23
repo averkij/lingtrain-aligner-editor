@@ -20,7 +20,7 @@
             <v-card-actions>
               <v-btn color="primary" text @click="show = false"> Close </v-btn>
               <v-spacer></v-spacer>
-              <v-btn color="success" dark @click="recalculateBatch">
+              <v-btn color="success" dark @click="resolveConflictsBatch">
                 Resolve
               </v-btn>
             </v-card-actions>
@@ -81,6 +81,10 @@ export default {
       this.show = false;
       this.$emit("recalculateBatch", this.batch_id, this.shift);
     },
+    resolveConflictsBatch() {
+      this.show = false;
+      this.$emit("resolveConflictsBatch", this.batch_id);
+    }
   },
   computed: {
     show: {
