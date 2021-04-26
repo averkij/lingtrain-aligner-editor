@@ -284,7 +284,7 @@ def start_alignment(username):
     proc = AlignmentProcessor(
         proc_count, db_path, user_db_path, res_img_best, lang_from, lang_to, guid_from, guid_to, model_name=config.MODEL, window=config.DEFAULT_WINDOW)
     proc.add_tasks(task_list)
-    proc.start()
+    proc.start_align()
 
     return con.EMPTY_LINES
 
@@ -339,7 +339,7 @@ def align_next_batch(username):
     proc = AlignmentProcessor(
         proc_count, db_path, user_db_path, res_img_best, lang_from, lang_to, guid_from, guid_to, model_name=config.MODEL, window=config.DEFAULT_WINDOW)
     proc.add_tasks(task_list)
-    proc.start()
+    proc.start_align()
 
     return con.EMPTY_LINES
 
@@ -377,29 +377,11 @@ def resolve_conflicts(username):
     res_img_best = os.path.join(
         con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{align_guid}.best.png")
 
-    #conflicts resolving strategy
-    steps = 3
-    print("resolving conflicts strategy 1. batch_ids:", batch_ids)
-    print("", batch_ids)
-    for batch_id in batch_ids:
-        for i in range(steps):
-            conflicts, rest = resolver.get_all_conflicts(
-                db_path, min_chain_length=2+i, max_conflicts_len=6*(i+1), batch_id=batch_id)
-            resolver.resolve_all_conflicts(
-                db_path, conflicts, config.MODEL, show_logs=False)
-
-    print("resolving conflicts strategy 2. batch_ids:", batch_ids)
-    for batch_id in batch_ids:
-        conflicts, rest = resolver.get_all_conflicts(
-            db_path, min_chain_length=2, max_conflicts_len=18, batch_id=batch_id)
-        resolver.resolve_all_conflicts(
-            db_path, conflicts, config.MODEL, show_logs=False)
-
-    vis_helper.visualize_alignment_by_db(
-        db_path, res_img_best, lang_name_from=lang_from, lang_name_to=lang_to, batch_ids=batch_ids)
-
-    user_db_helper.update_alignment_state(
-        user_db_path, guid_from, guid_to, con.PROC_IN_PROGRESS_DONE)
+    proc_count = config.PROCESSORS_COUNT
+    proc = AlignmentProcessor(
+        proc_count, db_path, user_db_path, res_img_best, lang_from, lang_to, guid_from, guid_to, model_name=config.MODEL, window=config.DEFAULT_WINDOW, mode="resolve")
+    proc.add_tasks(batch_ids)
+    proc.start_resolve()
 
     return ('', 200)
 
