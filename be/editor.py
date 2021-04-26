@@ -42,7 +42,7 @@ def edit_doc(db_path, index_id, text, operation, target, candidate_line_id, cand
                 if batch_index_id - 1 < 0:
                     if target_batch_id > 0:
                         target_batch_id = batch_id - 1
-                        target_index_id = len(index[target_batch_id]-1)
+                        target_index_id = len(index[target_batch_id])-1
                     else:
                         logging.warning(
                             f"wrong target coordinates, target_batch_id: ${batch_id - 1}")
