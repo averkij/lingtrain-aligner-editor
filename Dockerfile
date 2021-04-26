@@ -19,7 +19,10 @@ ENV LISTEN_PORT 80
 
 #install dependencies
 COPY ./be/requirements.txt /app
-RUN pip install -r /app/requirements.txt;
+RUN pip install -r /app/requirements.txt
+
+COPY ./be/requirements_aligner.txt /app
+RUN pip install -r /app/requirements_aligner.txt
 
 #copy assets
 RUN mkdir /app/static /app/static/flags

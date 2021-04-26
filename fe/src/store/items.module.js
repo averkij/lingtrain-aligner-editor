@@ -23,6 +23,7 @@ import {
   EDIT_PROCESSING_MARK_UNUSED,
   STOP_ALIGNMENT,
   ALIGN_SPLITTED,
+  RESOLVE_CONFLICTS,
   CREATE_ALIGNMENT,
   DELETE_ALIGNMENT,
   GET_CONFLICT_SPLITTED_FROM,
@@ -220,6 +221,13 @@ export const actions = {
     },
     () => {
       console.log("alignment error")
+    });
+  },
+  async [RESOLVE_CONFLICTS](context, params) {
+    await ItemsService.resolveConflicts(params).then(() => {
+    },
+    () => {
+      console.log("resolve conflicts error")
     });
   },
   async [CREATE_ALIGNMENT](context, params) {

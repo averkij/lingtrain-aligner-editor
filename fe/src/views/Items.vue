@@ -198,7 +198,7 @@
           </v-hover>
         </v-col>
         <RecalculateBatchDialog v-model="showRecalculateBatchDialog" :batch_id=currentBatchId
-          @recalculateBatch="recalculateBatch" />
+          @recalculateBatch="recalculateBatch" @resolveConflictsBatch="resolveConflictsBatch" />
       </v-row>
 
       <div class="text-h5 mt-10 font-weight-bold">Edit</div>
@@ -548,7 +548,8 @@
     DELETE_ALIGNMENT,
     ALIGN_SPLITTED,
     DOWNLOAD_SPLITTED,
-    DOWNLOAD_PROCESSING
+    DOWNLOAD_PROCESSING,
+    RESOLVE_CONFLICTS
   } from "@/store/actions.type";
   import {
     SET_ITEMS_PROCESSING,
@@ -759,6 +760,24 @@
       },
       recalculateBatch(batch_id, shift) {
         this.startAlignment(batch_id, shift, false)
+      },
+      resolveConflictsBatch(batch_id) {
+        this.isLoading.align = true;
+        this.initProcessingDocument();
+        this.currentlyProcessingId = this.selectedProcessingId;
+        this.userAlignInProgress = true;
+        this.$store
+          .dispatch(RESOLVE_CONFLICTS, {
+            username: this.$route.params.username,
+            id: this.selectedProcessingId,
+            batchIds: [batch_id],
+            resolveAll: ''
+          })
+          .then(() => {
+            this.isLoading.align = false;
+            console.log("fetchItemsProcessingTimer set")
+            this.fetchItemsProcessingTimer();
+          });        
       },
       fetchItemsProcessingTimer() {
         setTimeout(() => {
