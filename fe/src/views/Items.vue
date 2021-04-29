@@ -385,7 +385,7 @@
                         </div>
                         <v-divider class="d-table-cell" vertical></v-divider>
                         <div class="d-table-cell grey lighten-5 pl-2 pt-2 text-center">
-                          <v-checkbox hide-details color="blue" class="ma-1 pa-0" v-model="conflictSplittedFrom[line].e" @click.stop.prevent="markUnused('from', line)"></v-checkbox>
+                          <v-checkbox hide-details color="blue" class="ma-1 pa-0" v-model="conflictSplittedFrom[line].e" @click.stop="markUnused('from', line)"></v-checkbox>
                         </div>
                       </div>
                     </v-col>
@@ -556,7 +556,7 @@
   } from "@/store/actions.type";
   import {
     SET_ITEMS_PROCESSING,
-    SET_SPLITTED,
+    SET_SPLITTED
   } from "@/store/mutations.type";
 
   export default {
@@ -1137,11 +1137,6 @@
           });
       },
       markUnused(textType, lineId) {
-        if (textType == "from") {
-          this.conflictSplittedFrom[lineId].e = !this.conflictSplittedFrom[lineId].e;
-        } else {
-          this.conflictSplittedTo[lineId].e = !this.conflictSplittedTo[lineId].e;
-        }
         this.$store.dispatch(EDIT_PROCESSING_MARK_UNUSED, {
           username: this.$route.params.username,
           guid: this.selectedProcessingId,
