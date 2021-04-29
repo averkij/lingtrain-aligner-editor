@@ -197,8 +197,11 @@
             </v-card>
           </v-hover>
         </v-col>
-        <RecalculateBatchDialog v-model="showRecalculateBatchDialog" :batch_id=currentBatchId
-          @recalculateBatch="recalculateBatch" @resolveConflictsBatch="resolveConflictsBatch" />
+        <RecalculateBatchDialog v-model="showRecalculateBatchDialog"
+          :batch_id=currentBatchId
+          :inProgress="userAlignInProgress"
+          @recalculateBatch="recalculateBatch"
+          @resolveConflictsBatch="resolveConflictsBatch"/>
       </v-row>
 
       <div class="text-h5 mt-10 font-weight-bold">Edit</div>

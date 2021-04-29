@@ -20,7 +20,7 @@
             <v-card-actions>
               <v-btn color="primary" text @click="show = false"> Close </v-btn>
               <v-spacer></v-spacer>
-              <v-btn color="success" dark @click="resolveConflictsBatch">
+              <v-btn color="success" :disabled="inProgress" :loading="inProgress" @click="resolveConflictsBatch">
                 Resolve
               </v-btn>
             </v-card-actions>
@@ -44,13 +44,11 @@
                 <v-icon>mdi-arrow-right</v-icon>
               </v-btn>
             </v-card-actions>
-
             <v-spacer></v-spacer>
-
             <v-card-actions>
               <v-btn color="primary" text @click="show = false"> Close </v-btn>
               <v-spacer></v-spacer>
-              <v-btn color="primary" dark @click="recalculateBatch">
+              <v-btn color="primary" :disabled="inProgress" :loading="inProgress" @click="recalculateBatch">
                 Recalculate
               </v-btn>
             </v-card-actions>
@@ -68,6 +66,7 @@ export default {
   props: {
     value: Boolean,
     batch_id: Number,
+    inProgress: Boolean
   },
   data() {
     return {
