@@ -169,10 +169,10 @@ def create_alignment(username):
 
     with open(raw_from, "r", encoding="utf8") as input_from:
         lines_from = splitter.split_by_sentences(
-            input_from.readlines(), lang_from, add_paragraph_mark=True)
+            input_from.readlines(), lang_from)
     with open(raw_to, "r", encoding="utf8") as input_to:
         lines_to = splitter.split_by_sentences(
-            input_to.readlines(), lang_to, add_paragraph_mark=True)
+            input_to.readlines(), lang_to)
 
     lines_proxy_from, lines_proxy_to = [], []
     if os.path.isfile(proxy_from):
@@ -282,7 +282,7 @@ def start_alignment(username):
     proc_count = config.PROCESSORS_COUNT
 
     proc = AlignmentProcessor(
-        proc_count, db_path, user_db_path, res_img_best, lang_from, lang_to, guid_from, guid_to, model_name=config.MODEL, window=config.DEFAULT_WINDOW)
+        proc_count, db_path, user_db_path, res_img_best, lang_from, lang_to, guid_from, guid_to, model_name=config.MODEL, window=config.DEFAULT_WINDOW, embed_batch_size=config.EMBED_BATCH_SIZE, normalize_embeddings=config.NORMALIZE_EMBEDDINGS)
     proc.add_tasks(task_list)
     proc.start_align()
 
@@ -337,7 +337,7 @@ def align_next_batch(username):
     proc_count = config.PROCESSORS_COUNT
 
     proc = AlignmentProcessor(
-        proc_count, db_path, user_db_path, res_img_best, lang_from, lang_to, guid_from, guid_to, model_name=config.MODEL, window=config.DEFAULT_WINDOW)
+        proc_count, db_path, user_db_path, res_img_best, lang_from, lang_to, guid_from, guid_to, model_name=config.MODEL, window=config.DEFAULT_WINDOW, embed_batch_size=config.EMBED_BATCH_SIZE, normalize_embeddings=config.NORMALIZE_EMBEDDINGS)
     proc.add_tasks(task_list)
     proc.start_align()
 
@@ -379,7 +379,7 @@ def resolve_conflicts(username):
 
     proc_count = config.PROCESSORS_COUNT
     proc = AlignmentProcessor(
-        proc_count, db_path, user_db_path, res_img_best, lang_from, lang_to, guid_from, guid_to, model_name=config.MODEL, window=config.DEFAULT_WINDOW, mode="resolve")
+        proc_count, db_path, user_db_path, res_img_best, lang_from, lang_to, guid_from, guid_to, model_name=config.MODEL, window=config.DEFAULT_WINDOW, embed_batch_size=config.EMBED_BATCH_SIZE, normalize_embeddings=config.NORMALIZE_EMBEDDINGS, mode="resolve")
     proc.add_tasks(batch_ids)
     proc.start_resolve()
 
@@ -468,7 +468,7 @@ def get_splitted_from_by_ids(username, lang_from, lang_to, align_guid):
 
     res = {}
     if text_ids:
-        for id, text, proxy, exclude in helper.get_splitted_from_by_id(db_path, text_ids):
+        for id, text, proxy, exclude, _, h1, h2, h3, h4, h5, divider in helper.get_splitted_from_by_id(db_path, text_ids):
             res[id] = {
                 "t": text,
                 "p": proxy if proxy else '',
@@ -489,7 +489,7 @@ def get_splitted_to_by_ids(username, lang_from, lang_to, align_guid):
 
     res = {}
     if text_ids:
-        for id, text, proxy, exclude, _ in helper.get_splitted_to_by_id(db_path, text_ids):
+        for id, text, proxy, exclude, _, h1, h2, h3, h4, h5, divider in helper.get_splitted_to_by_id(db_path, text_ids):
             res[id] = {
                 "t": text,
                 "p": proxy if proxy else '',

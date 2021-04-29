@@ -21,7 +21,7 @@ FINISH_PROCESS = "finish_process"
 class AlignmentProcessor:
     """Processor with parallel texts alignment logic"""
 
-    def __init__(self, proc_count, db_path, user_db_path, res_img_best, lang_name_from, lang_name_to, guid_from, guid_to, model_name, window, mode="align"):
+    def __init__(self, proc_count, db_path, user_db_path, res_img_best, lang_name_from, lang_name_to, guid_from, guid_to, model_name, window, embed_batch_size, normalize_embeddings, mode="align"):
         self.proc_count = proc_count
         self.queue_in = Queue()
         self.queue_out = Queue()
@@ -36,6 +36,8 @@ class AlignmentProcessor:
         self.model_name = model_name
         self.window = window
         self.mode = mode
+        self.embed_batch_size = embed_batch_size
+        self.normalize_embeddings = normalize_embeddings
 
     def add_tasks(self, task_list):
         """Add batches with string arrays for the further processing"""
@@ -130,7 +132,7 @@ class AlignmentProcessor:
         """Align process wrapper"""
         logging.info(f"Alignment started for {self.db_path}.")
         try:
-            texts_from, texts_to = aligner.process_batch(lines_from_batch, lines_to_batch, line_ids_from, line_ids_to, batch_number, self.model_name, self.window,
+            texts_from, texts_to = aligner.process_batch(lines_from_batch, lines_to_batch, line_ids_from, line_ids_to, batch_number, self.model_name, self.window, self.embed_batch_size, self.normalize_embeddings, show_progress_bar=False,
                                                          save_pic=True, lang_name_from=self.lang_name_from, lang_name_to=self.lang_name_to, img_path=self.res_img_best)
 
             self.queue_out.put(
