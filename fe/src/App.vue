@@ -138,7 +138,7 @@
         });
       },
       goToGithub() {
-        window.open("https://github.com/averkij/lingtrain-aligner", '_blank');
+        window.open("https://github.com/averkij/lingtrain-aligner-editor", '_blank');
       },
       openContents() {
         this.$router.push({

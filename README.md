@@ -83,7 +83,7 @@ You can deploy and run the app on your server using docker.
 On your local machine.
 
 1. Clone the repo.
-    - <code>git clone https://github.com/averkij/lingtrain-aligner.git</code>
+    - <code>git clone https://github.com/averkij/lingtrain-aligner-editor.git</code>
 2. Edit the following line in **./fe/src/common/config.js** file.
     - <code>export const API_URL = "http://[IP_ADRESS]:[PORT]";</code>
       For example:
