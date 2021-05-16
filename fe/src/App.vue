@@ -40,6 +40,7 @@
           </v-col>
 
           <v-col v-if="showLanguageBar" cols="12" sm="5" class="text-right">
+            <v-spacer />
             <div class="pa-2 font-josefin d-inline-block">
               {{ LANGUAGES[langCodeFrom].name }}
             </div>
@@ -103,6 +104,7 @@
             <div class="pa-2 font-josefin d-inline-block">
               {{ LANGUAGES[langCodeTo].name }}
             </div>
+            <v-spacer />
           </v-col>
 
           <v-col cols="12" sm="1" class="text-right">
@@ -113,26 +115,60 @@
         </v-row>
 
         <template v-slot:extension>
-          <v-tabs v-model="tab" align-with-title>
+          <v-tabs v-model="tab" align-with-title class="white-transparent">
             <v-tabs-slider color="yellow"></v-tabs-slider>
-            
-            <v-tab v-for="item in items" :key="item">
-              {{ item }}
-            </v-tab>
+
+            <template v-if="$route.params.username">
+              <v-tab
+                :to="{
+                  name: 'docs',
+                  params: {
+                    username: $route.params.username,
+                    from: $route.params.from,
+                    to: $route.params.to,
+                  },
+                }"
+                >documents</v-tab
+              >
+
+              <v-tab
+                :to="{
+                  name: 'align',
+                  params: {
+                    username: $route.params.username,
+                    from: $route.params.from,
+                    to: $route.params.to,
+                  },
+                }"
+                >alignments</v-tab
+              >
+
+              <v-tab>editor</v-tab>
+              <v-tab>books</v-tab>
+
+              <!-- to delete -->
+              <v-tab
+                :to="{
+                  name: 'items',
+                  params: {
+                    username: $route.params.username,
+                    from: $route.params.from,
+                    to: $route.params.to,
+                  },
+                }"
+                >all</v-tab
+              >
+            </template>
           </v-tabs>
         </template>
       </v-toolbar>
-
-      <v-tabs-items v-model="tab">
-        <v-tab-item :transition="false" :reverse-transition="false" v-for="item in items" :key="item">
-          <v-main>
-            <v-container class="pb-15">
-              <router-view></router-view>
-            </v-container>
-          </v-main>
-        </v-tab-item>
-      </v-tabs-items>
     </v-card>
+
+    <v-main>
+      <v-container class="pb-15">
+        <router-view></router-view>
+      </v-container>
+    </v-main>
 
     <Footer />
   </v-app>
@@ -143,6 +179,7 @@ import Footer from "@/components/Footer";
 import { LANGUAGES } from "@/common/language.helper";
 import { DEFAULT_FROM, DEFAULT_TO } from "@/common/language.helper";
 import { API_URL } from "@/common/config";
+5;
 
 export default {
   name: "App",
@@ -155,14 +192,8 @@ export default {
     drawer: false,
     group: null,
     tab: null,
-    items: ["web", "shopping", "videos", "images", "news"],
-    text:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
   }),
   methods: {
-    // getFlagImgPath(code) {
-    //   return require(`@/assets/flags/flag-${code}-h.svg`);
-    // },
     getFlagImgPath(code) {
       return `${API_URL}/static/flags/flag-${code}-h.svg`;
     },
@@ -204,7 +235,14 @@ export default {
       return DEFAULT_TO;
     },
     showLanguageBar() {
-      return this.$route.name == "items";
+      if (
+        this.$route.name == "items" ||
+        this.$route.name == "docs" ||
+        this.$route.name == "align"
+      ) {
+        return true;
+      }
+      return false;
     },
     showDrawerMenu() {
       return this.$route.name != "login" && this.$route.name != "home";

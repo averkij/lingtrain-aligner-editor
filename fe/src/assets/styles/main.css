@@ -141,3 +141,8 @@
     box-shadow: 0px 2px 10px rgba(50,50,50,0.5) !important;
     cursor: pointer;
 }
+
+.white-transparent {
+    /* background: #ffffff08; */
+    /* background: linear-gradient(180deg, transparent 0%, transparent 80%, #ffffff50 100%); */
+}

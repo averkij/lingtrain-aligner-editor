@@ -21,14 +21,48 @@ const routes = [
     name: "items",
     component: () => import("@/views/Items")
   },
-  {
-    path: "/user/:username",
-    redirect: `/user/:username/items/${DEFAULT_FROM}/${DEFAULT_TO}`
-  },
+  // {
+  //   path: "/user/:username",
+  //   redirect: `/user/:username/items/${DEFAULT_FROM}/${DEFAULT_TO}`
+  // },
   {
     path: "/user/:username/items",
     redirect: `/user/:username/items/${DEFAULT_FROM}/${DEFAULT_TO}`
   },
+
+  //documents
+  {
+    path: "/user/:username/docs/:from/:to",
+    name: "docs",
+    component: () => import("@/views/Documents")
+  },
+  {
+    path: "/user/:username",
+    redirect: `/user/:username/docs/${DEFAULT_FROM}/${DEFAULT_TO}`
+  },
+  {
+    path: "/user/:username/docs",
+    redirect: `/user/:username/docs/${DEFAULT_FROM}/${DEFAULT_TO}`
+  },
+
+  //alignments
+  {
+    path: "/user/:username/align/:from/:to",
+    name: "align",
+    component: () => import("@/views/Alignments")
+  },
+  {
+    path: "/user/:username/align",
+    redirect: `/user/:username/align/${DEFAULT_FROM}/${DEFAULT_TO}`
+  },
+
+
+
+
+
+
+
+  //#contents
   {
     path: "/contents",
     name: "contents",
