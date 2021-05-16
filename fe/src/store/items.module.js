@@ -111,7 +111,6 @@ export const actions = {
     const {
       data
     } = await ItemsService.getSplitted(params);
-    console.log(data)
     context.commit(SET_SPLITTED, {
       data: data,
       langCode: params.langCode
@@ -272,7 +271,7 @@ export const mutations = {
     state.itemsProcessing[params.langCode] = params.items;
   },
   [SET_SPLITTED](state, params) {
-    console.log("SET_SPLITTED", params)
+    // console.log("SET_SPLITTED", params)
     if (params.data.items[params.langCode]) {
       state.splitted[params.langCode].lines = params.data.items[params.langCode];
     }
@@ -296,7 +295,7 @@ export const mutations = {
     state.conflictSplittedTo = data.items;
   },
   [SET_CONFLICT_FLOW_TO](state, data) {
-    console.log("SET_CONFLICT_FLOW_TO:", data.items)
+    // console.log("SET_CONFLICT_FLOW_TO:", data.items)
     state.conflictFlowTo = data.items;
   },
   [SET_CONTENTS](state, data) {
