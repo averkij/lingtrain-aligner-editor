@@ -59,7 +59,7 @@ Alignment process is pretty straightforward. After you have the app up and runni
 
 ### 6. Download the corpora
 
-![Dowload](/img/6.png)
+![Download](/img/6.png)
 
 ## Running on local machine
 
