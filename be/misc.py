@@ -171,13 +171,6 @@ def get_batch_intersected(iter1, iter2, batch_ids, batch_shift=0, n=config.DEFAU
         counter += 1
 
 
-def get_culture(lang_code):
-    """Get language culture"""
-    if lang_code in con.CULTURE_LIST:
-        return con.CULTURE_LIST[lang_code]
-    return con.CULTURE_LIST[con.DEFAULT_CULTURE]
-
-
 def try_parse_int(value):
     """Try parse int"""
     try:

@@ -12,12 +12,11 @@ import editor
 import editor_helper
 import main_db_helper
 import misc
-import output
 import user_db_helper
 from align_processor import AlignmentProcessor
 from flask import Flask, abort, request, send_file
 from flask_cors import CORS
-from lingtrain_aligner import aligner, helper, splitter, resolver, vis_helper
+from lingtrain_aligner import aligner, helper, splitter, saver
 
 misc.configure_logging()
 
@@ -597,9 +596,9 @@ def download_processsing(username, lang_from, lang_to, align_guid, lang, file_fo
         f"[{username}]. Preparing file for downloading {download_file}.")
 
     if file_format == con.FORMAT_TMX:
-        output.save_tmx(db_path, download_file, lang_from, lang_to)
+        saver.save_tmx(db_path, download_file, lang_from, lang_to)
     elif file_format == con.FORMAT_PLAIN:
-        output.save_plain_text(db_path, download_file,
+        saver.save_plain_text(db_path, download_file,
                                first_lang=lang == lang_from)
 
     logging.debug(

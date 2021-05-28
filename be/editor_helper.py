@@ -97,27 +97,3 @@ def get_candidates_page(db_path, text_type, id_from, id_to):
                 res.append({"id": id, "text": splitted, "proxy": proxy})
     return res
 
-
-def read_processing(db_path):
-    """Read the processsing document"""
-    ordered_text_ids = [x[0][0] for x in helper.get_flatten_doc_index(db_path)]
-    with sqlite3.connect(db_path) as db:
-        db.execute('DROP TABLE If EXISTS temp.dl_ids')
-        db.execute(
-            'CREATE TEMP TABLE dl_ids(rank integer primary key, id integer)')
-        db.executemany('insert into temp.dl_ids(id) values(?)', [
-                       (x,) for x in ordered_text_ids])
-        return db.execute("""
-            SELECT
-                f.text, t.text
-            FROM
-                processing_from f
-                join
-                    processing_to t
-                        on t.id=f.id
-                join
-                    temp.dl_ids ti
-                        on ti.id = f.id
-            ORDER BY
-                ti.rank
-                """).fetchall()
