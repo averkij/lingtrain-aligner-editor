@@ -38,11 +38,3 @@ EDIT_CLEAR_LINE = "edit_clear_line"
 EDIT_LINE = "edit_line"
 ADD_EMPTY_LINE_BEFORE = "add_empty_line_before"
 ADD_EMPTY_LINE_AFTER = "add_empty_line_after"
-
-CULTURE_LIST = {
-    "en": "en-US",
-    "zh": "zh-CN",
-    "ru": "ru-RU",
-    "de": "de-DE"
-}
-DEFAULT_CULTURE = "en"
