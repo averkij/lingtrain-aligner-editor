@@ -181,13 +181,13 @@ def create_alignment(username):
         with open(proxy_to, "r", encoding="utf8") as input_proxy_to:
             lines_proxy_to = input_proxy_to.readlines()
 
-    aligner.fill_db(db_path, lines_from, lines_to,
+    aligner.fill_db(db_path, lang_from, lang_to, lines_from, lines_to,
                     lines_proxy_from, lines_proxy_to)
 
     len_from, _ = misc.get_texts_length(db_path)
 
     is_last = len_from % batch_size > 0
-    total_batches = len_from//batch_size + 1 if is_last else 0
+    total_batches = len_from//batch_size + 1 if is_last else len_from//batch_size
     if config.TEST_RESTRICTION_MAX_BATCHES > 0:
         total_batches = min(config.TEST_RESTRICTION_MAX_BATCHES, total_batches)
 
