@@ -12,12 +12,11 @@ import editor
 import editor_helper
 import main_db_helper
 import misc
-import output
 import user_db_helper
 from align_processor import AlignmentProcessor
 from flask import Flask, abort, request, send_file
 from flask_cors import CORS
-from lingtrain_aligner import aligner, helper, splitter, resolver, vis_helper
+from lingtrain_aligner import aligner, helper, splitter, saver
 
 misc.configure_logging()
 
@@ -182,13 +181,13 @@ def create_alignment(username):
         with open(proxy_to, "r", encoding="utf8") as input_proxy_to:
             lines_proxy_to = input_proxy_to.readlines()
 
-    aligner.fill_db(db_path, lines_from, lines_to,
+    aligner.fill_db(db_path, lang_from, lang_to, lines_from, lines_to,
                     lines_proxy_from, lines_proxy_to)
 
     len_from, _ = misc.get_texts_length(db_path)
 
     is_last = len_from % batch_size > 0
-    total_batches = len_from//batch_size + 1 if is_last else 0
+    total_batches = len_from//batch_size + 1 if is_last else len_from//batch_size
     if config.TEST_RESTRICTION_MAX_BATCHES > 0:
         total_batches = min(config.TEST_RESTRICTION_MAX_BATCHES, total_batches)
 
@@ -597,9 +596,9 @@ def download_processsing(username, lang_from, lang_to, align_guid, lang, file_fo
         f"[{username}]. Preparing file for downloading {download_file}.")
 
     if file_format == con.FORMAT_TMX:
-        output.save_tmx(db_path, download_file, lang_from, lang_to)
+        saver.save_tmx(db_path, download_file, lang_from, lang_to)
     elif file_format == con.FORMAT_PLAIN:
-        output.save_plain_text(db_path, download_file,
+        saver.save_plain_text(db_path, download_file,
                                first_lang=lang == lang_from)
 
     logging.debug(

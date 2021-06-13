@@ -267,7 +267,7 @@
     },
     methods: {
       getCandidates(textType) {
-        this.$emit('getCandidates', this.item.index_id, textType, 1, 6, (res, data) => {
+        this.$emit('getCandidates', this.item.index_id, textType, 1, 36, (res, data) => {
           if (res == RESULT_OK) {
             if (textType == "from") {
               this.transFrom = data.items;
