@@ -16,7 +16,7 @@ import user_db_helper
 from align_processor import AlignmentProcessor
 from flask import Flask, abort, request, send_file
 from flask_cors import CORS
-from lingtrain_aligner import aligner, helper, splitter, saver
+from lingtrain_aligner import aligner, helper, preprocessor, splitter, saver
 
 misc.configure_logging()
 
@@ -68,8 +68,7 @@ def items(username, lang):
                                         con.RAW_FOLDER, lang, filename)
                 splitted_path = os.path.join(con.UPLOAD_FOLDER, username,
                                              con.SPLITTED_FOLDER, lang, filename)
-                splitter.split_by_sentences_and_save(raw_path, splitted_path,
-                                                     filename, lang, username)
+                splitter.split_by_sentences_and_save(raw_path, splitted_path, lang)
             logging.info(f"[{username}]. Success. {filename} is loaded.")
         return ('', 200)
     # return documents list
@@ -85,8 +84,6 @@ def items(username, lang):
 def download_splitted(username, lang, guid):
     """Download splitted document file"""
     logging.info(f"[{username}]. Downloading {lang} {guid} splitted document.")
-    files = misc.get_files_list(os.path.join(
-        con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang))
     filename = misc.get_filename(username, guid)
     if not filename:
         abort(404)
@@ -101,8 +98,6 @@ def download_splitted(username, lang, guid):
 @app.route("/items/<username>/splitted/<lang>/<guid>/<int:count>/<int:page>", methods=["GET"])
 def get_splitted(username, lang, guid, count, page):
     """Get splitted document page"""
-    files = misc.get_files_list(os.path.join(
-        con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang))
     filename = misc.get_filename(username, guid)
     if not filename:
         return {"items": {lang: []}}
@@ -125,6 +120,7 @@ def get_splitted(username, lang, guid, count, page):
             symbols_count += len(line)
             if count > 0 and (lines_count <= shift or lines_count > shift+count):
                 continue
+            line = preprocessor.parse_marked_line(line.strip())
             lines.append((line, lines_count))
 
     total_pages = (lines_count//count) + (1 if lines_count % count != 0 else 0)
