@@ -24,7 +24,29 @@
     </div>
 
     <div class="text-h4 mt-10 font-weight-bold">
-      <v-icon color="blue" large>mdi-file-find</v-icon> Preview
+      <v-row>
+        <v-col>
+          <v-icon color="blue" large>mdi-file-find</v-icon> Preview
+        </v-col>
+        <v-col align="right">
+          <!-- page count menu -->
+            <v-menu offset-y>
+              <template v-slot:activator="{ on, attrs }">
+                <v-btn icon v-bind="attrs" v-on="on">
+                  <v-icon>mdi-dots-vertical</v-icon>
+                </v-btn>
+              </template>
+              <v-list>
+                <template v-for="item in [10, 20, 50]">
+                  <v-list-item :class="{'blue':item == splittedPanelPageCount, 'lighten-3':item == splittedPanelPageCount}" link :key="item" @click="setSplittedPanelPageCount(item)">
+                    <v-list-item-title>{{ item }} lines</v-list-item-title>
+                  </v-list-item>
+                </template>
+              </v-list>
+            </v-menu>
+        </v-col>
+      </v-row>
+      
     </div>
     <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2">
       Documents are splitted by sentences using language specific rules.
@@ -64,10 +86,9 @@
     DEFAULT_TO,
     LanguageHelper,
   } from "@/common/language.helper";
-
-  // import {
-  //   SettingsHelper
-  // } from "@/common/settings.helper";
+  import {
+    SettingsHelper
+  } from "@/common/settings.helper";
 
   import {
     INIT_USERSPACE,
@@ -94,6 +115,7 @@
         proxyFiles: LanguageHelper.initGeneralVars(),
         selected: LanguageHelper.initGeneralVars(),
         selectedIds: LanguageHelper.initGeneralVars(),
+        splittedPanelPageCount: SettingsHelper.getSplittedPanelPageCount(),
         isLoading: {
           upload: LanguageHelper.initGeneralBools(),
           uploadProxy: LanguageHelper.initGeneralBools(),
@@ -113,13 +135,24 @@
       },
       onProxyFileChange(file, langCode) {
         this.proxyFiles[langCode] = file;
+      }, 
+      selectAndLoadPreview(langCode, name, fileId) {
+        this.selected[langCode] = name;
+        this.selectedIds[langCode] = fileId;
+        this.$store.dispatch(GET_SPLITTED, {
+          username: this.$route.params.username,
+          langCode,
+          fileId,
+          linesCount: this.splittedPanelPageCount,
+          page: 1
+        });
       },
       onPreviewPageChange(page, langCode) {
         this.$store.dispatch(GET_SPLITTED, {
           username: this.$route.params.username,
           langCode,
           fileId: this.selectedIds[langCode],
-          linesCount: 10,
+          linesCount: this.splittedPanelPageCount,
           page: page
         });
       },
@@ -153,18 +186,7 @@
           .then(() => {
             this.isLoading.uploadProxy[langCode] = false;
           });
-      },      
-      selectAndLoadPreview(langCode, name, fileId) {
-        this.selected[langCode] = name;
-        this.selectedIds[langCode] = fileId;
-        this.$store.dispatch(GET_SPLITTED, {
-          username: this.$route.params.username,
-          langCode,
-          fileId,
-          linesCount: 10,
-          page: 1
-        });
-      },
+      },     
       //helpers
       itemsNotEmpty(langCode) {
         if (!this.items | !this.items[langCode]) {
@@ -225,6 +247,11 @@
               this.selectFirstDocument(langCode);
             });
           });
+      },
+      setSplittedPanelPageCount(pageCount) {
+        this.splittedPanelPageCount = pageCount;
+        this.onPreviewPageChange(1, this.langCodeFrom);
+        this.onPreviewPageChange(1, this.langCodeTo);
       }
     },
     mounted() {
@@ -235,14 +262,11 @@
       });
     },
     watch: {
+      splittedPanelPageCount(value) {
+        SettingsHelper.setSplittedPanelPageCount(value);
+      },
       showProxyTo(value) {
         localStorage.showProxyTo = value
-      },
-      showAllTo(value) {
-        localStorage.showAllTo = value ? true : false;
-      },
-      showAllFrom(value) {
-        localStorage.showAllFrom = value ? true : false;
       },
       langCodeFrom() {
         this.fetchAll();

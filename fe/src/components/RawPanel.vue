@@ -1,13 +1,5 @@
 <template>
   <v-card>
-    <!-- <v-img position="top" class="white--text" height="200px" :src="info.img">
-                            <v-card-title>{{info.lang}}</v-card-title>
-                        </v-img> -->
-    <!-- <div class="blue lighten-5">
-      <v-card-title>{{ info.icon }} {{ info.name }}</v-card-title>
-      <v-card-text>Your {{ info.name }} files</v-card-text>
-    </div> -->
-    <!-- <v-divider></v-divider> -->
     <v-list class="pa-0">
       <v-list-item-group mandatory color="gray">
         <v-list-item

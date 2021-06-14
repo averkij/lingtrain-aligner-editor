@@ -8,13 +8,20 @@ export const SettingsHelper = {
     getShowAllFrom() {
         return localStorage.showAllFrom ? localStorage.showAllFrom : defaultClientSettings.showAllFrom;
     },
+    getSplittedPanelPageCount() {
+        return localStorage.splittedPanelPageCount ? localStorage.splittedPanelPageCount : defaultClientSettings.splittedPanelPageCount;
+    },
+    setSplittedPanelPageCount(value) {
+        localStorage.splittedPanelPageCount = value;
+    },
 }
 
 const defaultClientSettings = {
     showProxyTo: true,
     showAllTo: false,
     showAllFrom: false,
-    candidatesSorting: CANDIDATES_SORTING_NEAREST
+    candidatesSorting: CANDIDATES_SORTING_NEAREST,
+    splittedPanelPageCount: 20
 }
 
 export const CANDIDATES_SORTING_NEAREST = 'nearest'
