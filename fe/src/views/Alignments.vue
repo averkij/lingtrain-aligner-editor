@@ -419,58 +419,13 @@
           </v-card>
         </div>
       </div>
-
-      <div class="text-h4 mt-10 font-weight-bold">
-        <v-icon color="blue" large>mdi-cloud-download</v-icon> Corpora
-      </div>
-
-      <v-alert v-if="!processing || !processing.items || processing.items.length == 0" type="info" border="left"
-        colored-border color="info" class="mt-6" elevation="2">
-        Please, wait. Alignment is in progress.
-      </v-alert>
-      <div v-else>
-        <!-- <div class="mt-10">
-          <v-row>
-            <v-col cols="12">
-              <v-subheader class="pl-0">Similarity threshold: {{thresholdText}}</v-subheader>
-              <v-slider v-model="downloadThreshold" thumb-label :thumb-size="24">
-                <template v-slot:thumb-label="{ value }">
-                  {{ satisfactionEmojis[Math.min(Math.floor(value / 10), 9)] }}
-                </template>
-              </v-slider>
-            </v-col>
-          </v-row>
-          <div class="text-center">
-            <v-progress-circular :rotate="360" :size="260" :width="15" :value="corporaSizeRelative" color="teal">
-              <div class="text-h2 black--text mt-4" style="line-height:2rem !important;">{{corporaSizeAbsolute}} <br />
-                <span class="text-h5 grey--text">sentences</span></div>
-            </v-progress-circular>
-          </div>
-        </div> -->
-        <div class="mt-10">
-          <v-row>
-            <v-col cols="12" sm="6">
-              <DownloadPanel @downloadFile="downloadProcessing" :info="LANGUAGES[langCodeFrom]" :isLoading=isLoading
-                :count=100 :countOrig=splitted[langCodeFrom].meta.lines_count>
-              </DownloadPanel>
-            </v-col>
-            <v-col cols="12" sm="6">
-              <DownloadPanel @downloadFile="downloadProcessing" :info="LANGUAGES[langCodeTo]" :isLoading=isLoading
-                :count=100 :countOrig=splitted[langCodeTo].meta.lines_count>
-              </DownloadPanel>
-            </v-col>
-          </v-row>
-        </div>
-        <div class="text-h5 mt-10 font-weight-bold">Corpora in TMX format</div>
-        <v-btn class="primary mt-5" @click="downloadProcessingTmx()"><v-icon left color="white">mdi-download</v-icon>Download</v-btn>
-      </div>
+      
     </div>
   </div>
 </template>
 
 <script>
   import RawPanel from "@/components/RawPanel";
-  import DownloadPanel from "@/components/DownloadPanel";
   import InfoPanel from "@/components/InfoPanel";
   import EditItem from "@/components/EditItem";
   import GoToDialog from "@/components/GoToDialog";
@@ -531,8 +486,6 @@
     CREATE_ALIGNMENT,
     DELETE_ALIGNMENT,
     ALIGN_SPLITTED,
-    DOWNLOAD_SPLITTED,
-    DOWNLOAD_PROCESSING,
     RESOLVE_CONFLICTS
   } from "@/store/actions.type";
   import {
@@ -564,7 +517,6 @@
         isLoading: {
           upload: LanguageHelper.initGeneralBools(),
           uploadProxy: LanguageHelper.initGeneralBools(),
-          download: LanguageHelper.initGeneralBools(),
           align: false,
           processing: false,
           processingMeta: false
@@ -572,8 +524,6 @@
         triggerCollapseEditItem: false,
         triggerClearCandidates: false,
         userAlignInProgress: false,
-        satisfactionEmojis: ['😍', '😄', '😁', '😊', '🙂', '😐', '🙁', '☹️', '😢', '😭'],
-        downloadThreshold: 9,
         showProxyTo: SettingsHelper.getShowProxyTo(),
         showAllTo: SettingsHelper.getShowAllTo(),
         showAllFrom: SettingsHelper.getShowAllFrom(),
@@ -898,37 +848,6 @@
           callback(RESULT_OK, response.data)
         }).catch(() => {
           callback(RESULT_ERROR)
-        });
-      },
-      downloadSplitted(langCode, openInBrowser) {
-        this.$store.dispatch(DOWNLOAD_SPLITTED, {
-          fileId: this.selectedIds[langCode],
-          fileName: this.selected[langCode],
-          username: this.$route.params.username,
-          langCode,
-          openInBrowser
-        });
-      },
-      downloadProcessing(langCode) {
-        this.$store.dispatch(DOWNLOAD_PROCESSING, {
-          align_guid: this.selectedProcessingId,
-          fileName: this.selectedProcessingId + ".txt",
-          username: this.$route.params.username,
-          langCodeFrom: this.langCodeFrom,
-          langCodeTo: this.langCodeTo,
-          langCodeDownload: langCode,
-          format: "txt"
-        });
-      },
-      downloadProcessingTmx() {
-        this.$store.dispatch(DOWNLOAD_PROCESSING, {
-          align_guid: this.selectedProcessingId,
-          fileName: this.selectedProcessingId + ".tmx",
-          username: this.$route.params.username,
-          langCodeFrom: this.langCodeFrom,
-          langCodeTo: this.langCodeTo,
-          langCodeDownload: this.langCodeFrom,
-          format: "tmx"
         });
       },
       selectAndLoadPreview(langCode, name, fileId) {
@@ -1297,14 +1216,6 @@
         }
         return DEFAULT_TO;
       },
-      thresholdText() {
-        if (this.downloadThreshold == 0) {
-          return "no threshold";
-        } else if (this.downloadThreshold == 100) {
-          return "realy?";
-        }
-        return (this.downloadThreshold / 100).toFixed(2);
-      },
       processingExists() {
         let selected_progress_item = this.itemsProcessing[this.langCodeFrom].filter(x => x.guid_from == this
           .selectedIds[this.langCodeFrom] && x.guid_to == this.selectedIds[this.langCodeTo]);
@@ -1313,21 +1224,10 @@
         }
         return false;
       },
-      corporaSizeRelative() {
-        return 5;
-        // return this.selectedProcessing['sim_grades'][this.downloadThreshold] / this.selectedProcessing['sim_grades'][
-        //   0
-        // ] * 100;
-      },
-      corporaSizeAbsolute() {
-        return 10;
-        // return this.selectedProcessing['sim_grades'][this.downloadThreshold];
-      }
     },
     components: {
       EditItem,
       RawPanel,
-      DownloadPanel,
       InfoPanel,
       GoToDialog,
       CreateAlignmentDialog,
