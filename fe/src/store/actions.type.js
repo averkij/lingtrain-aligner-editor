@@ -9,6 +9,7 @@ export const FETCH_ITEMS = "fetch_items";
 export const FETCH_ITEMS_PROCESSING = "fetch_items_processing";
 
 export const GET_SPLITTED = "get_splitted";
+export const GET_MARKS = "get_marks";
 export const GET_PROCESSING = "get_processing";
 export const GET_PROCESSING_META = "get_processing_meta";
 export const GET_CANDIDATES = "get_candidates";

@@ -113,6 +113,12 @@ export const ItemsService = {
       `${params.username}/splitted/${params.langCode}/${params.fileId}/${params.linesCount}/${params.page}`
     );
   },
+  getMarks(params) {
+    return ApiService.get(
+      "items",
+      `${params.username}/marks/${params.langCode}/${params.fileId}`
+    );
+  },
   getProcessing(params) {
     return ApiService.get(
       "items",

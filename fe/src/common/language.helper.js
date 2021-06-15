@@ -93,6 +93,13 @@ export const LanguageHelper = {
         })
         return res;
     },
+    initMarks() {
+        let res = {}
+        Object.keys(LANGUAGES).forEach(x => {
+            res[x] = {};
+        })
+        return res;
+    },
     initProcessing() {
         return {
             items: [],

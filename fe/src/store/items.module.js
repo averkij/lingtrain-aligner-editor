@@ -15,6 +15,7 @@ import {
   DOWNLOAD_SPLITTED,
   DOWNLOAD_PROCESSING,
   GET_SPLITTED,
+  GET_MARKS,
   GET_DOC_INDEX,
   GET_PROCESSING,
   GET_PROCESSING_META,
@@ -36,6 +37,7 @@ import {
   SET_ITEMS,
   SET_ITEMS_PROCESSING,
   SET_SPLITTED,
+  SET_MARKS,
   SET_PROCESSING,
   SET_PROCESSING_META,
   SET_DOC_INDEX,
@@ -49,6 +51,7 @@ const initialState = {
   items: LanguageHelper.initItems(),
   itemsProcessing: LanguageHelper.initItems(),
   splitted: LanguageHelper.initSplitted(),
+  marks: LanguageHelper.initMarks(),
   processing: LanguageHelper.initProcessing(),
   processingMeta: {},
   docIndex: [],
@@ -112,6 +115,17 @@ export const actions = {
       data
     } = await ItemsService.getSplitted(params);
     context.commit(SET_SPLITTED, {
+      data: data,
+      langCode: params.langCode
+    });
+    return;
+  },
+  // params {fileId, username, langCode}
+  async [GET_MARKS](context, params) {
+    const {
+      data
+    } = await ItemsService.getMarks(params);
+    context.commit(SET_MARKS, {
       data: data,
       langCode: params.langCode
     });
@@ -271,13 +285,15 @@ export const mutations = {
     state.itemsProcessing[params.langCode] = params.items;
   },
   [SET_SPLITTED](state, params) {
-    // console.log("SET_SPLITTED", params)
     if (params.data.items[params.langCode]) {
       state.splitted[params.langCode].lines = params.data.items[params.langCode];
     }
     if (params.data.meta[params.langCode]) {
       state.splitted[params.langCode].meta = params.data.meta[params.langCode];
     }
+  },
+  [SET_MARKS](state, params) {
+    state.marks[params.langCode] = params.data.items;
   },
   [SET_PROCESSING](state, data) {
     state.processing = data;
@@ -312,6 +328,9 @@ const getters = {
   },
   splitted(state) {
     return state.splitted;
+  },
+  marks(state) {
+    return state.marks;
   },
   processing(state) {
     return state.processing;
