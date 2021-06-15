@@ -106,9 +106,9 @@ class AlignmentProcessor:
             logging.info(f"creating index for {self.db_path}")
             aligner.create_doc_index(db, result)
 
-        for batch_id, x, y in result:
+        for batch_id, _, _ in result:
             vis_helper.visualize_alignment_by_db(
-                self.db_path, self.res_img_best, lang_name_from=self.lang_name_from, lang_name_to=self.lang_name_to, batch_ids=[batch_id])
+                self.db_path, self.res_img_best, lang_name_from=self.lang_name_from, lang_name_to=self.lang_name_to, batch_ids=[batch_id], transparent_bg=True)
 
         if not error_occured:
             print("finishing. no error occured")
@@ -198,7 +198,7 @@ class AlignmentProcessor:
             counter += 1
 
         vis_helper.visualize_alignment_by_db(
-                self.db_path, self.res_img_best, lang_name_from=self.lang_name_from, lang_name_to=self.lang_name_to, batch_ids=result)
+                self.db_path, self.res_img_best, lang_name_from=self.lang_name_from, lang_name_to=self.lang_name_to, batch_ids=result, transparent_bg=True)
 
         if not error_occured:
             print("finishing. no error occured")

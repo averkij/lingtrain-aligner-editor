@@ -151,34 +151,24 @@
         Images will start showing after the first batch completion.
       </v-alert>
       <v-row v-else class="mt-6">
-        <v-col v-for="(batch_id, i) in processingMeta.meta.batch_ids" :key=i cols="12" sm="3">
-          <v-hover v-slot="{ hover }">
-            <v-card :class="{ 'batch-card-hover': hover }"
-              @click="showRecalculateBatchDialog=true; currentBatchId=batch_id">
-              <div class="grey lighten-5">
-                <v-card-title>
-                  batch {{batch_id+1}}
-                  <v-spacer></v-spacer>
-                  <v-chip color="grey" text-color="black" small outlined>
-                    {{DEFAULT_BATCHSIZE * i + 1}} — {{DEFAULT_BATCHSIZE * (i + 1)}}
-                  </v-chip>
-                </v-card-title>
-              </div>
-              <v-divider></v-divider>
-              <!-- <v-img :src="`${API_URL}/static/img/${username}/${processingMeta.meta.align_guid}.best_${batch_id}.png`"
-                :lazy-src="`${API_URL}/static/proc_img_stub.jpg`">
-                <template v-slot:placeholder>
-                  <v-row class="fill-height ma-0" align="center" justify="center">
-                    <v-progress-circular indeterminate color="green"></v-progress-circular>
-                  </v-row>
-                </template>
-              </v-img> -->
-              <div>
-                <img width=100% :src="getImgUrl(batch_id)">
-              </div>
-            </v-card>
-          </v-hover>
-        </v-col>
+        <!-- VIS CAROUSEL -->
+        <swiper class="swiper" :options="swiperOption">
+          <swiper-slide v-for="(batch_id, i) in processingMeta.meta.batch_ids" :key=i cols="12" sm="2">
+              <v-card flat
+                @click="showRecalculateBatchDialog=true; currentBatchId=batch_id">
+                <div class="grey lighten-2">
+                  <v-card-title class="text-subtitle-2 pa-3 pb-3">
+                    batch {{batch_id+1}}
+                  </v-card-title>
+                </div>
+                <v-divider></v-divider>
+                <div class="grey">
+                  <img width=100% :src="getImgUrl(batch_id)">
+                </div>
+              </v-card>
+          </swiper-slide>
+          <div class="swiper-pagination" slot="pagination"></div>
+        </swiper>        
         <RecalculateBatchDialog v-model="showRecalculateBatchDialog"
           :batch_id=currentBatchId
           :inProgress="userAlignInProgress"
@@ -425,6 +415,8 @@
 </template>
 
 <script>
+  import { Swiper, SwiperSlide } from 'vue-awesome-swiper'
+  import 'swiper/swiper-bundle.css'
   import RawPanel from "@/components/RawPanel";
   import InfoPanel from "@/components/InfoPanel";
   import EditItem from "@/components/EditItem";
@@ -546,6 +538,15 @@
 
         hoverAlignmentIndex: -1,
         hoveredAlignmentItem: {"name": ""},
+
+        swiperOption: {
+          slidesPerView: 5,
+          spaceBetween: 20,
+          pagination: {
+            el: '.swiper-pagination',
+            clickable: true
+          }
+        }
       };
     },
     methods: {
@@ -1089,6 +1090,9 @@
         if (this.itemsProcessingNotEmpty(this.langCodeFrom)) {
           if (this.currentlyProcessingId) {
             this.selectProcessing(item, this.currentlyProcessingId);
+
+            // console.log("set swiper")
+            // this.swiper.setProgress(1, 1)
           }
         }
       },
@@ -1232,7 +1236,9 @@
       GoToDialog,
       CreateAlignmentDialog,
       RecalculateBatchDialog,
-      ConfirmDeleteDialog
+      ConfirmDeleteDialog,
+      Swiper,
+      SwiperSlide
     }
   };
 </script>
