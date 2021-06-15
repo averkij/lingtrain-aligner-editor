@@ -131,6 +131,14 @@
     padding-bottom: 30px !important;
 }
 
+.break-word {
+    word-break: break-word;
+}
+
+.break-all {
+    word-break: break-all;
+}
+
 /* fonts */
 .font-josefin {
     font-family: 'Josefin Sans', sans-serif;
