@@ -48,13 +48,18 @@
       </div>
       <v-divider></v-divider>
       <v-card-actions>
+        <!-- download splitted text -->
         <v-btn @click="downloadSplitted(info.langCode, false)"
           ><v-icon left color="grey">mdi-download</v-icon>Download</v-btn
         >
-        <v-btn @click="downloadSplitted(info.langCode, true)"
+
+        <!-- open splitted text -->
+        <!-- <v-btn @click="downloadSplitted(info.langCode, true)"
           ><v-icon left color="grey">mdi-open-in-new</v-icon>Open</v-btn
-        >
-        <v-spacer></v-spacer>
+        > -->
+
+        <!-- upload proxy text -->
+        <!-- <v-spacer></v-spacer>
         <v-tooltip bottom>
           <template v-slot:activator="{ on, attrs }">
             <v-btn
@@ -67,7 +72,7 @@
             </v-btn>
           </template>
           <span>Add translation hint</span>
-        </v-tooltip>
+        </v-tooltip> -->
       </v-card-actions>
     </v-card>
 

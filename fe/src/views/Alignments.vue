@@ -14,47 +14,29 @@
       <v-icon color="blue" large>mdi-text-box-multiple</v-icon> Documents
     </div>
     <v-alert type="info" class="mt-6" v-show="showAlert">
-      There are no uploaded documents yet. Please upload some using the form
-      below.
+      There are no uploaded documents yet. Please upload some using the Documents section.
     </v-alert>
     <div class="mt-6">
       <v-row>
         <v-col cols="12" sm="6">
-          <RawPanel @uploadFile="uploadFile" @onFileChange="onFileChange" @selectAndLoadPreview="selectAndLoadPreview" @performDelete="performDeleteRawFile"
+          <RawPanel v-if="items[langCodeFrom].length > 0" @uploadFile="uploadFile" @onFileChange="onFileChange" @selectAndLoadPreview="selectAndLoadPreview" @performDelete="performDeleteRawFile"
             :info="LANGUAGES[langCodeFrom]" :items=items :isLoading=isLoading>
           </RawPanel>
         </v-col>
         <v-col cols="12" sm="6">
-          <RawPanel @uploadFile="uploadFile" @onFileChange="onFileChange" @selectAndLoadPreview="selectAndLoadPreview" @performDelete="performDeleteRawFile"
+          <RawPanel v-if="items[langCodeFrom].length > 0" @uploadFile="uploadFile" @onFileChange="onFileChange" @selectAndLoadPreview="selectAndLoadPreview" @performDelete="performDeleteRawFile"
             :info="LANGUAGES[langCodeTo]" :items=items :isLoading=isLoading>
           </RawPanel>
         </v-col>
       </v-row>
     </div>
 
-    <div class="text-h4 mt-10 font-weight-bold">
-      <v-icon color="blue" large>mdi-file-find</v-icon> Preview
-    </div>
-    <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2">
-      Documents are splitted by sentences using language specific rules.
-    </v-alert>
-    <v-row>
-      <v-col cols="12" sm="6">
-        <SplittedPanel @onPreviewPageChange="onPreviewPageChange" @onProxyFileChange="onProxyFileChange"
-          @downloadSplitted="downloadSplitted" @uploadProxyFile="uploadProxyFile" :info="LANGUAGES[langCodeFrom]"
-          :splitted=splitted :selected=selected :isLoading=isLoading :showUploadProxyBtn=true>
-        </SplittedPanel>
-      </v-col>
-      <v-col cols="12" sm="6">
-        <SplittedPanel @onPreviewPageChange="onPreviewPageChange" @onProxyFileChange="onProxyFileChange"
-          @downloadSplitted="downloadSplitted" @uploadProxyFile="uploadProxyFile" :info="LANGUAGES[langCodeTo]"
-          :splitted=splitted :selected=selected :isLoading=isLoading :showUploadProxyBtn=true>
-        </SplittedPanel>
-      </v-col>
-    </v-row>
-
-    <div class="text-h4 mt-10 font-weight-bold">
-      <v-icon color="blue" large>mdi-align-horizontal-center</v-icon> Alignment
+    <div class="text-h4 mt-10 font-weight-bold">      
+      <v-row>
+        <v-col>
+          <v-icon color="blue" large>mdi-align-horizontal-center</v-icon> Alignment
+        </v-col>
+      </v-row>
     </div>
     <v-alert type="info" border="left" colored-border color="blue" class="mt-6" elevation="2">
       Alignment process is going step by step. Create the alignment with choosen parameters and start working with it in
@@ -489,7 +471,6 @@
 <script>
   import RawPanel from "@/components/RawPanel";
   import DownloadPanel from "@/components/DownloadPanel";
-  import SplittedPanel from "@/components/SplittedPanel";
   import InfoPanel from "@/components/InfoPanel";
   import EditItem from "@/components/EditItem";
   import GoToDialog from "@/components/GoToDialog";
@@ -1347,7 +1328,6 @@
       EditItem,
       RawPanel,
       DownloadPanel,
-      SplittedPanel,
       InfoPanel,
       GoToDialog,
       CreateAlignmentDialog,

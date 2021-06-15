@@ -12,12 +12,12 @@
       <v-row>
         <v-col cols="12" sm="6">
           <RawPanel @uploadFile="uploadFile" @onFileChange="onFileChange" @selectAndLoadPreview="selectAndLoadPreview" @performDelete="performDeleteRawFile"
-            :info="LANGUAGES[langCodeFrom]" :items=items :isLoading=isLoading>
+            :info="LANGUAGES[langCodeFrom]" :items=items :isLoading=isLoading :uploadEnabled="true">
           </RawPanel>
         </v-col>
         <v-col cols="12" sm="6">
           <RawPanel @uploadFile="uploadFile" @onFileChange="onFileChange" @selectAndLoadPreview="selectAndLoadPreview" @performDelete="performDeleteRawFile"
-            :info="LANGUAGES[langCodeTo]" :items=items :isLoading=isLoading>
+            :info="LANGUAGES[langCodeTo]" :items=items :isLoading=isLoading :uploadEnabled="true">
           </RawPanel>
         </v-col>
       </v-row>
