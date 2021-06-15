@@ -66,6 +66,60 @@
       </v-col>
     </v-row>
 
+
+    <div class="text-h4 mt-10 font-weight-bold">
+      <v-icon color="blue" large>mdi-format-header-1</v-icon> Structure
+    </div>
+    <!-- <v-alert type="info" class="mt-6" v-show="showAlert">
+      There are no uploaded documents yet. Please upload some using the form
+      below.
+    </v-alert> -->
+
+    <div class="mt-6">
+      <v-row>
+        <v-col cols="12" sm="6">
+          <v-card>
+          <div v-for="(mark,i) in marks[langCodeFrom]" :key="i">            
+            <div class="d-table fill-height">              
+              <div class="d-table-cell grey lighten-4 pa-2 text-center" style="min-width:45px">
+                {{ i+1 }}
+              </div>
+              <v-divider class="d-table-cell" vertical></v-divider>
+              <div class="d-table-cell pa-2">
+                <v-chip class="mx-1" small label :class="{'green': mark[2]=='author' || mark[2]=='title', 'teal': mark[2] == 'h1', 'cyan': mark[2] == 'h2', 'lime': mark[2] == 'h3', 'lime': mark[2] == 'h4', 'lime': mark[2] == 'h5',
+                      'pr-5': mark[2] == 'h2' || mark[2] == 'h3' || mark[2] == 'h4' || mark[2] == 'h5' }" text-color="white">{{mark[2]}}</v-chip>
+                <span :class="{'mark-title': mark[2]=='author' || mark[2]=='title'}">
+                  {{mark[0]}} 
+                </span>                
+              </div>
+            </div>
+            <v-divider/>
+          </div>
+          </v-card>
+        </v-col>
+        <v-col cols="12" sm="6">
+          <v-card>
+          <div v-for="(mark,i) in marks[langCodeTo]" :key="i">            
+            <div class="d-table fill-height">              
+              <div class="d-table-cell grey lighten-4 pa-2 text-center" style="min-width:45px">
+                {{ i+1 }}
+              </div>
+              <v-divider class="d-table-cell" vertical></v-divider>
+              <div class="d-table-cell pa-2">
+                <v-chip class="mx-1" small label :class="{'green': mark[2]=='author' || mark[2]=='title', 'teal': mark[2] == 'h1', 'cyan': mark[2] == 'h2', 'lime': mark[2] == 'h3', 'lime': mark[2] == 'h4', 'lime': mark[2] == 'h5',
+                      'pr-5': mark[2] == 'h2' || mark[2] == 'h3' || mark[2] == 'h4' || mark[2] == 'h5' }" text-color="white">{{mark[2]}}</v-chip>
+                <span :class="{'mark-title': mark[2]=='author' || mark[2]=='title'}">
+                  {{mark[0]}} 
+                </span>                
+              </div>
+            </div>
+            <v-divider/>
+          </div>
+          </v-card>
+        </v-col>  
+      </v-row>
+    </div>
+
   </div>
 </template>
 
@@ -96,6 +150,7 @@
     UPLOAD_FILES,
     DELETE_DOCUMENT,
     GET_SPLITTED,
+    GET_MARKS,
     DOWNLOAD_SPLITTED
   } from "@/store/actions.type";
   import {
@@ -145,6 +200,11 @@
           fileId,
           linesCount: this.splittedPanelPageCount,
           page: 1
+        });
+        this.$store.dispatch(GET_MARKS, {
+          username: this.$route.params.username,
+          langCode,
+          fileId: this.selectedIds[langCode]
         });
       },
       onPreviewPageChange(page, langCode) {
@@ -279,7 +339,7 @@
       }
     },
     computed: {
-      ...mapGetters(["items", "itemsProcessing", "splitted", "processing", "docIndex", "conflictSplittedFrom",
+      ...mapGetters(["items", "itemsProcessing", "splitted", "marks", "processing", "docIndex", "conflictSplittedFrom",
         "conflictSplittedTo", "conflictFlowTo", "processingMeta"
       ]),
       username() {

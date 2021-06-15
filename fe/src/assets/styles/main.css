@@ -146,3 +146,23 @@
     /* background: #ffffff08; */
     /* background: linear-gradient(180deg, transparent 0%, transparent 80%, #ffffff50 100%); */
 }
+
+/* marks */
+.mark-title {
+    font-weight: 500;
+}
+.mark-h1 {
+    padding: 0px 0;
+}
+.mark-h2 {
+    padding-left: 0px;
+}
+.mark-h3 {
+    padding-left: 0px;
+}
+.mark-h4 {
+    padding-left: 0px;
+}
+.mark-h5 {
+    padding-left: 0px;
+}

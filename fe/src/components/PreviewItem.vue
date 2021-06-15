@@ -8,14 +8,14 @@
           </div>
           <v-divider class="d-table-cell" vertical></v-divider>
           <div class="d-table-cell pa-2" :class="{'font-weight-bold': item[0].au || item[0].ti || item[0].h1 || item[0].h2 || item[0].h3 || item[0].h4 || item[0].h5}">{{ item[0].text }}
-            <v-chip v-if="item[0].au" class="ml-2" small label color="teal" text-color="white">author</v-chip>
-            <v-chip v-if="item[0].ti" class="ml-2" small label color="teal" text-color="white">title</v-chip>
+            <v-chip v-if="item[0].au" class="ml-2" small label color="green" text-color="white">author</v-chip>
+            <v-chip v-if="item[0].ti" class="ml-2" small label color="green" text-color="white">title</v-chip>
             <v-chip v-if="item[0].pa" class="ml-2" small label color="blue" text-color="white">paragraph</v-chip>
-            <v-chip v-if="item[0].h1" class="ml-2" small label color="pink" text-color="white">heading 1</v-chip>
-            <v-chip v-if="item[0].h2" class="ml-2" small label color="pink" text-color="white">heading 2</v-chip>
-            <v-chip v-if="item[0].h3" class="ml-2" small label color="pink" text-color="white">heading 3</v-chip>
-            <v-chip v-if="item[0].h4" class="ml-2" small label color="pink" text-color="white">heading 4</v-chip>
-            <v-chip v-if="item[0].h5" class="ml-2" small label color="pink" text-color="white">heading 5</v-chip>
+            <v-chip v-if="item[0].h1" class="ml-2" small label color="teal" text-color="white">h1</v-chip>
+            <v-chip v-if="item[0].h2" class="ml-2" small label color="cyan" text-color="white">h2</v-chip>
+            <v-chip v-if="item[0].h3" class="ml-2" small label color="light-blue" text-color="white">h3</v-chip>
+            <v-chip v-if="item[0].h4" class="ml-2" small label color="light-blue" text-color="white">h4</v-chip>
+            <v-chip v-if="item[0].h5" class="ml-2" small label color="light-blue" text-color="white">h5</v-chip>
           </div>
         </div>
       </v-col>

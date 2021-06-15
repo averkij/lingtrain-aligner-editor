@@ -129,6 +129,24 @@ def get_splitted(username, lang, guid, count, page):
     return {"items": {lang: lines}, "meta": {lang: meta}}
 
 
+@app.route("/items/<username>/marks/<lang>/<guid>", methods=["GET"])
+def get_marks(username, lang, guid):
+    """Get document marks"""
+    filename = misc.get_filename(username, guid)
+    if not filename:
+        return {"items": {lang: []}}
+    path = os.path.join(con.UPLOAD_FOLDER, username,
+                        con.SPLITTED_FOLDER, lang, filename)
+    if not os.path.isfile(path):
+        return {"items": {lang: []}}
+    marks = []
+    with open(path, mode='r', encoding='utf-8') as input_file:
+        lines = input_file.readlines()
+        for i,line in enumerate(lines):
+            preprocessor.extract_marks(marks, line.strip(), i)
+    return {"items": marks}
+
+
 @app.route("/items/<username>/alignment/create", methods=["POST"])
 def create_alignment(username):
     """Register new alignment"""
