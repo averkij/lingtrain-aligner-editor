@@ -135,22 +135,11 @@
         {{selectedProcessing.name}}
       </div>
 
-      <!-- ALIGNMENT BUTTON -->
-      <v-btn v-if="!userAlignInProgress" class="success mt-6"
-        :loading="isLoading.align || isLoading.alignStopping"
-        :disabled="selectedProcessing && selectedProcessing.state[1]==selectedProcessing.state[2]"
-        @click="startAlignment()">
-        Align next batch
-      </v-btn>
-      <v-btn v-else v-show="selected[langCodeFrom] && selected[langCodeTo]" class="error mt-6" @click="stopAlignment()">
-        Stop alignment
-      </v-btn>
-
       <v-alert v-if="!processingMeta || !processingMeta.meta || processingMeta.meta.batch_ids.length == 0" type="info"
         border="left" colored-border color="purple" class="mt-6" elevation="2">
         Images will start showing after the first batch completion.
       </v-alert>
-      <v-row v-else class="mt-6">
+      <div v-else class="mt-6">
         <!-- VIS CAROUSEL -->
         <swiper class="swiper" :options="swiperOption">
           <swiper-slide v-for="(batch_id, i) in processingMeta.meta.batch_ids" :key=i cols="12" sm="2">
@@ -174,7 +163,18 @@
           :inProgress="userAlignInProgress"
           @recalculateBatch="recalculateBatch"
           @resolveConflictsBatch="resolveConflictsBatch"/>
-      </v-row>
+      </div>
+
+       <!-- ALIGNMENT BUTTON -->
+      <v-btn v-if="!userAlignInProgress" class="success mt-6"
+        :loading="isLoading.align || isLoading.alignStopping"
+        :disabled="selectedProcessing && selectedProcessing.state[1]==selectedProcessing.state[2]"
+        @click="startAlignment()">
+        Align next batch
+      </v-btn>
+      <v-btn v-else v-show="selected[langCodeFrom] && selected[langCodeTo]" class="error mt-6" @click="stopAlignment()">
+        Stop alignment
+      </v-btn>
 
       <div class="text-h5 mt-10 font-weight-bold">Edit</div>
 
