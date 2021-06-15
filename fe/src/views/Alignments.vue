@@ -166,15 +166,19 @@
       </div>
 
        <!-- ALIGNMENT BUTTON -->
-      <v-btn v-if="!userAlignInProgress" class="success mt-6"
-        :loading="isLoading.align || isLoading.alignStopping"
-        :disabled="selectedProcessing && selectedProcessing.state[1]==selectedProcessing.state[2]"
-        @click="startAlignment()">
-        Align next batch
-      </v-btn>
-      <v-btn v-else v-show="selected[langCodeFrom] && selected[langCodeTo]" class="error mt-6" @click="stopAlignment()">
-        Stop alignment
-      </v-btn>
+      <v-row>
+        <v-col class="text-right">
+          <v-btn v-if="!userAlignInProgress" class="success mt-6"
+            :loading="isLoading.align || isLoading.alignStopping"
+            :disabled="selectedProcessing && selectedProcessing.state[1]==selectedProcessing.state[2]"
+            @click="startAlignment()">
+            Align next batch
+          </v-btn>
+          <v-btn v-else v-show="selected[langCodeFrom] && selected[langCodeTo]" class="error mt-6" @click="stopAlignment()">
+            Stop alignment
+          </v-btn>
+        </v-col>
+      </v-row>      
 
       <div class="text-h5 mt-10 font-weight-bold">Edit</div>
 
