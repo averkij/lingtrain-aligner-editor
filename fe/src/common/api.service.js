@@ -173,6 +173,8 @@ export const ItemsService = {
     form.append("align_all", params.alignAll);
     form.append("batch_ids", JSON.stringify(params.batchIds))
     form.append("batch_shift", params.batchShift)
+    form.append("amount", params.amount)
+    form.append("window", params.window)
     if (params.nextOnly) {
       console.log("calculating next batch")
       return ApiService.post(

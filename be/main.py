@@ -242,6 +242,8 @@ def start_alignment(username):
     batch_ids = misc.parse_json_array(request.form.get("batch_ids", "[0]"))
     batch_shift, _ = misc.try_parse_int(
         request.form.get("batch_shift", 0))
+    window, _ = misc.try_parse_int(
+        request.form.get("window", config.DEFAULT_WINDOW))
 
     logging.info(
         f"align parameters align_guid {align_guid} align_all {align_all} batch_ids {batch_ids}, batch_shift {batch_shift}")
@@ -288,7 +290,7 @@ def start_alignment(username):
     task_list = [(lines_from_batch, lines_to_batch, line_ids_from, line_ids_to, batch_id)
                  for lines_from_batch, lines_to_batch,
                  line_ids_from, line_ids_to, batch_id
-                 in misc.get_batch_intersected(lines_from, lines_to, batch_ids, batch_shift)]
+                 in misc.get_batch_intersected(lines_from, lines_to, batch_ids, batch_shift, window=window)]
 
     proc_count = config.PROCESSORS_COUNT
 
@@ -304,6 +306,12 @@ def start_alignment(username):
 def align_next_batch(username):
     """Align next batch of two splitted documents"""
     align_guid = request.form.get("id", '')
+    amount, _ = misc.try_parse_int(
+        request.form.get("amount", 1))
+    batch_shift, _ = misc.try_parse_int(
+        request.form.get("batch_shift", 0))
+    window, _ = misc.try_parse_int(
+        request.form.get("window", config.DEFAULT_WINDOW))
     name, guid_from, guid_to, state, curr_batches, total_batches = user_db_helper.get_alignment_info(
         username, align_guid)
     _, lang_from = user_db_helper.get_alignment_fileinfo_from(
@@ -316,7 +324,7 @@ def align_next_batch(username):
     user_db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
 
     batches_count = user_db_helper.get_batches_count(db_path)
-    batch_ids = [batches_count]
+    batch_ids = list(range(batches_count, batches_count + amount))
 
     logging.info(
         f"align parameters NEXT align_guid {align_guid} batch_ids {batch_ids} name {name} guid_from {guid_from} guid_to {guid_to} total_batches {total_batches}")
@@ -343,7 +351,7 @@ def align_next_batch(username):
     task_list = [(lines_from_batch, lines_to_batch, line_ids_from, line_ids_to, batch_id)
                  for lines_from_batch, lines_to_batch,
                  line_ids_from, line_ids_to, batch_id
-                 in misc.get_batch_intersected(lines_from, lines_to, batch_ids)]
+                 in misc.get_batch_intersected(lines_from, lines_to, batch_ids, batch_shift, window=window)]
 
     proc_count = config.PROCESSORS_COUNT
 
