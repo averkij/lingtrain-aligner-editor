@@ -245,28 +245,28 @@
         </v-col>
       </v-row>      
 
-      <div class="text-h5 mt-10 font-weight-bold">Conflicts</div>
+      <div class="text-h5 mt-5 font-weight-bold">Conflicts</div>
 
       <div class="mt-5">
         <div class="font-weight-bold">
-          {{conflictsAmount(conflicts)}} conflicts found
+          {{conflictsAmount()}} conflicts found
         </div>
       </div>
 
-      <div class="text-center" v-if="isLoading.resolve">
+      <div class="text-center" v-if="isLoading.resolve || isLoading.conflicts">
         <v-progress-circular indeterminate color="green"></v-progress-circular>
       </div>
       <v-alert v-else-if="!processing || !processing.items || processing.items.length == 0 || userAlignInProgress" type="info" border="left"
         colored-border color="info" class="mt-6" elevation="2">
-        Please, wait. Alignment is in progress.
+        There is nothing to show yet.
       </v-alert>
-      <div v-else>
+      <div v-else-if="conflictsAmount() > 0">
         <v-row class="mt-2">
           <v-col>
             Conflict {{currConflictId+1}}:
           </v-col>
         </v-row>
-        <v-row>        
+        <v-row>     
           <v-col cols="12" sm="6">
             <v-card>
             <div v-for="(d,i) in conflictDetails.from" :key="i">            
@@ -301,6 +301,10 @@
           </v-col>
         </v-row>
       </div>
+      <v-alert v-else type="info" border="left"
+        colored-border color="info" class="mt-6" elevation="2">
+        All conflicts resolved.
+      </v-alert>
 
       <!-- CHECK CONFLICTS BUTTON -->
       <v-row>
@@ -310,14 +314,14 @@
           Previous
         </v-btn>
         <v-btn class="primary mt-4 btn-min-w-120"
-          :disabled="isLoading.resolve || userAlignInProgress || currConflictId==conflicts.length-1"
+          :disabled="isLoading.resolve || userAlignInProgress || conflictsAmount()==0 || currConflictId==conflictsAmount()-1"
           @click="showNextConflict()">
           Next
         </v-btn>
         <v-spacer></v-spacer>
         <v-btn class="success mt-4 mr-3 btn-min-w"
           :loading="isLoading.resolve"
-          :disabled="isLoading.resolve || userAlignInProgress"
+          :disabled="isLoading.resolve || userAlignInProgress || conflictsAmount()==0"
           @click="resolveConflictsBatch(-1)">
           Resolve all
         </v-btn>
@@ -334,65 +338,70 @@
       </v-alert>
       <v-alert v-else-if="!processing || !processing.items || processing.items.length == 0" type="info" border="left"
         colored-border color="info" class="mt-6" elevation="2">
-        Please, wait. Alignment is in progress.
+        There is nothing to show yet.
       </v-alert>
 
       <!-- EDIT ITEMS block-->
-      <v-card v-else class="mt-6">
-        <div class="green lighten-5" dark>
+      <div v-else>
+        <v-alert type="info" border="left" colored-border color="info" class="mt-6" elevation="2">
+          Pay attention to the beginning and the end of alignment. Some undetected conflicts can still be there.
+        </v-alert>
+        <v-card class="mt-2">
+          <div class="green lighten-5" dark>
 
-          <!-- title -->
-          <v-card-title class="pr-3">
-            {{selectedProcessing.name}}
-            <v-spacer></v-spacer>
+            <!-- title -->
+            <v-card-title class="pr-3">
+              {{selectedProcessing.name}}
+              <v-spacer></v-spacer>
 
-            <v-icon>mdi-translate</v-icon>
-            <v-switch color="green" value="true" v-model="showProxyTo" class="mx-2"></v-switch>
-            <!-- <div>showTranslation: {{clientSettings}}</div> -->
+              <v-icon>mdi-translate</v-icon>
+              <v-switch color="green" value="true" v-model="showProxyTo" class="mx-2"></v-switch>
+              <!-- <div>showTranslation: {{clientSettings}}</div> -->
 
-            <v-btn icon @click="collapseEditItems">
-              <v-icon>mdi-collapse-all</v-icon>
-            </v-btn>
-          </v-card-title>
-          <v-card-text>Review and edit automatically aligned document</v-card-text>
-        </div>
-        <v-divider></v-divider>
-
-        <!-- items -->
-        <div v-for="(line, i) in processing.items" :key="i">
-          <EditItem @editProcessing="editProcessing" @editAddUpEnd="editAddUpEnd" @editAddDownEnd="editAddDownEnd"
-            @editDeleteLine="editDeleteLine" @editAddEmptyLineBefore="editAddEmptyLineBefore"
-            @editAddEmptyLineAfter="editAddEmptyLineAfter" @editClearLine="editClearLine" @getCandidates="getCandidates"
-            @editAddCandidateEnd="editAddCandidateEnd" :item="line"
-            :prevItem="i == 0 ? processing.items[0] : processing.items[i-1]" :collapse="triggerCollapseEditItem"
-            :clearCandidates="triggerClearCandidates" :showProxyTo="showProxyTo" :panelColor="'green'"
-            :proxy_from_dict="processing.proxy_from_dict" :proxy_to_dict="processing.proxy_to_dict">
-          </EditItem>
+              <v-btn icon @click="collapseEditItems">
+                <v-icon>mdi-collapse-all</v-icon>
+              </v-btn>
+            </v-card-title>
+            <v-card-text>Review and edit automatically aligned document</v-card-text>
+          </div>
           <v-divider></v-divider>
-        </div>
 
-        <!-- pagination -->
-        <v-row class="py-1 px-5">
-          <v-col cols="12" sm="2"></v-col>
-          <v-col cols="12" sm="8">
-            <v-pagination v-model="processing.meta.page" :length="processing.meta.total_pages" total-visible="10"
-              @input="onProcessingPageChange(processing.meta.page)">
-            </v-pagination>
-          </v-col>
-          <v-col cols="12" sm="2" class="text-right">
-            <v-tooltip bottom>
-              <template v-slot:activator="{ on, attrs }">
-                <v-btn class="mt-1" v-bind="attrs" v-on="on" @click="showGoToDialog=true">
-                  <v-icon left color="grey">mdi-page-next-outline</v-icon>Go to
-                </v-btn>
-              </template>
-              <span>Go to the specific page</span>
-            </v-tooltip>
+          <!-- items -->
+          <div v-for="(line, i) in processing.items" :key="i">
+            <EditItem @editProcessing="editProcessing" @editAddUpEnd="editAddUpEnd" @editAddDownEnd="editAddDownEnd"
+              @editDeleteLine="editDeleteLine" @editAddEmptyLineBefore="editAddEmptyLineBefore"
+              @editAddEmptyLineAfter="editAddEmptyLineAfter" @editClearLine="editClearLine" @getCandidates="getCandidates"
+              @editAddCandidateEnd="editAddCandidateEnd" :item="line"
+              :prevItem="i == 0 ? processing.items[0] : processing.items[i-1]" :collapse="triggerCollapseEditItem"
+              :clearCandidates="triggerClearCandidates" :showProxyTo="showProxyTo" :panelColor="'green'"
+              :proxy_from_dict="processing.proxy_from_dict" :proxy_to_dict="processing.proxy_to_dict">
+            </EditItem>
+            <v-divider></v-divider>
+          </div>
 
-          </v-col>
-          <GoToDialog v-model="showGoToDialog" @goToPage="goToPage" />
-        </v-row>
-      </v-card>
+          <!-- pagination -->
+          <v-row class="py-1 px-5">
+            <v-col cols="12" sm="2"></v-col>
+            <v-col cols="12" sm="8">
+              <v-pagination v-model="processing.meta.page" :length="processing.meta.total_pages" total-visible="10"
+                @input="onProcessingPageChange(processing.meta.page)">
+              </v-pagination>
+            </v-col>
+            <v-col cols="12" sm="2" class="text-right">
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn class="mt-1" v-bind="attrs" v-on="on" @click="showGoToDialog=true">
+                    <v-icon left color="grey">mdi-page-next-outline</v-icon>Go to
+                  </v-btn>
+                </template>
+                <span>Go to the specific page</span>
+              </v-tooltip>
+
+            </v-col>
+            <GoToDialog v-model="showGoToDialog" @goToPage="goToPage" />
+          </v-row>
+        </v-card>
+      </div>
 
       <div class="text-h4 mt-10 font-weight-bold">
         <v-icon color="blue" large>mdi-puzzle</v-icon> Unused strings
@@ -403,7 +412,7 @@
       </div>
       <v-alert v-else-if="!processing || !processing.items || processing.items.length == 0" type="info" border="left"
         colored-border color="info" class="mt-6" elevation="2">
-        Please, wait. Alignment is in progress.
+        There is nothing to show yet.
       </v-alert>
 
       <div v-else>
@@ -931,11 +940,7 @@
         });
       },
       showNextConflict() {
-        let conflictsAmount = 0;
-        if (this.conflicts && this.conflicts.length > 0) {
-          conflictsAmount = this.conflicts.length;
-        }
-        if (this.currConflictId < conflictsAmount-1) {
+        if (this.currConflictId < this.conflictsAmount()) {
           this.currConflictId += 1;
           this.showConflict(this.currConflictId);
         }
@@ -994,7 +999,8 @@
           username: this.$route.params.username,
           align_guid: this.selectedProcessingId,
         }).then(() => {
-          if (this.conflicts && this.conflicts.length > 0) {
+          this.currConflictId = 0;
+          if (this.conflictsAmount() > 0) {
             this.$store.dispatch(GET_CONFLICT_DETAILS, {
               username: this.$route.params.username,
               align_guid: this.selectedProcessingId,
@@ -1276,10 +1282,10 @@
             });
           });
       },
-      conflictsAmount(conflicts) {
+      conflictsAmount() {
         let res = 0;
-        if (conflicts && conflicts.length > 0) {
-          conflicts.forEach((x) => res += x[1]);
+        if (this.conflicts && this.conflicts.length > 0) {
+          this.conflicts.forEach((x) => res += x[1]);
         }
         return res;
       }
