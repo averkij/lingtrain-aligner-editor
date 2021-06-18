@@ -16,7 +16,7 @@ import user_db_helper
 from align_processor import AlignmentProcessor
 from flask import Flask, abort, request, send_file
 from flask_cors import CORS
-from lingtrain_aligner import aligner, helper, preprocessor, splitter, saver
+from lingtrain_aligner import aligner, helper, preprocessor, splitter, saver, resolver
 
 misc.configure_logging()
 
@@ -362,12 +362,58 @@ def align_next_batch(username):
 
     return con.EMPTY_LINES
 
+@app.route("/items/<username>/alignment/conflicts/<align_guid>", methods=["GET"])
+def get_alignment_conflicts(username, align_guid):
+    """Get alignment conflicts"""
+    name, guid_from, guid_to, state, curr_batches, total_batches = user_db_helper.get_alignment_info(
+        username, align_guid)
+    _, lang_from = user_db_helper.get_alignment_fileinfo_from(
+        username, guid_from)
+    _, lang_to = user_db_helper.get_alignment_fileinfo_to(username, guid_to)
+    db_folder = os.path.join(con.UPLOAD_FOLDER, username,
+                             con.DB_FOLDER, lang_from, lang_to)
+    db_path = os.path.join(db_folder, f'{align_guid}.db')
+
+    if not os.path.isfile(db_path):
+        abort(404)
+
+    conflicts, rest = resolver.get_all_conflicts(db_path, min_chain_length=2, max_conflicts_len=18, batch_id=-1)
+    stat1 = resolver.get_statistics(conflicts, print_stat=False)
+    stat2 = resolver.get_statistics(rest, print_stat=False)
+    res = [(x, stat1[x]) for x in stat1]
+    res.extend([(x, stat2[x]) for x in stat2])
+    res.sort(key=lambda x: x[1], reverse=True)
+    return {"items": res}
+
+
+@app.route("/items/<username>/alignment/conflicts/<align_guid>/show/<int:id>", methods=["GET"])
+def show_alignment_conflict(username, align_guid, id):
+    """Get alignment conflict details"""
+    name, guid_from, guid_to, state, curr_batches, total_batches = user_db_helper.get_alignment_info(
+        username, align_guid)
+    _, lang_from = user_db_helper.get_alignment_fileinfo_from(
+        username, guid_from)
+    _, lang_to = user_db_helper.get_alignment_fileinfo_to(username, guid_to)
+    db_folder = os.path.join(con.UPLOAD_FOLDER, username,
+                             con.DB_FOLDER, lang_from, lang_to)
+    db_path = os.path.join(db_folder, f'{align_guid}.db')
+
+    if not os.path.isfile(db_path):
+        abort(404)
+
+    conflicts, rest = resolver.get_all_conflicts(db_path, min_chain_length=2, max_conflicts_len=18, batch_id=-1)
+    conflicts.extend(rest)
+    id = id % len(conflicts)
+    splitted_from, splitted_to = resolver.show_conflict(db_path, conflicts[id], print_conf=False)
+    
+    return {"from": splitted_from, "to": splitted_to}
+
 
 @app.route("/items/<username>/alignment/resolve", methods=["POST"])
 def resolve_conflicts(username):
     """Found and resolve conflicts in document"""
     align_guid = request.form.get("id", '')
-    resolve_all = request.form.get("resolve_all", '')
+    resolve_all = request.form.get("resolve_all", False)
     batch_ids = misc.parse_json_array(request.form.get("batch_ids", "[0]"))
     name, guid_from, guid_to, state, curr_batches, total_batches = user_db_helper.get_alignment_info(
         username, align_guid)
