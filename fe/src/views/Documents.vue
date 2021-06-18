@@ -75,7 +75,10 @@
       below.
     </v-alert> -->
 
-    <div class="mt-6">
+    <v-alert v-if="!marks || (marks[langCodeFrom].length==0 && marks[langCodeTo].length==0)" type="info" border="left" colored-border color="info" class="mt-6" elevation="2">
+      No marks besides paragraphs were found in selected documents.
+    </v-alert>
+    <div v-else class="mt-6">
       <v-row>
         <v-col cols="12" sm="6">
           <v-card>
