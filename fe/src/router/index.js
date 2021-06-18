@@ -21,15 +21,11 @@ const routes = [
     name: "items",
     component: () => import("@/views/Items")
   },
-  // {
-  //   path: "/user/:username",
-  //   redirect: `/user/:username/items/${DEFAULT_FROM}/${DEFAULT_TO}`
-  // },
+  //obsolete
   {
     path: "/user/:username/items",
     redirect: `/user/:username/items/${DEFAULT_FROM}/${DEFAULT_TO}`
   },
-
   //documents
   {
     path: "/user/:username/docs/:from/:to",
@@ -44,7 +40,6 @@ const routes = [
     path: "/user/:username/docs",
     redirect: `/user/:username/docs/${DEFAULT_FROM}/${DEFAULT_TO}`
   },
-
   //alignments
   {
     path: "/user/:username/align/:from/:to",
@@ -55,13 +50,16 @@ const routes = [
     path: "/user/:username/align",
     redirect: `/user/:username/align/${DEFAULT_FROM}/${DEFAULT_TO}`
   },
-
-
-
-
-
-
-
+  //creation
+  {
+    path: "/user/:username/create/:from/:to",
+    name: "create",
+    component: () => import("@/views/Create")
+  },
+  {
+    path: "/user/:username/create",
+    redirect: `/user/:username/create/${DEFAULT_FROM}/${DEFAULT_TO}`
+  },
   //#contents
   {
     path: "/contents",
