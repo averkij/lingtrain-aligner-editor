@@ -152,6 +152,12 @@ export const ItemsService = {
       `${params.username}/alignment/conflicts/${params.align_guid}`
     );
   },
+  getConflictDetails(params) {
+    return ApiService.get(
+      "items",
+      `${params.username}/alignment/conflicts/${params.align_guid}/show/${params.conflictId}`
+    );
+  },
   getDocIndex(params) {
     return ApiService.get(
       "items",

@@ -20,11 +20,12 @@ import {
   GET_PROCESSING,
   GET_PROCESSING_META,
   GET_CANDIDATES,
+  GET_CONFLICTS,
+  GET_CONFLICT_DETAILS,
   EDIT_PROCESSING,
   EDIT_PROCESSING_MARK_UNUSED,
   STOP_ALIGNMENT,
   ALIGN_SPLITTED,
-  GET_CONFLICTS,
   RESOLVE_CONFLICTS,
   CREATE_ALIGNMENT,
   DELETE_ALIGNMENT,
@@ -43,6 +44,7 @@ import {
   SET_PROCESSING_META,
   SET_DOC_INDEX,
   SET_CONFLICTS,
+  SET_CONFLICT_DETAILS,
   SET_CONFLICT_SPLITTED_FROM,
   SET_CONFLICT_SPLITTED_TO,
   SET_CONFLICT_FLOW_TO,
@@ -61,7 +63,8 @@ const initialState = {
   conflictSplittedTo: [],
   conflictFlowTo: [],
   contents: [],
-  conflicts: {}
+  conflicts: {},
+  conflictDetails: {"from": [], "to": []}
 };
 
 export const state = {
@@ -151,7 +154,17 @@ export const actions = {
         context.commit(SET_CONFLICTS, response.data);
       },
       function () {
-        console.log(`Didn't find database.`);
+        console.log(`GET_CONFLICTS error.`);
+      }
+    );
+  },
+  async [GET_CONFLICT_DETAILS](context, params) {
+    await ItemsService.getConflictDetails(params).then(
+      function (response) {
+        context.commit(SET_CONFLICT_DETAILS, response.data);
+      },
+      function () {
+        console.log(`GET_CONFLICT_DETAILS error.`);
       }
     );
   },
@@ -320,6 +333,9 @@ export const mutations = {
   [SET_CONFLICTS](state, data) {
     state.conflicts = data.items;
   },
+  [SET_CONFLICT_DETAILS](state, data) {
+    state.conflictDetails = data;
+  },
   [SET_CONFLICT_SPLITTED_FROM](state, data) {
     state.conflictSplittedFrom = data.items;
   },
@@ -359,6 +375,9 @@ const getters = {
   },
   conflicts(state) {
     return state.conflicts;
+  },
+  conflictDetails(state) {
+    return state.conflictDetails;
   },
   conflictSplittedFrom(state) {
     return state.conflictSplittedFrom;

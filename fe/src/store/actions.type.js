@@ -31,6 +31,7 @@ export const DOWNLOAD_SPLITTED = "download_splitted";
 
 export const ALIGN_SPLITTED = "align_splitted";
 export const GET_CONFLICTS = "get_conflicts";
+export const GET_CONFLICT_DETAILS = "get_conflict_details";
 export const RESOLVE_CONFLICTS = "resolve_conflicts";
 
 

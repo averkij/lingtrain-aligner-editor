@@ -233,13 +233,13 @@
       <!-- ALIGNMENT BUTTON -->
       <v-row>
         <v-col class="text-right">
-          <v-btn v-if="!userAlignInProgress" class="success mt-4"
+          <v-btn v-if="!userAlignInProgress" class="success mt-4 btn-min-w"
             :loading="isLoading.align || isLoading.alignStopping"
-            :disabled="selectedProcessing && selectedProcessing.state[1]==selectedProcessing.state[2]"
+            :disabled="(selectedProcessing && selectedProcessing.state[1]==selectedProcessing.state[2]) || (isLoading.resolve)"
             @click="alignBatches()">
             Align next
           </v-btn>
-          <v-btn v-else v-show="selected[langCodeFrom] && selected[langCodeTo]" class="error mt-4" @click="stopAlignment()">
+          <v-btn v-else v-show="selected[langCodeFrom] && selected[langCodeTo]" class="error mt-4 btn-min-w" @click="stopAlignment()">
             Stop alignment
           </v-btn>
         </v-col>
@@ -251,25 +251,76 @@
         <div class="font-weight-bold">
           {{conflictsAmount(conflicts)}} conflicts found
         </div>
-        <!-- <div>{{conflicts}}</div> -->
-        <!-- <div class="mt-2">
-          <div v-for="c in conflicts" :key="c">
-            {{c[0]}} - {{c[1]}}
-          </div>
-        </div>         -->
+      </div>
+
+      <div class="text-center" v-if="isLoading.resolve">
+        <v-progress-circular indeterminate color="green"></v-progress-circular>
+      </div>
+      <v-alert v-else-if="!processing || !processing.items || processing.items.length == 0 || userAlignInProgress" type="info" border="left"
+        colored-border color="info" class="mt-6" elevation="2">
+        Please, wait. Alignment is in progress.
+      </v-alert>
+      <div v-else>
+        <v-row class="mt-2">
+          <v-col>
+            Conflict {{currConflictId+1}}:
+          </v-col>
+        </v-row>
+        <v-row>        
+          <v-col cols="12" sm="6">
+            <v-card>
+            <div v-for="(d,i) in conflictDetails.from" :key="i">            
+              <div class="d-table fill-height">              
+                <div class="d-table-cell grey lighten-4 pa-2 text-center" style="min-width:45px">
+                  {{i}}
+                </div>
+                <v-divider class="d-table-cell" vertical></v-divider>
+                <div class="d-table-cell pa-2">
+                  {{d}}
+                </div>
+              </div>
+              <v-divider/>
+            </div>
+            </v-card>
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-card>
+            <div v-for="(d,i) in conflictDetails.to" :key="i">            
+              <div class="d-table fill-height">              
+                <div class="d-table-cell grey lighten-4 pa-2 text-center" style="min-width:45px">
+                  {{i}}
+                </div>
+                <v-divider class="d-table-cell" vertical></v-divider>
+                <div class="d-table-cell pa-2">
+                  {{d}}
+                </div>
+              </div>
+              <v-divider/>
+            </div>
+            </v-card>
+          </v-col>
+        </v-row>
       </div>
 
       <!-- CHECK CONFLICTS BUTTON -->
       <v-row>
-        <v-col class="text-right">
-          <v-btn v-if="!userAlignInProgress" class="success mt-4"
-            @click="resolveConflictsBatch(-1)">
-            Resolve all
-          </v-btn>
-          <v-btn v-else v-show="selected[langCodeFrom] && selected[langCodeTo]" class="error mt-4" @click="stopAlignment()">
-            Stop alignment
-          </v-btn>
-        </v-col>
+        <v-btn class="primary mt-4 ml-3 mr-5 btn-min-w-120"
+          :disabled="isLoading.resolve || userAlignInProgress || currConflictId==0"
+          @click="showPrevConflict()">
+          Previous
+        </v-btn>
+        <v-btn class="primary mt-4 btn-min-w-120"
+          :disabled="isLoading.resolve || userAlignInProgress || currConflictId==conflicts.length-1"
+          @click="showNextConflict()">
+          Next
+        </v-btn>
+        <v-spacer></v-spacer>
+        <v-btn class="success mt-4 mr-3 btn-min-w"
+          :loading="isLoading.resolve"
+          :disabled="isLoading.resolve || userAlignInProgress"
+          @click="resolveConflictsBatch(-1)">
+          Resolve all
+        </v-btn>
       </v-row>      
 
       <div class="text-h5 mt-10 font-weight-bold">Editor</div>
@@ -343,10 +394,6 @@
         </v-row>
       </v-card>
 
-      <!-- TO DO -->
-      <!-- <div class="text-h4 mt-10 font-weight-bold">
-        <v-icon color="blue" large>mdi-puzzle</v-icon> Conflicts
-      </div> -->
       <div class="text-h4 mt-10 font-weight-bold">
         <v-icon color="blue" large>mdi-puzzle</v-icon> Unused strings
       </div>
@@ -358,66 +405,8 @@
         colored-border color="info" class="mt-6" elevation="2">
         Please, wait. Alignment is in progress.
       </v-alert>
+
       <div v-else>
-
-        <!-- TO DO -->
-        <!-- <v-alert type="info" border="left" colored-border color="info" class="mt-6" elevation="2">
-          To proceed to the next batch all conflicts need to be resolved. Lines without identifiers are not considered
-          during the conflicts detection.
-        </v-alert>
-
-        <div class="text-h5 mt-10 font-weight-bold">Flow breaks</div>
-
-        <v-alert v-if="!flowBreakGroups || flowBreakGroups.length==0" type="info" border="left" colored-border color="info"
-          class="mt-6" elevation="2">
-          No unhandled flow breaks detected.
-        </v-alert>
-        <div class="mt-6">
-          <v-card>
-            <div class="blue lighten-5" dark>
-
-              <v-card-title class="pr-3">
-                <v-spacer></v-spacer>
-
-                <v-icon>mdi-translate</v-icon>
-                <v-switch value="true" v-model="showProxyTo" class="mx-2"></v-switch>
-
-                <v-btn icon @click="collapseEditItems">
-                  <v-icon>mdi-collapse-all</v-icon>
-                </v-btn>
-              </v-card-title>
-            </div>
-            <v-divider></v-divider>
-
-            <div v-for="(group,i) in flowBreakGroups" :key="i">
-              <div class="pa-3 blue lighten-5 font-weight-bold text-caption">conflict on line {{group['lineId']}}</div>
-              <v-divider></v-divider>
-              <EditItem @editProcessing="editProcessing" @editAddUpEnd="editAddUpEnd" @editAddDownEnd="editAddDownEnd"
-                @editDeleteLine="editDeleteLine" @editAddEmptyLineBefore="editAddEmptyLineBefore"
-                @editAddEmptyLineAfter="editAddEmptyLineAfter" @editClearLine="editClearLine"
-                @getCandidates="getCandidates" @editAddCandidateEnd="editAddCandidateEnd"
-                :item="conflictFlowTo[group['prev']]"
-                :prevItem="group['prev'] == 0 ? conflictFlowTo[0] : conflictFlowTo[group['prev']-1]"
-                :collapse="triggerCollapseEditItem" :clearCandidates="triggerClearCandidates" :showProxyTo="showProxyTo"
-                :panelColor="'blue'">
-              </EditItem>
-              <v-divider></v-divider>
-              <EditItem @editProcessing="editProcessing" @editAddUpEnd="editAddUpEnd" @editAddDownEnd="editAddDownEnd"
-                @editDeleteLine="editDeleteLine" @editAddEmptyLineBefore="editAddEmptyLineBefore"
-                @editAddEmptyLineAfter="editAddEmptyLineAfter" @editClearLine="editClearLine"
-                @getCandidates="getCandidates" @editAddCandidateEnd="editAddCandidateEnd"
-                :item="conflictFlowTo[group['curr']]"
-                :prevItem="group['curr'] == 0 ? conflictFlowTo[0] : conflictFlowTo[group['curr']-1]"
-                :collapse="triggerCollapseEditItem" :clearCandidates="triggerClearCandidates" :showProxyTo="showProxyTo"
-                :panelColor="'red'">
-              </EditItem>
-              <v-divider></v-divider>
-            </div>
-          </v-card>
-        </div> -->
-
-        <!-- <div class="text-h5 mt-10 font-weight-bold">Unused strings</div> -->
-
         <v-alert v-if="(!unusedFromLines || unusedFromLines.length==0) && (!unusedToLines || unusedToLines.length==0)"
           type="info" border="left" colored-border color="info" class="mt-6" elevation="2">
           All sentences are in use.
@@ -566,6 +555,7 @@
     GET_PROCESSING_META,
     GET_CANDIDATES,
     GET_CONFLICTS,
+    GET_CONFLICT_DETAILS,
     GET_CONFLICT_SPLITTED_FROM,
     GET_CONFLICT_SPLITTED_TO,
     // GET_CONFLICT_FLOW_TO,
@@ -607,6 +597,7 @@
           upload: LanguageHelper.initGeneralBools(),
           uploadProxy: LanguageHelper.initGeneralBools(),
           align: false,
+          resolve: false,
           processing: false,
           processingMeta: false,
           conflicts: false
@@ -632,6 +623,7 @@
         usedFromLinesSet: new Set(),
         usedToLinesSet: new Set(),
         usedToLinesFlow: [],
+        currConflictId: 0,
 
         hoverAlignmentIndex: -1,
         hoveredAlignmentItem: {"name": ""},
@@ -774,10 +766,9 @@
         this.startAlignment(batch_id, shift, false, 1, this.alignWindow)
       },
       resolveConflictsBatch(batch_id) {
-        this.isLoading.align = true;
+        this.isLoading.resolve = true;
         this.initProcessingDocument();
         this.currentlyProcessingId = this.selectedProcessingId;
-        this.userAlignInProgress = true;
         this.$store
           .dispatch(RESOLVE_CONFLICTS, {
             username: this.$route.params.username,
@@ -786,7 +777,6 @@
             resolveAll: ''
           })
           .then(() => {
-            this.isLoading.align = false;
             console.log("fetchItemsProcessingTimer set")
             this.fetchItemsProcessingTimer();
           });        
@@ -806,6 +796,7 @@
             } else {
               this.userAlignInProgress = false;
               this.isLoading.alignStopping = false;
+              this.isLoading.resolve = false;
               let currItem = this.itemsProcessing[this.langCodeFrom].filter(x => x.guid == this
                 .currentlyProcessingId)
               if (currItem.length > 0) {
@@ -939,6 +930,31 @@
           page: 1
         });
       },
+      showNextConflict() {
+        let conflictsAmount = 0;
+        if (this.conflicts && this.conflicts.length > 0) {
+          conflictsAmount = this.conflicts.length;
+        }
+        if (this.currConflictId < conflictsAmount-1) {
+          this.currConflictId += 1;
+          this.showConflict(this.currConflictId);
+        }
+      },
+      showPrevConflict() {
+        if (this.currConflictId > 0) {
+          this.currConflictId -= 1;
+          this.showConflict(this.currConflictId);
+        }        
+      },
+      showConflict(conflictId) {
+        this.$store.dispatch(GET_CONFLICT_DETAILS, {
+          username: this.$route.params.username,
+          align_guid: this.selectedProcessingId,
+          conflictId: conflictId
+        }).then(() => {
+          this.isLoading.conflicts = false;
+        });
+      },
       selectProcessing(item, fileId) {
         this.selectedListItem = fileId;
         this.isLoading.processing = true;
@@ -978,7 +994,17 @@
           username: this.$route.params.username,
           align_guid: this.selectedProcessingId,
         }).then(() => {
-          this.isLoading.conflicts = false;
+          if (this.conflicts && this.conflicts.length > 0) {
+            this.$store.dispatch(GET_CONFLICT_DETAILS, {
+              username: this.$route.params.username,
+              align_guid: this.selectedProcessingId,
+              conflictId: 0
+            }).then(() => {
+              this.isLoading.conflicts = false;              
+            });
+          } else {
+            this.isLoading.conflicts = false; 
+          }
         });
       },
       refreshProcessingPage() {
@@ -1286,8 +1312,8 @@
       }
     },
     computed: {
-      ...mapGetters(["items", "itemsProcessing", "splitted", "processing", "docIndex", "conflicts", "conflictSplittedFrom",
-        "conflictSplittedTo", "conflictFlowTo", "processingMeta"
+      ...mapGetters(["items", "itemsProcessing", "splitted", "processing", "docIndex", "conflicts", "conflictDetails",
+        "conflictSplittedFrom", "conflictSplittedTo", "conflictFlowTo", "processingMeta"
       ]),
       username() {
         return this.$route.params.username;

@@ -95,6 +95,14 @@
     background: #eaeaea;
 }
 
+.btn-min-w {
+    min-width: 170px !important;
+}
+
+.btn-min-w-120 {
+    min-width: 120px !important;
+}
+
 .line-num {
     font-size: 13px;
 }
