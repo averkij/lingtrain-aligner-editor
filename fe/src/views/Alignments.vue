@@ -108,7 +108,7 @@
                   mdi-clock-outline</v-icon>
                 <v-icon v-else-if="item.state[0]==PROC_ERROR" color="error">mdi-alert-circle</v-icon>
                 <v-icon v-else-if="item.state[0]==PROC_IN_PROGRESS_DONE" color="blue">mdi-check</v-icon>
-                <v-icon v-else color="teal">mdi-check</v-icon>
+                <v-icon v-else color="green">mdi-check-circle-outline</v-icon>
               </v-list-item-icon>
               <v-list-item-content>
                 <v-list-item-title>{{item.name}}<v-chip class="ml-4" color="grey" text-color="black" small outlined>
@@ -245,6 +245,7 @@
         </v-col>
       </v-row>      
 
+      <!-- CONFLICTS RESOLVING SECTION -->
       <div class="text-h5 mt-5 font-weight-bold">Conflicts</div>
 
       <div class="mt-5">
@@ -327,6 +328,7 @@
         </v-btn>
       </v-row>      
 
+      <!-- EDITOR SECTION -->
       <div class="text-h5 mt-10 font-weight-bold">Editor</div>
 
       <div class="text-center" v-if="isLoading.processing">
@@ -354,9 +356,8 @@
               {{selectedProcessing.name}}
               <v-spacer></v-spacer>
 
-              <v-icon>mdi-translate</v-icon>
-              <v-switch color="green" value="true" v-model="showProxyTo" class="mx-2"></v-switch>
-              <!-- <div>showTranslation: {{clientSettings}}</div> -->
+              <!-- <v-icon>mdi-translate</v-icon>
+              <v-switch color="green" value="true" v-model="showProxyTo" class="mx-2"></v-switch> -->
 
               <v-btn icon @click="collapseEditItems">
                 <v-icon>mdi-collapse-all</v-icon>

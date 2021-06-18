@@ -21,7 +21,7 @@ FINISH_PROCESS = "finish_process"
 class AlignmentProcessor:
     """Processor with parallel texts alignment logic"""
 
-    def __init__(self, proc_count, db_path, user_db_path, res_img_best, lang_name_from, lang_name_to, guid_from, guid_to, model_name, window, embed_batch_size, normalize_embeddings, mode="align"):
+    def __init__(self, proc_count, db_path, user_db_path, res_img_best, lang_name_from, lang_name_to, align_guid, model_name, window, embed_batch_size, normalize_embeddings, mode="align"):
         self.proc_count = proc_count
         self.queue_in = Queue()
         self.queue_out = Queue()
@@ -31,8 +31,7 @@ class AlignmentProcessor:
         self.lang_name_from = lang_name_from
         self.lang_name_to = lang_name_to
         self.tasks_count = 0
-        self.guid_from = guid_from
-        self.guid_to = guid_to
+        self.align_guid = align_guid
         self.model_name = model_name
         self.window = window
         self.mode = mode
@@ -87,12 +86,12 @@ class AlignmentProcessor:
                 with sqlite3.connect(self.db_path) as db:
                     aligner.update_batch_progress(db, batch_number)
                 user_db_helper.increment_alignment_state(
-                    self.db_path, self.user_db_path, self.guid_from, self.guid_to, con.PROC_IN_PROGRESS)
+                    self.db_path, self.user_db_path, self.align_guid, con.PROC_IN_PROGRESS)
 
             elif result_code == con.PROC_ERROR:
                 error_occured = True
                 user_db_helper.increment_alignment_state(
-                    self.db_path, self.user_db_path, self.guid_from, self.guid_to, con.PROC_ERROR)
+                    self.db_path, self.user_db_path, self.align_guid, con.PROC_ERROR)
                 break
 
             counter += 1
@@ -112,8 +111,13 @@ class AlignmentProcessor:
 
         if not error_occured:
             print("finishing. no error occured")
-            user_db_helper.update_alignment_state(
-                self.user_db_path, self.guid_from, self.guid_to, con.PROC_IN_PROGRESS_DONE)
+            curr_batches, total_batches = user_db_helper.get_alignment_progress(self.user_db_path, self.align_guid)
+            if (curr_batches == total_batches):
+                user_db_helper.update_alignment_state(
+                    self.user_db_path, self.align_guid, con.PROC_DONE)
+            else:
+                user_db_helper.update_alignment_state(
+                    self.user_db_path, self.align_guid, con.PROC_IN_PROGRESS_DONE)
         else:
             print("finishing with error")
 
@@ -134,10 +138,8 @@ class AlignmentProcessor:
         try:
             texts_from, texts_to = aligner.process_batch(lines_from_batch, lines_to_batch, line_ids_from, line_ids_to, batch_number, self.model_name, self.window, self.embed_batch_size, self.normalize_embeddings, show_progress_bar=False,
                                                          save_pic=True, lang_name_from=self.lang_name_from, lang_name_to=self.lang_name_to, img_path=self.res_img_best)
-
             self.queue_out.put(
                 (con.PROC_DONE, batch_number, texts_from, texts_to))
-
         except Exception as e:
             logging.error(e, exc_info=True)
             self.queue_out.put((con.PROC_ERROR, [], [], []))
@@ -162,13 +164,13 @@ class AlignmentProcessor:
             print("resolving conflicts strategy 1. batch_id:", batch_id)
 
             for i in range(steps):
-                conflicts, rest = resolver.get_all_conflicts(
+                conflicts, _ = resolver.get_all_conflicts(
                     self.db_path, min_chain_length=2+i, max_conflicts_len=6*(i+1), batch_id=batch_id)
                 resolver.resolve_all_conflicts(
                     self.db_path, conflicts, self.model_name, show_logs=False)
 
             print("resolving conflicts strategy 2. batch_id:", batch_id)
-            conflicts, rest = resolver.get_all_conflicts(
+            conflicts, _ = resolver.get_all_conflicts(
                 self.db_path, min_chain_length=2, max_conflicts_len=18, batch_id=batch_id)
             resolver.resolve_all_conflicts(
                 self.db_path, conflicts, self.model_name, show_logs=False)
@@ -193,7 +195,7 @@ class AlignmentProcessor:
             elif result_code == con.PROC_ERROR:
                 error_occured = True
                 user_db_helper.increment_alignment_state(
-                    self.db_path, self.user_db_path, self.guid_from, self.guid_to, con.PROC_ERROR)
+                    self.db_path, self.user_db_path, self.align_guid, con.PROC_ERROR)
                 break
             counter += 1
 
@@ -202,7 +204,12 @@ class AlignmentProcessor:
 
         if not error_occured:
             print("finishing. no error occured")
-            user_db_helper.update_alignment_state(
-                self.user_db_path, self.guid_from, self.guid_to, con.PROC_IN_PROGRESS_DONE)
+            curr_batches, total_batches = user_db_helper.get_alignment_progress(self.user_db_path, self.align_guid)
+            if (curr_batches == total_batches):
+                user_db_helper.update_alignment_state(
+                    self.user_db_path, self.align_guid, con.DONE_FOLDER)
+            else:
+                user_db_helper.update_alignment_state(
+                    self.user_db_path, self.align_guid, con.PROC_IN_PROGRESS_DONE)
         else:
             print("finishing with error")

@@ -277,7 +277,7 @@ def start_alignment(username):
         abort(404)
     if align_all:
         user_db_helper.update_alignment_state(
-            user_db_path, guid_from, guid_to, con.PROC_INIT, 0, total_batches)
+            user_db_path, align_guid, con.PROC_INIT, 0, total_batches)
 
     user_db_helper.update_alignment_state_by_align_id(
         user_db_path, align_guid, con.PROC_IN_PROGRESS)
@@ -295,7 +295,7 @@ def start_alignment(username):
     proc_count = config.PROCESSORS_COUNT
 
     proc = AlignmentProcessor(
-        proc_count, db_path, user_db_path, res_img_best, lang_from, lang_to, guid_from, guid_to, model_name=config.MODEL, window=config.DEFAULT_WINDOW, embed_batch_size=config.EMBED_BATCH_SIZE, normalize_embeddings=config.NORMALIZE_EMBEDDINGS)
+        proc_count, db_path, user_db_path, res_img_best, lang_from, lang_to, align_guid, model_name=config.MODEL, window=config.DEFAULT_WINDOW, embed_batch_size=config.EMBED_BATCH_SIZE, normalize_embeddings=config.NORMALIZE_EMBEDDINGS)
     proc.add_tasks(task_list)
     proc.start_align()
 
@@ -356,7 +356,7 @@ def align_next_batch(username):
     proc_count = config.PROCESSORS_COUNT
 
     proc = AlignmentProcessor(
-        proc_count, db_path, user_db_path, res_img_best, lang_from, lang_to, guid_from, guid_to, model_name=config.MODEL, window=config.DEFAULT_WINDOW, embed_batch_size=config.EMBED_BATCH_SIZE, normalize_embeddings=config.NORMALIZE_EMBEDDINGS)
+        proc_count, db_path, user_db_path, res_img_best, lang_from, lang_to, align_guid, model_name=config.MODEL, window=config.DEFAULT_WINDOW, embed_batch_size=config.EMBED_BATCH_SIZE, normalize_embeddings=config.NORMALIZE_EMBEDDINGS)
     proc.add_tasks(task_list)
     proc.start_align()
 
@@ -413,7 +413,6 @@ def show_alignment_conflict(username, align_guid, id):
 def resolve_conflicts(username):
     """Found and resolve conflicts in document"""
     align_guid = request.form.get("id", '')
-    resolve_all = request.form.get("resolve_all", False)
     batch_ids = misc.parse_json_array(request.form.get("batch_ids", "[0]"))
     name, guid_from, guid_to, state, curr_batches, total_batches = user_db_helper.get_alignment_info(
         username, align_guid)
@@ -425,16 +424,10 @@ def resolve_conflicts(username):
     db_path = os.path.join(db_folder, f"{align_guid}.db")
     user_db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
 
-    if resolve_all:
-        batch_ids = list(range(total_batches))
-
     # exit if batch ids is empty
     batch_ids = [x for x in batch_ids if x < total_batches][:total_batches]
     if not batch_ids:
         abort(404)
-    if resolve_all:
-        user_db_helper.update_alignment_state(
-            user_db_path, guid_from, guid_to, con.PROC_INIT, 0, total_batches)
 
     user_db_helper.update_alignment_state_by_align_id(
         user_db_path, align_guid, con.PROC_IN_PROGRESS)
@@ -444,7 +437,7 @@ def resolve_conflicts(username):
 
     proc_count = config.PROCESSORS_COUNT
     proc = AlignmentProcessor(
-        proc_count, db_path, user_db_path, res_img_best, lang_from, lang_to, guid_from, guid_to, model_name=config.MODEL, window=config.DEFAULT_WINDOW, embed_batch_size=config.EMBED_BATCH_SIZE, normalize_embeddings=config.NORMALIZE_EMBEDDINGS, mode="resolve")
+        proc_count, db_path, user_db_path, res_img_best, lang_from, lang_to, align_guid, model_name=config.MODEL, window=config.DEFAULT_WINDOW, embed_batch_size=config.EMBED_BATCH_SIZE, normalize_embeddings=config.NORMALIZE_EMBEDDINGS, mode="resolve")
     proc.add_tasks(batch_ids)
     proc.start_resolve()
 

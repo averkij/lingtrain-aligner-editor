@@ -22,26 +22,26 @@ def get_processed_batch_ids(db_path):
     return res
 
 
-def increment_alignment_state(db_path, user_db_path, guid_from, guid_to, state):
+def increment_alignment_state(db_path, user_db_path, align_guid, state):
     """Increment alignment progress"""
     batches_count = get_batches_count(db_path)
     with sqlite3.connect(user_db_path) as user_db:
         print("batches_count", batches_count)
-        user_db.execute('update alignments set state=:state, curr_batches=:curr_batches where guid_from=:guid_from and guid_to=:guid_to', {
-            "guid_from": guid_from, "guid_to": guid_to, "state": state, "curr_batches": batches_count})
+        user_db.execute('update alignments set state=:state, curr_batches=:curr_batches where guid=:guid', {
+            "guid": align_guid, "state": state, "curr_batches": batches_count})
 
 
-def update_alignment_state(user_db_path, guid_from, guid_to, state, curr_batches=None, total_batches=None):
+def update_alignment_state(user_db_path, align_guid, state, curr_batches=None, total_batches=None):
     """Update alignment state"""
     with sqlite3.connect(user_db_path) as db:
         if curr_batches and curr_batches >= 0 and total_batches:
             logging.info(
                 f"updating alignment state total_batches {total_batches} curr_batches {curr_batches} state {state}")
-            db.execute('update alignments set state=:state, curr_batches=:curr_batches, total_batches=:total_batches where guid_from=:guid_from and guid_to=:guid_to', {
-                "guid_from": guid_from, "guid_to": guid_to, "state": state, "curr_batches": curr_batches, "total_batches": total_batches})
+            db.execute('update alignments set state=:state, curr_batches=:curr_batches, total_batches=:total_batches where guid=:guid', {
+                "guid": align_guid, "state": state, "curr_batches": curr_batches, "total_batches": total_batches})
         else:
-            db.execute('update alignments set state=:state where guid_from=:guid_from and guid_to=:guid_to', {
-                "guid_from": guid_from, "guid_to": guid_to, "state": state})
+            db.execute('update alignments set state=:state where guid=:guid', {
+                "guid": align_guid, "state": state})
 
 
 def update_alignment_state_by_align_id(user_db_path, align_id, state):
@@ -196,6 +196,12 @@ def get_alignment_info(username, guid):
     db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
     with sqlite3.connect(db_path) as db:
         return db.execute("select name, guid_from, guid_to, state, curr_batches, total_batches from alignments where guid=:guid", {"guid": guid}).fetchone()
+
+
+def get_alignment_progress(user_db_path, align_guid):
+    """Get alignment progress info"""
+    with sqlite3.connect(user_db_path) as db:
+        return db.execute("select curr_batches, total_batches from alignments where guid=:guid", {"guid": align_guid}).fetchone()
 
 
 def get_alignments_list(username, lang_from, lang_to):

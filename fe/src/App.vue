@@ -130,7 +130,6 @@
                 }"
                 >Load</v-tab
               >
-
               <v-tab
                 :to="{
                   name: 'align',
@@ -142,20 +141,16 @@
                 }"
                 >Align</v-tab
               >
-
-              <v-tab>Create</v-tab>
-
-              <!-- to delete -->
               <v-tab
                 :to="{
-                  name: 'items',
+                  name: 'create',
                   params: {
                     username: $route.params.username,
                     from: $route.params.from,
                     to: $route.params.to,
                   },
                 }"
-                >all</v-tab
+                >Create</v-tab
               >
             </template>
           </v-tabs>
@@ -235,7 +230,7 @@ export default {
     },
     showLanguageBar() {
       if (
-        this.$route.name == "items" ||
+        this.$route.name == "create" ||
         this.$route.name == "docs" ||
         this.$route.name == "align"
       ) {
