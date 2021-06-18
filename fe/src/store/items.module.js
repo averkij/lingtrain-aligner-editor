@@ -24,6 +24,7 @@ import {
   EDIT_PROCESSING_MARK_UNUSED,
   STOP_ALIGNMENT,
   ALIGN_SPLITTED,
+  GET_CONFLICTS,
   RESOLVE_CONFLICTS,
   CREATE_ALIGNMENT,
   DELETE_ALIGNMENT,
@@ -41,6 +42,7 @@ import {
   SET_PROCESSING,
   SET_PROCESSING_META,
   SET_DOC_INDEX,
+  SET_CONFLICTS,
   SET_CONFLICT_SPLITTED_FROM,
   SET_CONFLICT_SPLITTED_TO,
   SET_CONFLICT_FLOW_TO,
@@ -58,7 +60,8 @@ const initialState = {
   conflictSplittedFrom: [],
   conflictSplittedTo: [],
   conflictFlowTo: [],
-  contents:[],
+  contents: [],
+  conflicts: {}
 };
 
 export const state = {
@@ -136,6 +139,16 @@ export const actions = {
       function (response) {
         // console.log("setting index", response.data)
         context.commit(SET_DOC_INDEX, response.data);
+      },
+      function () {
+        console.log(`Didn't find database.`);
+      }
+    );
+  },
+  async [GET_CONFLICTS](context, params) {
+    await ItemsService.getConflicts(params).then(
+      function (response) {
+        context.commit(SET_CONFLICTS, response.data);
       },
       function () {
         console.log(`Didn't find database.`);
@@ -304,6 +317,9 @@ export const mutations = {
   [SET_DOC_INDEX](state, data) {
     state.docIndex = data.items;
   },
+  [SET_CONFLICTS](state, data) {
+    state.conflicts = data.items;
+  },
   [SET_CONFLICT_SPLITTED_FROM](state, data) {
     state.conflictSplittedFrom = data.items;
   },
@@ -340,6 +356,9 @@ const getters = {
   },
   docIndex(state) {
     return state.docIndex;
+  },
+  conflicts(state) {
+    return state.conflicts;
   },
   conflictSplittedFrom(state) {
     return state.conflictSplittedFrom;

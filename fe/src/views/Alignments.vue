@@ -10,7 +10,7 @@
       </div>
     </div> -->
 
-    <div class="text-h4 mt-10">
+    <div class="text-h4 mt-10 font-weight-bold">
       <v-icon color="blue" large>mdi-text-box-multiple</v-icon> Documents
     </div>
     <v-alert type="info" class="mt-6" v-show="showAlert">
@@ -31,7 +31,7 @@
       </v-row>
     </div>
 
-    <div class="text-h4 mt-10">      
+    <div class="text-h4 mt-10 font-weight-bold">      
       <v-row>
         <v-col>
           <v-icon color="blue" large>mdi-align-horizontal-center</v-icon> Alignment
@@ -79,7 +79,7 @@
     </v-alert> -->
 
 
-    <div class="text-h4 mt-10">
+    <div class="text-h4 mt-10 font-weight-bold">
       <v-icon color="blue" large>mdi-pencil</v-icon> Work area
     </div>
 
@@ -237,7 +237,7 @@
             :loading="isLoading.align || isLoading.alignStopping"
             :disabled="selectedProcessing && selectedProcessing.state[1]==selectedProcessing.state[2]"
             @click="alignBatches()">
-            Align next batch
+            Align next
           </v-btn>
           <v-btn v-else v-show="selected[langCodeFrom] && selected[langCodeTo]" class="error mt-4" @click="stopAlignment()">
             Stop alignment
@@ -245,7 +245,34 @@
         </v-col>
       </v-row>      
 
-      <div class="text-h5 mt-10 font-weight-bold">Edit</div>
+      <div class="text-h5 mt-10 font-weight-bold">Conflicts</div>
+
+      <div class="mt-5">
+        <div class="font-weight-bold">
+          {{conflictsAmount(conflicts)}} conflicts found
+        </div>
+        <!-- <div>{{conflicts}}</div> -->
+        <!-- <div class="mt-2">
+          <div v-for="c in conflicts" :key="c">
+            {{c[0]}} - {{c[1]}}
+          </div>
+        </div>         -->
+      </div>
+
+      <!-- CHECK CONFLICTS BUTTON -->
+      <v-row>
+        <v-col class="text-right">
+          <v-btn v-if="!userAlignInProgress" class="success mt-4"
+            @click="resolveConflictsBatch(-1)">
+            Resolve all
+          </v-btn>
+          <v-btn v-else v-show="selected[langCodeFrom] && selected[langCodeTo]" class="error mt-4" @click="stopAlignment()">
+            Stop alignment
+          </v-btn>
+        </v-col>
+      </v-row>      
+
+      <div class="text-h5 mt-10 font-weight-bold">Editor</div>
 
       <div class="text-center" v-if="isLoading.processing">
         <v-progress-circular indeterminate color="green"></v-progress-circular>
@@ -538,6 +565,7 @@
     GET_PROCESSING,
     GET_PROCESSING_META,
     GET_CANDIDATES,
+    GET_CONFLICTS,
     GET_CONFLICT_SPLITTED_FROM,
     GET_CONFLICT_SPLITTED_TO,
     // GET_CONFLICT_FLOW_TO,
@@ -580,7 +608,8 @@
           uploadProxy: LanguageHelper.initGeneralBools(),
           align: false,
           processing: false,
-          processingMeta: false
+          processingMeta: false,
+          conflicts: false
         },
         triggerCollapseEditItem: false,
         triggerClearCandidates: false,
@@ -914,6 +943,7 @@
         this.selectedListItem = fileId;
         this.isLoading.processing = true;
         this.isLoading.processingMeta = true;
+        this.isLoading.conflicts = true;
         this.selectedProcessing = item;
         this.selectedProcessingId = fileId;
 
@@ -942,6 +972,13 @@
           }).then(() => {
             this.isLoading.processing = false;
           });
+        });
+
+        this.$store.dispatch(GET_CONFLICTS, {
+          username: this.$route.params.username,
+          align_guid: this.selectedProcessingId,
+        }).then(() => {
+          this.isLoading.conflicts = false;
         });
       },
       refreshProcessingPage() {
@@ -1213,6 +1250,13 @@
             });
           });
       },
+      conflictsAmount(conflicts) {
+        let res = 0;
+        if (conflicts && conflicts.length > 0) {
+          conflicts.forEach((x) => res += x[1]);
+        }
+        return res;
+      }
     },
     mounted() {
       this.$store.dispatch(INIT_USERSPACE, {
@@ -1242,7 +1286,7 @@
       }
     },
     computed: {
-      ...mapGetters(["items", "itemsProcessing", "splitted", "processing", "docIndex", "conflictSplittedFrom",
+      ...mapGetters(["items", "itemsProcessing", "splitted", "processing", "docIndex", "conflicts", "conflictSplittedFrom",
         "conflictSplittedTo", "conflictFlowTo", "processingMeta"
       ]),
       username() {
@@ -1275,7 +1319,7 @@
           return true;
         }
         return false;
-      },
+      }
     },
     components: {
       EditItem,

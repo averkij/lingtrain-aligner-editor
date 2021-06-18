@@ -146,6 +146,12 @@ export const ItemsService = {
       `${params.username}/processing/${params.langCodeFrom}/${params.langCodeTo}/${params.fileId}/candidates/${params.textType}/${params.indexId}/${params.countBefore}/${params.countAfter}`
     );
   },
+  getConflicts(params) {
+    return ApiService.get(
+      "items",
+      `${params.username}/alignment/conflicts/${params.align_guid}`
+    );
+  },
   getDocIndex(params) {
     return ApiService.get(
       "items",

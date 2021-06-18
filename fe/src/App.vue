@@ -128,7 +128,7 @@
                     to: $route.params.to,
                   },
                 }"
-                >documents</v-tab
+                >Load</v-tab
               >
 
               <v-tab
@@ -140,11 +140,10 @@
                     to: $route.params.to,
                   },
                 }"
-                >alignments</v-tab
+                >Align</v-tab
               >
 
-              <v-tab>editor</v-tab>
-              <v-tab>books</v-tab>
+              <v-tab>Create</v-tab>
 
               <!-- to delete -->
               <v-tab
