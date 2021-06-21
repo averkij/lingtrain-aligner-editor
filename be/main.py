@@ -68,8 +68,7 @@ def items(username, lang):
                                         con.RAW_FOLDER, lang, filename)
                 splitted_path = os.path.join(con.UPLOAD_FOLDER, username,
                                              con.SPLITTED_FOLDER, lang, filename)
-                splitter.split_by_sentences_and_save(raw_path, splitted_path,
-                                                     filename, lang, username)
+                splitter.split_by_sentences_and_save(raw_path, splitted_path, lang)
             logging.info(f"[{username}]. Success. {filename} is loaded.")
         return ('', 200)
     # return documents list
@@ -574,7 +573,7 @@ def edit_processing(username, lang_from, lang_to, align_guid):
     return ('', 200)
 
 
-@app.route("/items/<username>/processing/<lang_from>/<lang_to>/<align_guid>/download/<lang>/<file_format>", methods=["GET"])
+@app.route("/items/<username>/processing/<lang_from>/<lang_to>/<align_guid>/download/<lang>/<file_format>", methods=["POST"])
 def download_processsing(username, lang_from, lang_to, align_guid, lang, file_format):
     """Download processsing document"""
     logging.info(
@@ -595,11 +594,14 @@ def download_processsing(username, lang_from, lang_to, align_guid, lang, file_fo
     logging.debug(
         f"[{username}]. Preparing file for downloading {download_file}.")
 
+    direction = "from"
+    if not lang == lang_from:
+        direction = "to"
+
     if file_format == con.FORMAT_TMX:
         saver.save_tmx(db_path, download_file, lang_from, lang_to)
     elif file_format == con.FORMAT_PLAIN:
-        saver.save_plain_text(db_path, download_file,
-                               first_lang=lang == lang_from)
+        saver.save_plain_text(db_path, download_file, direction)
 
     logging.debug(
         f"[{username}]. File {download_file} prepared. Sent to user.")
