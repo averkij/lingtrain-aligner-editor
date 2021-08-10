@@ -99,6 +99,9 @@ export const ItemsService = {
       "items",
       `${params.username}/processing/${params.langCodeFrom}/${params.langCodeTo}/${params.align_guid}/download/${params.langCodeDownload}/${params.format}`
     ).then((response) => {
+      
+      console.log(response)
+
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -167,6 +170,8 @@ export const ItemsService = {
     form.append("align_all", params.alignAll);
     form.append("batch_ids", JSON.stringify(params.batchIds))
     form.append("batch_shift", params.batchShift)
+    form.append("amount", params.amount)
+    form.append("window", params.window)
     if (params.nextOnly) {
       console.log("calculating next batch")
       return ApiService.post(
@@ -181,8 +186,30 @@ export const ItemsService = {
         `${params.username}/alignment/align`,
         form
       );
-
     }
+  },
+  updateVisualization(params) {
+    let form = new FormData();
+    form.append("id", params.id);
+    form.append("update_all", params.updateAll);
+    form.append("batch_ids", JSON.stringify(params.batchIds))
+    return ApiService.post(
+      "items",
+      `${params.username}/alignment/visualize`,
+      form
+    );
+  },
+  getConflicts(params) {
+    return ApiService.get(
+      "items",
+      `${params.username}/alignment/conflicts/${params.alignId}`
+    );
+  },
+  getConflictDetails(params) {
+    return ApiService.get(
+      "items",
+      `${params.username}/alignment/conflicts/${params.alignId}/show/${params.conflictId}`
+    );
   },
   createAlignment(params) {
     let form = new FormData();
@@ -204,6 +231,12 @@ export const ItemsService = {
       "items",
       `${params.username}/alignment/resolve`,
       form
+    );
+  },
+  findLinePosition(params) {
+    return ApiService.get(
+      "items",
+      `${params.username}/edit/find/${params.langCodeFrom}/${params.langCodeTo}/${params.alignId}/${params.langCode}/${params.lineId}`
     );
   },
   deleteAlignment(params) {

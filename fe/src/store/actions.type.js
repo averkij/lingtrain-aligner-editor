@@ -13,6 +13,7 @@ export const GET_PROCESSING = "get_processing";
 export const GET_PROCESSING_META = "get_processing_meta";
 export const GET_CANDIDATES = "get_candidates";
 export const GET_DOC_INDEX = "get_doc_index";
+export const FIND_LINE_POSITION_IN_INDEX = "find_line_position_in_index";
 
 export const GET_CONFLICT_SPLITTED_FROM = "get_conflict_splitted_from";
 export const GET_CONFLICT_SPLITTED_TO = "get_conflict_splitted_to";
@@ -29,7 +30,10 @@ export const DOWNLOAD_PROCESSING = "download_processing";
 export const DOWNLOAD_SPLITTED = "download_splitted";
 
 export const ALIGN_SPLITTED = "align_splitted";
+export const GET_CONFLICTS = "get_conflicts";
+export const GET_CONFLICT_DETAILS = "get_conflict_details";
 export const RESOLVE_CONFLICTS = "resolve_conflicts";
 
+export const UPDATE_VISUALIZATION = "update_visualization";
 
 export const GET_CONTENTS = "get_contents";

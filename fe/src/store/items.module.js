@@ -19,6 +19,8 @@ import {
   GET_PROCESSING,
   GET_PROCESSING_META,
   GET_CANDIDATES,
+  GET_CONFLICTS,
+  GET_CONFLICT_DETAILS,
   EDIT_PROCESSING,
   EDIT_PROCESSING_MARK_UNUSED,
   STOP_ALIGNMENT,
@@ -29,7 +31,9 @@ import {
   GET_CONFLICT_SPLITTED_FROM,
   GET_CONFLICT_SPLITTED_TO,
   GET_CONFLICT_FLOW_TO,
-  GET_CONTENTS
+  GET_CONTENTS,
+  UPDATE_VISUALIZATION,
+  FIND_LINE_POSITION_IN_INDEX,
 } from "./actions.type";
 
 import {
@@ -39,10 +43,13 @@ import {
   SET_PROCESSING,
   SET_PROCESSING_META,
   SET_DOC_INDEX,
+  SET_CONFLICTS,
+  SET_CONFLICT_DETAILS,
   SET_CONFLICT_SPLITTED_FROM,
   SET_CONFLICT_SPLITTED_TO,
   SET_CONFLICT_FLOW_TO,
-  SET_CONTENTS
+  SET_CONTENTS,
+  SET_LINE_POSITION_IN_INDEX
 } from "./mutations.type";
 
 const initialState = {
@@ -56,6 +63,9 @@ const initialState = {
   conflictSplittedTo: [],
   conflictFlowTo: [],
   contents:[],
+  linePositionInIndex: -1,
+  conflicts: {},
+  conflictDetails: {"from": [], "to": []},
 };
 
 export const state = {
@@ -261,7 +271,45 @@ export const actions = {
       }
     );
     return;
-  }
+  },
+  async [GET_CONFLICTS](context, params) {
+    console.log("GET_CONFLICTS--------")
+    await ItemsService.getConflicts(params).then(
+      function (response) {
+        context.commit(SET_CONFLICTS, response.data);
+      },
+      function () {
+        console.log(`GET_CONFLICTS error.`);
+      }
+    );
+  },
+  async [GET_CONFLICT_DETAILS](context, params) {
+    await ItemsService.getConflictDetails(params).then(
+      function (response) {
+        context.commit(SET_CONFLICT_DETAILS, response.data);
+      },
+      function () {
+        console.log(`GET_CONFLICT_DETAILS error.`);
+      }
+    );
+  },
+  async [UPDATE_VISUALIZATION](context, params) {
+    await ItemsService.updateVisualization(params).then(() => {
+    },
+    () => {
+      console.log("update visualization error")
+    });
+  },
+  async [FIND_LINE_POSITION_IN_INDEX](context, params) {
+    await ItemsService.findLinePosition(params).then(
+      function (response) {
+        context.commit(SET_LINE_POSITION_IN_INDEX, response.data);
+      },
+      function () {
+        console.log(`FIND_LINE_POSITION_IN_INDEX error.`);
+      }
+    );
+  },
 };
 
 export const mutations = {
@@ -301,7 +349,16 @@ export const mutations = {
   },
   [SET_CONTENTS](state, data) {
     state.contents = data.items;
-  }
+  },
+  [SET_LINE_POSITION_IN_INDEX](state, data) {
+    state.linePositionInIndex = data.pos;
+  },
+  [SET_CONFLICTS](state, data) {
+    state.conflicts = data.items;
+  },
+  [SET_CONFLICT_DETAILS](state, data) {
+    state.conflictDetails = data;
+  },
 };
 
 const getters = {
@@ -334,6 +391,15 @@ const getters = {
   },
   contents(state) {
     return state.contents;
+  },
+  linePositionInIndex(state) {
+    return state.linePositionInIndex;
+  },
+  conflicts(state) {
+    return state.conflicts;
+  },
+  conflictDetails(state) {
+    return state.conflictDetails;
   },
 };
 

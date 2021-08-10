@@ -8,3 +8,6 @@ export const SET_CONFLICT_SPLITTED_FROM = "get_conflict_splitted_from";
 export const SET_CONFLICT_SPLITTED_TO = "get_conflict_splitted_to";
 export const SET_CONFLICT_FLOW_TO = "get_conflict_flow_to";
 export const SET_CONTENTS = "set_contents";
+export const SET_LINE_POSITION_IN_INDEX = "set_line_position_in_index";
+export const SET_CONFLICTS = "set_conflicts";
+export const SET_CONFLICT_DETAILS = "set_conflict_details";
