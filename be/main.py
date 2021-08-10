@@ -16,7 +16,7 @@ import user_db_helper
 from align_processor import AlignmentProcessor
 from flask import Flask, abort, request, send_file
 from flask_cors import CORS
-from lingtrain_aligner import aligner, helper, splitter, saver
+from lingtrain_aligner import aligner, helper, preprocessor, splitter, saver, resolver, reader, vis_helper, constants as la_con
 
 misc.configure_logging()
 
@@ -221,6 +221,44 @@ def delete_document(username):
     return ('', 200)
 
 
+@app.route("/items/<username>/alignment/visualize", methods=["POST"])
+def update_visualization(username):
+    """Align two splitted documents"""
+    align_guid = request.form.get("id", '')
+    update_all = request.form.get("update_all", '')
+    batch_ids = misc.parse_json_array(request.form.get("batch_ids", "[0]"))
+
+    logging.info(
+        f"visualize parameters align_guid {align_guid} update_all {update_all} batch_ids {batch_ids}")
+
+    _, guid_from, guid_to, _, _, total_batches = user_db_helper.get_alignment_info(
+        username, align_guid)
+    _, lang_from = user_db_helper.get_alignment_fileinfo_from(
+        username, guid_from)
+    _, lang_to = user_db_helper.get_alignment_fileinfo_to(username, guid_to)
+    db_folder = os.path.join(con.UPLOAD_FOLDER, username,
+                             con.DB_FOLDER, lang_from, lang_to)
+    db_path = os.path.join(db_folder, f"{align_guid}.db")
+
+    if update_all:
+        logging.info(f"[{username}]. Cleaning images.")
+        misc.clean_img_user_foler(username, align_guid)
+        batch_ids = list(range(total_batches))
+
+    # exit if batch ids is empty
+    batch_ids = [x for x in batch_ids if x < total_batches][:total_batches]
+    if not batch_ids:
+        abort(404)
+
+    res_img_best = os.path.join(
+        con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{align_guid}.best.png")
+
+    vis_helper.visualize_alignment_by_db(
+        db_path, res_img_best, lang_name_from=lang_from, lang_name_to=lang_to, batch_ids=batch_ids, transparent_bg=True, show_info=config.VIS_BATCH_INFO, show_regression=config.VIS_REGRESSION)
+
+    return ('', 200)
+
+
 @app.route("/items/<username>/alignment/align", methods=["POST"])
 def start_alignment(username):
     """Align two splitted documents"""
@@ -229,6 +267,8 @@ def start_alignment(username):
     batch_ids = misc.parse_json_array(request.form.get("batch_ids", "[0]"))
     batch_shift, _ = misc.try_parse_int(
         request.form.get("batch_shift", 0))
+    window, _ = misc.try_parse_int(
+        request.form.get("window", config.DEFAULT_WINDOW))
 
     logging.info(
         f"align parameters align_guid {align_guid} align_all {align_all} batch_ids {batch_ids}, batch_shift {batch_shift}")
@@ -262,7 +302,7 @@ def start_alignment(username):
         abort(404)
     if align_all:
         user_db_helper.update_alignment_state(
-            user_db_path, guid_from, guid_to, con.PROC_INIT, 0, total_batches)
+            user_db_path, align_guid, con.PROC_INIT, 0, total_batches)
 
     user_db_helper.update_alignment_state_by_align_id(
         user_db_path, align_guid, con.PROC_IN_PROGRESS)
@@ -272,15 +312,16 @@ def start_alignment(username):
     res_img_best = os.path.join(
         con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{align_guid}.best.png")
 
-    task_list = [(lines_from_batch, lines_to_batch, line_ids_from, line_ids_to, batch_id)
+    task_list = [(lines_from_batch, lines_to_batch, line_ids_from, line_ids_to, batch_id, batch_shift, window)
                  for lines_from_batch, lines_to_batch,
                  line_ids_from, line_ids_to, batch_id
-                 in misc.get_batch_intersected(lines_from, lines_to, batch_ids, batch_shift)]
+                 in misc.get_batch_intersected(lines_from, lines_to, batch_ids, batch_shift, window=window)]
 
     proc_count = config.PROCESSORS_COUNT
 
     proc = AlignmentProcessor(
-        proc_count, db_path, user_db_path, res_img_best, lang_from, lang_to, guid_from, guid_to, model_name=config.MODEL, window=config.DEFAULT_WINDOW, embed_batch_size=config.EMBED_BATCH_SIZE, normalize_embeddings=config.NORMALIZE_EMBEDDINGS)
+        proc_count, db_path, user_db_path, res_img_best, lang_from, lang_to, align_guid, model_name=config.MODEL, window=config.DEFAULT_WINDOW, embed_batch_size=config.EMBED_BATCH_SIZE, normalize_embeddings=config.NORMALIZE_EMBEDDINGS,
+        operation=la_con.OPERATION_CALCULATE_CUSTOM, plot_info=config.VIS_BATCH_INFO, plot_regression=config.VIS_REGRESSION)
     proc.add_tasks(task_list)
     proc.start_align()
 
@@ -291,6 +332,12 @@ def start_alignment(username):
 def align_next_batch(username):
     """Align next batch of two splitted documents"""
     align_guid = request.form.get("id", '')
+    amount, _ = misc.try_parse_int(
+        request.form.get("amount", 1))
+    batch_shift, _ = misc.try_parse_int(
+        request.form.get("batch_shift", 0))
+    window, _ = misc.try_parse_int(
+        request.form.get("window", config.DEFAULT_WINDOW))
     name, guid_from, guid_to, state, curr_batches, total_batches = user_db_helper.get_alignment_info(
         username, align_guid)
     _, lang_from = user_db_helper.get_alignment_fileinfo_from(
@@ -302,8 +349,8 @@ def align_next_batch(username):
     db_path = os.path.join(db_folder, f"{align_guid}.db")
     user_db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
 
-    batches_count = user_db_helper.get_batches_count(db_path)
-    batch_ids = [batches_count]
+    last_batch_id = user_db_helper.get_last_batch_id(db_path) + 1
+    batch_ids = list(range(last_batch_id, last_batch_id + amount))
 
     logging.info(
         f"align parameters NEXT align_guid {align_guid} batch_ids {batch_ids} name {name} guid_from {guid_from} guid_to {guid_to} total_batches {total_batches}")
@@ -327,26 +374,78 @@ def align_next_batch(username):
     res_img_best = os.path.join(
         con.STATIC_FOLDER, con.IMG_FOLDER, username, f"{align_guid}.best.png")
 
-    task_list = [(lines_from_batch, lines_to_batch, line_ids_from, line_ids_to, batch_id)
+    task_list = [(lines_from_batch, lines_to_batch, line_ids_from, line_ids_to, batch_id, batch_shift, window)
                  for lines_from_batch, lines_to_batch,
                  line_ids_from, line_ids_to, batch_id
-                 in misc.get_batch_intersected(lines_from, lines_to, batch_ids)]
+                 in misc.get_batch_intersected(lines_from, lines_to, batch_ids, batch_shift, window=window)]
 
     proc_count = config.PROCESSORS_COUNT
 
     proc = AlignmentProcessor(
-        proc_count, db_path, user_db_path, res_img_best, lang_from, lang_to, guid_from, guid_to, model_name=config.MODEL, window=config.DEFAULT_WINDOW, embed_batch_size=config.EMBED_BATCH_SIZE, normalize_embeddings=config.NORMALIZE_EMBEDDINGS)
+        proc_count, db_path, user_db_path, res_img_best, lang_from, lang_to, align_guid, model_name=config.MODEL, window=config.DEFAULT_WINDOW, embed_batch_size=config.EMBED_BATCH_SIZE, normalize_embeddings=config.NORMALIZE_EMBEDDINGS,
+        plot_info=config.VIS_BATCH_INFO, plot_regression=config.VIS_REGRESSION)
     proc.add_tasks(task_list)
     proc.start_align()
 
     return con.EMPTY_LINES
 
 
+@app.route("/items/<username>/alignment/conflicts/<align_guid>", methods=["GET"])
+def get_alignment_conflicts(username, align_guid):
+    """Get alignment conflicts"""
+    name, guid_from, guid_to, state, curr_batches, total_batches = user_db_helper.get_alignment_info(
+        username, align_guid)
+    _, lang_from = user_db_helper.get_alignment_fileinfo_from(
+        username, guid_from)
+    _, lang_to = user_db_helper.get_alignment_fileinfo_to(username, guid_to)
+    db_folder = os.path.join(con.UPLOAD_FOLDER, username,
+                             con.DB_FOLDER, lang_from, lang_to)
+    db_path = os.path.join(db_folder, f'{align_guid}.db')
+
+    if not os.path.isfile(db_path):
+        abort(404)
+
+    conflicts, rest = resolver.get_all_conflicts(
+        db_path, min_chain_length=2, max_conflicts_len=20, batch_id=-1)
+    stat1 = resolver.get_statistics(conflicts, print_stat=False)
+    stat2 = resolver.get_statistics(rest, print_stat=False)
+    res = [(x, stat1[x]) for x in stat1]
+    res.extend([(x, stat2[x]) for x in stat2])
+    res.sort(key=lambda x: x[1], reverse=True)
+    return {"items": res}
+
+
+@app.route("/items/<username>/alignment/conflicts/<align_guid>/show/<int:id>", methods=["GET"])
+def show_alignment_conflict(username, align_guid, id):
+    """Get alignment conflict details"""
+    name, guid_from, guid_to, state, curr_batches, total_batches = user_db_helper.get_alignment_info(
+        username, align_guid)
+    _, lang_from = user_db_helper.get_alignment_fileinfo_from(
+        username, guid_from)
+    _, lang_to = user_db_helper.get_alignment_fileinfo_to(username, guid_to)
+    db_folder = os.path.join(con.UPLOAD_FOLDER, username,
+                             con.DB_FOLDER, lang_from, lang_to)
+    db_path = os.path.join(db_folder, f'{align_guid}.db')
+
+    if not os.path.isfile(db_path):
+        abort(404)
+
+    conflicts, rest = resolver.get_all_conflicts(
+        db_path, min_chain_length=2, max_conflicts_len=20, batch_id=-1)
+    conflicts.extend(rest)
+    if not conflicts:
+        return {"from": [], "to": []}
+    id = id % len(conflicts)
+    splitted_from, splitted_to = resolver.show_conflict(
+        db_path, conflicts[id], print_conf=False)
+
+    return {"from": splitted_from, "to": splitted_to}
+
+
 @app.route("/items/<username>/alignment/resolve", methods=["POST"])
 def resolve_conflicts(username):
     """Found and resolve conflicts in document"""
     align_guid = request.form.get("id", '')
-    resolve_all = request.form.get("resolve_all", '')
     batch_ids = misc.parse_json_array(request.form.get("batch_ids", "[0]"))
     name, guid_from, guid_to, state, curr_batches, total_batches = user_db_helper.get_alignment_info(
         username, align_guid)
@@ -358,16 +457,10 @@ def resolve_conflicts(username):
     db_path = os.path.join(db_folder, f"{align_guid}.db")
     user_db_path = os.path.join(con.UPLOAD_FOLDER, username, con.USER_DB_NAME)
 
-    if resolve_all:
-        batch_ids = list(range(total_batches))
-
     # exit if batch ids is empty
     batch_ids = [x for x in batch_ids if x < total_batches][:total_batches]
     if not batch_ids:
         abort(404)
-    if resolve_all:
-        user_db_helper.update_alignment_state(
-            user_db_path, guid_from, guid_to, con.PROC_INIT, 0, total_batches)
 
     user_db_helper.update_alignment_state_by_align_id(
         user_db_path, align_guid, con.PROC_IN_PROGRESS)
@@ -377,8 +470,9 @@ def resolve_conflicts(username):
 
     proc_count = config.PROCESSORS_COUNT
     proc = AlignmentProcessor(
-        proc_count, db_path, user_db_path, res_img_best, lang_from, lang_to, guid_from, guid_to, model_name=config.MODEL, window=config.DEFAULT_WINDOW, embed_batch_size=config.EMBED_BATCH_SIZE, normalize_embeddings=config.NORMALIZE_EMBEDDINGS, mode="resolve")
-    proc.add_tasks(batch_ids)
+        proc_count, db_path, user_db_path, res_img_best, lang_from, lang_to, align_guid, model_name=config.MODEL, window=config.DEFAULT_WINDOW, embed_batch_size=config.EMBED_BATCH_SIZE, normalize_embeddings=config.NORMALIZE_EMBEDDINGS,
+        mode="resolve", operation=la_con.OPERATION_RESOLVE, plot_info=config.VIS_BATCH_INFO, plot_regression=config.VIS_REGRESSION)
+    proc.add_tasks([(batch_id, total_batches) for batch_id in batch_ids])
     proc.start_resolve()
 
     return ('', 200)
@@ -573,7 +667,7 @@ def edit_processing(username, lang_from, lang_to, align_guid):
     return ('', 200)
 
 
-@app.route("/items/<username>/processing/<lang_from>/<lang_to>/<align_guid>/download/<lang>/<file_format>", methods=["POST"])
+@app.route("/items/<username>/processing/<lang_from>/<lang_to>/<align_guid>/download/<lang>/<file_format>", methods=["GET"])
 def download_processsing(username, lang_from, lang_to, align_guid, lang, file_format):
     """Download processsing document"""
     logging.info(
