@@ -120,13 +120,13 @@
             <v-list-item v-for="(item, i) in itemsProcessing[langCodeFrom]" :key="i"
               @change="selectProcessing(item, item.guid)"
               @mouseover="hoverAlignmentIndex = i"
-              @mouseleave="hoverAlignmentIndex = -1">
+              @mouseleave="hoverAlignmentIndex = -1" class="lighten-4" :class="{'yellow':item.guid==selectedProcessingId}">
               <v-list-item-icon>
                 <v-icon v-if="item.state[0]==PROC_INIT || item.state[0]==PROC_IN_PROGRESS" color="blue">
                   mdi-clock-outline</v-icon>
                 <v-icon v-else-if="item.state[0]==PROC_ERROR" color="error">mdi-alert-circle</v-icon>
                 <v-icon v-else-if="item.state[0]==PROC_IN_PROGRESS_DONE" color="blue">mdi-check</v-icon>
-                <v-icon v-else color="teal">mdi-check</v-icon>
+                <v-icon v-else color="green">mdi-check-circle-outline</v-icon>
               </v-list-item-icon>
               <v-list-item-content>
                 <v-list-item-title>{{item.name}}<v-chip class="ml-4" color="grey" text-color="black" small outlined>
@@ -149,61 +149,237 @@
       </v-card>
 
       <!-- PROCESSING DOCUMENTS LIST BLOCK -->
-      <div class="text-h5 mt-12 font-weight-bold">
-        {{selectedProcessing.name}}
+      <v-row>
+        <v-col class="text-center text-h4 mt-12">
+          <span>{{selectedProcessing.name}}</span>
+        </v-col>
+      </v-row>
+      <!-- VISUALIZATION -->
+      <div class="text-h5 mt-10 font-weight-bold">
+        Visualization
       </div>
-
-      <!-- ALIGNMENT BUTTON -->
-      <v-btn v-if="!userAlignInProgress" class="success mt-6"
-        :loading="isLoading.align || isLoading.alignStopping"
-        :disabled="selectedProcessing && selectedProcessing.state[1]==selectedProcessing.state[2]"
-        @click="startAlignment()">
-        Align next batch
-      </v-btn>
-      <v-btn v-else v-show="selected[langCodeFrom] && selected[langCodeTo]" class="error mt-6" @click="stopAlignment()">
-        Stop alignment
-      </v-btn>
-
       <v-alert v-if="!processingMeta || !processingMeta.meta || processingMeta.meta.batch_ids.length == 0" type="info"
         border="left" colored-border color="purple" class="mt-6" elevation="2">
         Images will start showing after the first batch completion.
       </v-alert>
-      <v-row v-else class="mt-6">
-        <v-col v-for="(batch_id, i) in processingMeta.meta.batch_ids" :key=i cols="12" sm="3">
-          <v-hover v-slot="{ hover }">
-            <v-card :class="{ 'batch-card-hover': hover }"
-              @click="showRecalculateBatchDialog=true; currentBatchId=batch_id">
-              <div class="grey lighten-5">
-                <v-card-title>
-                  batch {{batch_id+1}}
-                  <v-spacer></v-spacer>
-                  <v-chip color="grey" text-color="black" small outlined>
-                    {{DEFAULT_BATCHSIZE * i + 1}} — {{DEFAULT_BATCHSIZE * (i + 1)}}
-                  </v-chip>
-                </v-card-title>
-              </div>
-              <v-divider></v-divider>
-              <!-- <v-img :src="`${API_URL}/static/img/${username}/${processingMeta.meta.align_guid}.best_${batch_id}.png`"
-                :lazy-src="`${API_URL}/static/proc_img_stub.jpg`">
-                <template v-slot:placeholder>
-                  <v-row class="fill-height ma-0" align="center" justify="center">
-                    <v-progress-circular indeterminate color="green"></v-progress-circular>
-                  </v-row>
-                </template>
-              </v-img> -->
-              <div>
-                <img width=100% :src="getImgUrl(batch_id)">
-              </div>
-            </v-card>
-          </v-hover>
-        </v-col>
+      <div v-else class="mt-6">
+        <!-- VISUAL CAROUSEL -->
+        <swiper class="swiper pb-8" :options="swiperOption" ref="mySwiper">
+          <swiper-slide v-for="(batch_id, i) in processingMeta.meta.batch_ids" :key=i>
+              <v-card class="vis-card" flat>
+                <div class="green lighten-5">
+                  <v-card-title class="text-subtitle-2 pa-3 pb-3">
+                    <span>batch {{batch_id+1}} </span>
+                    <v-spacer></v-spacer>
+                    <span class="refresh-vis-icon">
+                      <v-icon @click="refreshVis(batch_id)">mdi-refresh</v-icon>
+                    </span>
+                  </v-card-title>
+                </div>
+                <v-divider></v-divider>
+                <div class="vis-card-img" style="height:100%" @click="showRecalculateBatchDialog=true; currentBatchId=batch_id">
+                  <img width=100% :src="getImgUrl(batch_id)" lazy-src="@/assets/vis_placeholder.png" class="_swiper-lazy">
+                  <!-- <div class="swiper-lazy-preloader"></div> -->
+                </div>
+              </v-card>
+          </swiper-slide>
+          <div class="swiper-scrollbar" slot="scrollbar"></div>
+        </swiper>
         <RecalculateBatchDialog v-model="showRecalculateBatchDialog"
           :batch_id=currentBatchId
           :inProgress="userAlignInProgress"
           @recalculateBatch="recalculateBatch"
           @resolveConflictsBatch="resolveConflictsBatch"/>
+      </div>
+
+      <!-- ALIGNMENT SETTINGS -->      
+      <div class="text-h5 mt-12 font-weight-bold">
+        Alignment
+      </div>
+      <v-row class="mt-5">
+        <v-col>
+          <v-card>
+            <div class="green lighten-5">
+              <v-card-title>
+                Settings
+              </v-card-title>
+              <v-card-text>
+                Choose alignment settings for selected document
+              </v-card-text>
+            </div>
+            <v-divider></v-divider>
+            <div class="pa-6">
+              <v-row>
+                <v-col cols="12" sm="4">
+                  <v-card flat>
+                    <div class="white lighten-5">
+                      <v-card-title class="text-subtitle-1 pa-3 pt-0">
+                        Batches to align: <span class="font-weight-bold px-2">{{batchesToAlign}}</span>
+                      </v-card-title>
+                    </div>
+                    <div class="white lighten-3 pa-3">
+                      <v-slider v-model="batchesToAlign" @change="customAlignmentSettings=null;" min="1" max="5" step="1" ticks="always" tick-size="1">
+                      </v-slider>
+                    </div>
+                  </v-card>
+                </v-col>
+                <v-col cols="12" sm="4">
+                  <v-card flat>
+                    <div class="white lighten-5">
+                      <v-card-title class="text-subtitle-1 pa-3 pt-0">
+                        Shift: <span class="font-weight-bold px-2">{{alignShift}}</span>
+                      </v-card-title>
+                    </div>
+                    <div class="white lighten-3 pa-3">
+                      <v-slider v-model="alignShift" min="-500" max="500" step="20" thumb-label>
+                      </v-slider>
+                    </div>
+                  </v-card>
+                </v-col>
+                <v-col cols="12" sm="4">
+                  <v-card flat>
+                    <div class="white lighten-5">
+                      <v-card-title class="text-subtitle-1 pa-3 pt-0">
+                        Window: <span class="font-weight-bold px-2">{{alignWindow}}</span>
+                      </v-card-title>
+                    </div>
+                    <div class="white lighten-3 pa-3">
+                      <v-slider v-model="alignWindow" min="20" max="100" step="10" thumb-label>
+                      </v-slider>
+                    </div>
+                  </v-card>
+                </v-col>
+              </v-row>
+            </div>
+          </v-card>
+        </v-col>
       </v-row>
 
+      <!-- ALIGNMENT BUTTON -->
+      <v-alert type="info" border="left" colored-border color="orange" class="mt-5" elevation="2"
+        v-if="customAlignmentSettings">
+        Alignment settings was changed. Batches to align: from <span class="font-weight-bold">{{customAlignmentSettings.start + 1}}</span> to <span class="font-weight-bold">{{customAlignmentSettings.end + 1}}</span>.
+      </v-alert>
+      <v-row>
+        <v-col class="text-right">
+          <v-btn class="primary mt-4 mr-3 btn-min-w"
+            @click="$refs.custAlignDialog.init(); showCustomAlignmentSettingsDialog=true">
+            Customize
+          </v-btn>
+          <CustomAlignmentSettingsDialog ref="custAlignDialog" v-model="showCustomAlignmentSettingsDialog"
+            :totalBatches="selectedProcessingTotalBatches"
+            @applySettings="applyCustomAlignmentSettings"/>
+          <v-btn v-if="customAlignmentSettings && !userAlignInProgress" class="success mt-4 btn-min-w"
+            :loading="isLoading.align || isLoading.alignStopping"
+            :disabled="isLoading.resolve"
+            @click="alignCustom()">
+            Align custom
+          </v-btn>
+          <v-btn v-else-if="!userAlignInProgress" class="success mt-4 btn-min-w"
+            :loading="isLoading.align || isLoading.alignStopping"
+            :disabled="(selectedProcessing && selectedProcessing.state[1]==selectedProcessing.state[2]) || (isLoading.resolve)"
+            @click="alignBatches()">
+            Align next
+          </v-btn>
+          <v-btn v-else v-show="selected[langCodeFrom] && selected[langCodeTo]" class="error mt-4 btn-min-w" @click="stopAlignment()">
+            Stop alignment
+          </v-btn>
+        </v-col>
+      </v-row>
+
+      <!-- CONFLICTS RESOLVING SECTION -->
+      <div class="text-h5 mt-5 font-weight-bold">Conflicts</div>
+
+      <div class="mt-5">
+        <div class="font-weight-bold">
+          {{conflictsAmount()}} conflicts found
+        </div>
+      </div>
+      <div class="text-center" v-if="isLoading.resolve || isLoading.conflicts">
+        <v-progress-circular indeterminate color="green"></v-progress-circular>
+      </div>
+      <v-alert v-else-if="!processing || !processing.items || processing.items.length == 0 || userAlignInProgress" type="info" border="left"
+        colored-border color="info" class="mt-6" elevation="2">
+        There is nothing to show yet.
+      </v-alert>
+      <div v-else-if="conflictsAmount() > 0">
+        <v-row class="mt-2">
+          <v-col>
+            Conflict {{currConflictId+1}}:
+          </v-col>
+        </v-row>
+        <v-row>     
+          <v-col cols="12" sm="6">
+            <v-card>
+            <div v-for="(d,i) in conflictDetails.from" :key="i">            
+              <div class="d-table fill-height">              
+                <div class="d-table-cell grey lighten-4 pa-2 text-center" style="min-width:45px">
+                  {{i}}
+                </div>
+                <v-divider class="d-table-cell" vertical></v-divider>
+                <div class="d-table-cell pa-2">
+                  {{d}}
+                </div>
+              </div>
+              <v-divider/>
+            </div>
+            </v-card>
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-card>
+            <div v-for="(d,i) in conflictDetails.to" :key="i">            
+              <div class="d-table fill-height">              
+                <div class="d-table-cell grey lighten-4 pa-2 text-center" style="min-width:45px">
+                  {{i}}
+                </div>
+                <v-divider class="d-table-cell" vertical></v-divider>
+                <div class="d-table-cell pa-2">
+                  {{d}}
+                </div>
+              </div>
+              <v-divider/>
+            </div>
+            </v-card>
+          </v-col>
+        </v-row>
+      </div>
+      <v-alert v-else type="info" border="left"
+        colored-border color="info" class="mt-6" elevation="2">
+        All conflicts resolved.
+      </v-alert>
+
+      <!-- CHECK CONFLICTS BUTTON -->
+      <v-row>
+        <v-btn class="primary mt-4 ml-3 mr-5 btn-min-w-120"
+          :disabled="isLoading.resolve || userAlignInProgress || currConflictId==0"
+          @click="showPrevConflict()">
+          Previous
+        </v-btn>
+        <v-btn class="primary mt-4 btn-min-w-120"
+          :disabled="isLoading.resolve || userAlignInProgress || conflictsAmount()==0 || currConflictId==conflictsAmount()-1"
+          @click="showNextConflict()">
+          Next
+        </v-btn>
+        <v-spacer></v-spacer>
+        <v-btn class="primary mt-4 mr-3 btn-min-w"
+          :disabled="isLoading.resolve || userAlignInProgress"
+          @click="refreshConflicts()">
+          Refresh
+        </v-btn>
+        <v-btn class="primary mt-4 mr-3 btn-min-w"
+          :disabled="isLoading.resolve || userAlignInProgress || conflictsAmount()==0"
+          @click="findLinePositionAndGotoEditor()">
+          Open in editor
+        </v-btn>
+        <v-btn class="success mt-4 mr-3 btn-min-w"
+          :loading="isLoading.resolve"
+          :disabled="isLoading.resolve || userAlignInProgress || conflictsAmount()==0"
+          @click="resolveConflictsBatch(-1)">
+          Resolve all
+        </v-btn>
+      </v-row>
+
+      <!-- EDITOR SECTION -->
       <div class="text-h5 mt-10 font-weight-bold">Edit</div>
 
       <div class="text-center" v-if="isLoading.processing">
@@ -219,66 +395,69 @@
       </v-alert>
 
       <!-- EDIT ITEMS block-->
-      <v-card v-else class="mt-6">
-        <div class="green lighten-5" dark>
+      <div v-else>
+        <v-alert type="info" border="left" colored-border color="info" class="mt-6" elevation="2">
+          Pay attention to the beginning and the end of alignment. Some undetected conflicts can still be there.
+        </v-alert>
+        <v-card class="mt-2">
+          <div class="green lighten-5" dark>
 
-          <!-- title -->
-          <v-card-title class="pr-3">
-            {{selectedProcessing.name}}
-            <v-spacer></v-spacer>
+            <!-- title -->
+            <v-card-title class="pr-3">
+              {{selectedProcessing.name}}
+              <v-spacer></v-spacer>
 
-            <v-icon>mdi-translate</v-icon>
-            <v-switch color="green" value="true" v-model="showProxyTo" class="mx-2"></v-switch>
-            <!-- <div>showTranslation: {{clientSettings}}</div> -->
+              <v-icon>mdi-translate</v-icon>
+              <v-switch color="green" value="true" v-model="showProxyTo" class="mx-2"></v-switch>
 
-            <v-btn icon @click="collapseEditItems">
-              <v-icon>mdi-collapse-all</v-icon>
-            </v-btn>
-          </v-card-title>
-          <v-card-text>Review and edit automatically aligned document</v-card-text>
-        </div>
-        <v-divider></v-divider>
-
-        <!-- items -->
-        <div v-for="(line, i) in processing.items" :key="i">
-          <EditItem @editProcessing="editProcessing" @editAddUpEnd="editAddUpEnd" @editAddDownEnd="editAddDownEnd"
-            @editDeleteLine="editDeleteLine" @editAddEmptyLineBefore="editAddEmptyLineBefore"
-            @editAddEmptyLineAfter="editAddEmptyLineAfter" @editClearLine="editClearLine" @getCandidates="getCandidates"
-            @editAddCandidateEnd="editAddCandidateEnd" :item="line"
-            :prevItem="i == 0 ? processing.items[0] : processing.items[i-1]" :collapse="triggerCollapseEditItem"
-            :clearCandidates="triggerClearCandidates" :showProxyTo="showProxyTo" :panelColor="'green'"
-            :proxy_from_dict="processing.proxy_from_dict" :proxy_to_dict="processing.proxy_to_dict">
-          </EditItem>
+              <v-btn icon @click="collapseEditItems">
+                <v-icon>mdi-collapse-all</v-icon>
+              </v-btn>
+              <v-btn icon @click="expandEditItems">
+                <v-icon>mdi-expand-all</v-icon>
+              </v-btn>
+            </v-card-title>
+            <v-card-text>Review and edit automatically aligned document</v-card-text>
+          </div>
           <v-divider></v-divider>
-        </div>
 
-        <!-- pagination -->
-        <v-row class="py-1 px-5">
-          <v-col cols="12" sm="2"></v-col>
-          <v-col cols="12" sm="8">
-            <v-pagination v-model="processing.meta.page" :length="processing.meta.total_pages" total-visible="10"
-              @input="onProcessingPageChange(processing.meta.page)">
-            </v-pagination>
-          </v-col>
-          <v-col cols="12" sm="2" class="text-right">
-            <v-tooltip bottom>
-              <template v-slot:activator="{ on, attrs }">
-                <v-btn class="mt-1" v-bind="attrs" v-on="on" @click="showGoToDialog=true">
-                  <v-icon left color="grey">mdi-page-next-outline</v-icon>Go to
-                </v-btn>
-              </template>
-              <span>Go to the specific page</span>
-            </v-tooltip>
+          <!-- items -->
+          <div v-for="(line, i) in processing.items" :key="i">
+            <EditItem @editProcessing="editProcessing" @editAddUpEnd="editAddUpEnd" @editAddDownEnd="editAddDownEnd"
+              @editDeleteLine="editDeleteLine" @editAddEmptyLineBefore="editAddEmptyLineBefore"
+              @editAddEmptyLineAfter="editAddEmptyLineAfter" @editClearLine="editClearLine" @getCandidates="getCandidates"
+              @editAddCandidateEnd="editAddCandidateEnd" :item="line"
+              :prevItem="i == 0 ? processing.items[0] : processing.items[i-1]" :collapse="triggerCollapseEditItem" :expand="triggerExpandEditItem"
+              :clearCandidates="triggerClearCandidates" :showProxyTo="showProxyTo" :panelColor="'green'"
+              :proxy_from_dict="processing.proxy_from_dict" :proxy_to_dict="processing.proxy_to_dict">
+            </EditItem>
+            <v-divider></v-divider>
+          </div>
 
-          </v-col>
-          <GoToDialog v-model="showGoToDialog" @goToPage="goToPage" />
-        </v-row>
-      </v-card>
+          <!-- pagination -->
+          <v-row class="py-1 px-5">
+            <v-col cols="12" sm="2"></v-col>
+            <v-col cols="12" sm="8">
+              <v-pagination v-model="processing.meta.page" :length="processing.meta.total_pages" total-visible="10"
+                @input="onProcessingPageChange(processing.meta.page)">
+              </v-pagination>
+            </v-col>
+            <v-col cols="12" sm="2" class="text-right">
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn class="mt-1" v-bind="attrs" v-on="on" @click="showGoToDialog=true">
+                    <v-icon left color="grey">mdi-page-next-outline</v-icon>Go to
+                  </v-btn>
+                </template>
+                <span>Go to the specific page</span>
+              </v-tooltip>
 
-      <!-- TO DO -->
-      <!-- <div class="text-h4 mt-10 font-weight-bold">
-        <v-icon color="blue" large>mdi-puzzle</v-icon> Conflicts
-      </div> -->
+            </v-col>
+            <GoToDialog v-model="showGoToDialog" @goToPage="goToPage" />
+          </v-row>
+        </v-card>
+      </div>
+
       <div class="text-h4 mt-10 font-weight-bold">
         <v-icon color="blue" large>mdi-puzzle</v-icon> Unused strings
       </div>
@@ -292,63 +471,6 @@
       </v-alert>
       <div v-else>
 
-        <!-- TO DO -->
-        <!-- <v-alert type="info" border="left" colored-border color="info" class="mt-6" elevation="2">
-          To proceed to the next batch all conflicts need to be resolved. Lines without identifiers are not considered
-          during the conflicts detection.
-        </v-alert>
-
-        <div class="text-h5 mt-10 font-weight-bold">Flow breaks</div>
-
-        <v-alert v-if="!flowBreakGroups || flowBreakGroups.length==0" type="info" border="left" colored-border color="info"
-          class="mt-6" elevation="2">
-          No unhandled flow breaks detected.
-        </v-alert>
-        <div class="mt-6">
-          <v-card>
-            <div class="blue lighten-5" dark>
-
-              <v-card-title class="pr-3">
-                <v-spacer></v-spacer>
-
-                <v-icon>mdi-translate</v-icon>
-                <v-switch value="true" v-model="showProxyTo" class="mx-2"></v-switch>
-
-                <v-btn icon @click="collapseEditItems">
-                  <v-icon>mdi-collapse-all</v-icon>
-                </v-btn>
-              </v-card-title>
-            </div>
-            <v-divider></v-divider>
-
-            <div v-for="(group,i) in flowBreakGroups" :key="i">
-              <div class="pa-3 blue lighten-5 font-weight-bold text-caption">conflict on line {{group['lineId']}}</div>
-              <v-divider></v-divider>
-              <EditItem @editProcessing="editProcessing" @editAddUpEnd="editAddUpEnd" @editAddDownEnd="editAddDownEnd"
-                @editDeleteLine="editDeleteLine" @editAddEmptyLineBefore="editAddEmptyLineBefore"
-                @editAddEmptyLineAfter="editAddEmptyLineAfter" @editClearLine="editClearLine"
-                @getCandidates="getCandidates" @editAddCandidateEnd="editAddCandidateEnd"
-                :item="conflictFlowTo[group['prev']]"
-                :prevItem="group['prev'] == 0 ? conflictFlowTo[0] : conflictFlowTo[group['prev']-1]"
-                :collapse="triggerCollapseEditItem" :clearCandidates="triggerClearCandidates" :showProxyTo="showProxyTo"
-                :panelColor="'blue'">
-              </EditItem>
-              <v-divider></v-divider>
-              <EditItem @editProcessing="editProcessing" @editAddUpEnd="editAddUpEnd" @editAddDownEnd="editAddDownEnd"
-                @editDeleteLine="editDeleteLine" @editAddEmptyLineBefore="editAddEmptyLineBefore"
-                @editAddEmptyLineAfter="editAddEmptyLineAfter" @editClearLine="editClearLine"
-                @getCandidates="getCandidates" @editAddCandidateEnd="editAddCandidateEnd"
-                :item="conflictFlowTo[group['curr']]"
-                :prevItem="group['curr'] == 0 ? conflictFlowTo[0] : conflictFlowTo[group['curr']-1]"
-                :collapse="triggerCollapseEditItem" :clearCandidates="triggerClearCandidates" :showProxyTo="showProxyTo"
-                :panelColor="'red'">
-              </EditItem>
-              <v-divider></v-divider>
-            </div>
-          </v-card>
-        </div> -->
-
-        <!-- <div class="text-h5 mt-10 font-weight-bold">Unused strings</div> -->
 
         <v-alert v-if="(!unusedFromLines || unusedFromLines.length==0) && (!unusedToLines || unusedToLines.length==0)"
           type="info" border="left" colored-border color="info" class="mt-6" elevation="2">
@@ -360,7 +482,7 @@
               <v-card-title>{{LANGUAGES[langCodeFrom].name}}
                 <v-spacer></v-spacer>
                 <span class="text-button blue--text">show all</span>
-                <v-switch value="true" false-value="false" v-model="showAllFrom" class="ml-2"></v-switch>
+                <!-- <v-switch value="true" false-value="false" v-model="showAllFrom" class="ml-2"></v-switch> -->
               </v-card-title>
               <v-card-text>{{unusedFromLines.length}} lines
               </v-card-text>
@@ -384,9 +506,9 @@
                           </div>
                         </div>
                         <v-divider class="d-table-cell" vertical></v-divider>
-                        <div class="d-table-cell grey lighten-5 pl-2 pt-2 text-center">
+                        <!-- <div class="d-table-cell grey lighten-5 pl-2 pt-2 text-center">
                           <v-checkbox hide-details color="blue" class="ma-1 pa-0" v-model="conflictSplittedFrom[line].e" @click.stop="markUnused('from', line)"></v-checkbox>
-                        </div>
+                        </div> -->
                       </div>
                     </v-col>
                   </v-row>
@@ -400,7 +522,7 @@
               <v-card-title>{{LANGUAGES[langCodeTo].name}}
                 <v-spacer></v-spacer>
                 <span class="text-button blue--text">show all</span>
-                <v-switch value="true" v-model="showAllTo" class="ml-2"></v-switch>
+                <!-- <v-switch value="true" v-model="showAllTo" class="ml-2"></v-switch> -->
               </v-card-title>
               <v-card-text>{{unusedToLines.length}} lines
               </v-card-text>
@@ -424,9 +546,9 @@
                           </div>
                         </div>
                         <v-divider class="d-table-cell" vertical></v-divider>
-                        <div class="d-table-cell grey lighten-5 pl-2 pt-2 text-center">
+                        <!-- <div class="d-table-cell grey lighten-5 pl-2 pt-2 text-center">
                           <v-checkbox hide-details color="blue" class="ma-1 pa-0" v-model="conflictSplittedTo[line].e" @click.stop.prevent="markUnused('to', line)"></v-checkbox>
-                        </div>
+                        </div> -->
                       </div>
                     </v-col>
                   </v-row>
@@ -496,6 +618,7 @@
   import CreateAlignmentDialog from "@/components/CreateAlignmentDialog"
   import RecalculateBatchDialog from "@/components/RecalculateBatchDialog"
   import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog"
+  import CustomAlignmentSettingsDialog from "@/components/CustomAlignmentSettingsDialog"
   import {
     mapGetters
   } from "vuex";
@@ -552,7 +675,11 @@
     ALIGN_SPLITTED,
     DOWNLOAD_SPLITTED,
     DOWNLOAD_PROCESSING,
-    RESOLVE_CONFLICTS
+    RESOLVE_CONFLICTS,
+    GET_CONFLICTS,
+    GET_CONFLICT_DETAILS,
+    UPDATE_VISUALIZATION,
+    FIND_LINE_POSITION_IN_INDEX
   } from "@/store/actions.type";
   import {
     SET_ITEMS_PROCESSING,
@@ -586,7 +713,9 @@
           download: LanguageHelper.initGeneralBools(),
           align: false,
           processing: false,
-          processingMeta: false
+          processingMeta: false,
+          conflicts: false,
+          resolve: false
         },
         triggerCollapseEditItem: false,
         triggerClearCandidates: false,
@@ -612,14 +741,57 @@
         usedFromLinesSet: new Set(),
         usedToLinesSet: new Set(),
         usedToLinesFlow: [],
+        currConflictId: 0,
 
         hoverAlignmentIndex: -1,
         hoveredAlignmentItem: {"name": ""},
+
+        swiperOption: {
+          slidesPerView: 5,
+          spaceBetween: 20,
+          // mousewheel: {
+          //   sensitivity:5
+          // },
+          scrollbar: {
+            el: '.swiper-scrollbar',
+            draggable: true,
+          },
+        },
+        batchesToAlign: 5,
+        alignShift: 0,
+        alignWindow: 50,
+        cacheKey: Math.random(),
+
+        customAlignmentSettings: null,
+        selectedProcessingTotalBatches: 0,
+        showCustomAlignmentSettingsDialog: false,
       };
     },
     methods: {
       getImgUrl(batch_id) {
         return `${API_URL}/static/img/${this.username}/${this.processingMeta.meta.align_guid}.best_${batch_id}.png?rnd=${Math.random()}`;
+      },
+      applyCustomAlignmentSettings(settings) {
+        this.customAlignmentSettings = settings;
+      },
+      findLinePositionAndGotoEditor() {
+        if (this.conflictDetails) {
+          let lineId = Object.keys(this.conflictDetails["from"])[0];
+          this.$store.dispatch(FIND_LINE_POSITION_IN_INDEX, {
+            alignId: this.selectedProcessingId,
+            username: this.$route.params.username,
+            langCodeFrom: this.langCodeFrom,
+            langCodeTo: this.langCodeTo,
+            langCode: this.langCodeFrom,
+            lineId: lineId
+          }).then(() => {
+            let editorPageSize = 10;
+            let pageNumber = Math.floor(this.linePositionInIndex / editorPageSize) + 1;
+            this.goToPage(pageNumber);
+          });
+        } else {
+          alert("There are no conflicts.")
+        }
       },
       prepareUsedToLines() {
         let foo = new Set();
@@ -723,6 +895,20 @@
         //     this.flowBreakGroups = flowBreakGroups;
         //   });
       },
+      refreshVis(batch_id) {
+        this.$store
+          .dispatch(UPDATE_VISUALIZATION, {
+            username: this.$route.params.username,
+            id: this.selectedProcessingId,
+            batchIds: [batch_id],
+            updateAll: ''
+          })
+          .then(() => {
+            this.cacheKey = Math.random();
+            this.$refs.mySwiper.$swiper.lazy.load();
+            console.log(this.$refs.mySwiper.$swiper.lazy.load)
+          });
+      },
       createAlignment(name) {
         this.$store
           .dispatch(CREATE_ALIGNMENT, {
@@ -741,18 +927,21 @@
             });
           });
       },
-      startAlignment(batch_id = 0, shift = 0, nextOnly = true) {
+      startAlignment(batch_ids = [0], shift = 0, nextOnly = true, amount = 1, window=50) {
         this.isLoading.align = true;
         this.initProcessingDocument();
         this.currentlyProcessingId = this.selectedProcessingId;
         this.userAlignInProgress = true;
+
         this.$store
           .dispatch(ALIGN_SPLITTED, {
             username: this.$route.params.username,
             id: this.selectedProcessingId,
             nextOnly: nextOnly,
-            batchIds: [batch_id],
+            batchIds: batch_ids,
             batchShift: shift,
+            amount: amount,
+            window: window,
             alignAll: ''
           })
           .then(() => {
@@ -761,14 +950,23 @@
             this.fetchItemsProcessingTimer();
           });
       },
+      alignBatches() {
+        this.startAlignment([0], this.alignShift, true, this.batchesToAlign, this.alignWindow)
+      },
+      alignCustom() {
+        let batch_ids = this.getRange(this.customAlignmentSettings.start, this.customAlignmentSettings.end);        
+        this.startAlignment(batch_ids, this.alignShift, false, 1, this.alignWindow)
+      },
+      getRange(start, stop, step=1) {
+        return Array.from({ length: (stop - start) / step + 1}, (_, i) => start + (i * step));
+      },
       recalculateBatch(batch_id, shift) {
-        this.startAlignment(batch_id, shift, false)
+        this.startAlignment([batch_id], shift, false, 1, this.alignWindow)
       },
       resolveConflictsBatch(batch_id) {
-        this.isLoading.align = true;
+        this.isLoading.resolve = true;
         this.initProcessingDocument();
         this.currentlyProcessingId = this.selectedProcessingId;
-        this.userAlignInProgress = true;
         this.$store
           .dispatch(RESOLVE_CONFLICTS, {
             username: this.$route.params.username,
@@ -777,7 +975,6 @@
             resolveAll: ''
           })
           .then(() => {
-            this.isLoading.align = false;
             console.log("fetchItemsProcessingTimer set")
             this.fetchItemsProcessingTimer();
           });        
@@ -795,8 +992,10 @@
               this.selectCurrentlyProcessingDocument(this.selectedProcessing);
               this.fetchItemsProcessingTimer();
             } else {
+              this.cacheKey = Math.random();
               this.userAlignInProgress = false;
               this.isLoading.alignStopping = false;
+              this.isLoading.resolve = false;
               let currItem = this.itemsProcessing[this.langCodeFrom].filter(x => x.guid == this
                 .currentlyProcessingId)
               if (currItem.length > 0) {
@@ -806,7 +1005,7 @@
               }
             }
           });
-        }, 5000)
+        }, 6000)
       },
       initProcessingDocument() {
         let processingItemsCopy = JSON.parse(JSON.stringify(this.itemsProcessing[this.langCodeFrom]));
@@ -961,12 +1160,40 @@
           page: 1
         });
       },
+      showNextConflict() {
+        if (this.currConflictId < this.conflictsAmount()) {
+          this.currConflictId += 1;
+          this.showConflict(this.currConflictId);
+        }
+      },
+      showPrevConflict() {
+        if (this.currConflictId > 0) {
+          this.currConflictId -= 1;
+          this.showConflict(this.currConflictId);
+        }        
+      },
+      showConflict(conflictId) {
+        this.$store.dispatch(GET_CONFLICT_DETAILS, {
+          username: this.$route.params.username,
+          alignId: this.selectedProcessingId,
+          conflictId: conflictId
+        }).then(() => {
+          this.isLoading.conflicts = false;
+        });
+      },
       selectProcessing(item, fileId) {
+        // if (fileId == this.selectedProcessingId) {
+        //   return;
+        // }
+
         this.selectedListItem = fileId;
         this.isLoading.processing = true;
         this.isLoading.processingMeta = true;
+        this.isLoading.conflicts = true;
         this.selectedProcessing = item;
         this.selectedProcessingId = fileId;
+        this.selectedProcessingTotalBatches = item.state[1];
+        this.customAlignmentSettings = null;
 
         this.$store.dispatch(GET_PROCESSING_META, {
           username: this.$route.params.username,
@@ -993,6 +1220,43 @@
           }).then(() => {
             this.isLoading.processing = false;
           });
+        });
+        this.$store.dispatch(GET_CONFLICTS, {
+          username: this.$route.params.username,
+          alignId: this.selectedProcessingId,
+        }).then(() => {
+          this.currConflictId = 0;
+          if (this.conflictsAmount() > 0) {
+            this.$store.dispatch(GET_CONFLICT_DETAILS, {
+              username: this.$route.params.username,
+              alignId: this.selectedProcessingId,
+              conflictId: 0
+            }).then(() => {
+              this.isLoading.conflicts = false;              
+            });
+          } else {
+            this.isLoading.conflicts = false; 
+          }
+        });
+      },
+      refreshConflicts() {
+        this.isLoading.conflicts = true;  
+        this.$store.dispatch(GET_CONFLICTS, {
+          username: this.$route.params.username,
+          alignId: this.selectedProcessingId,
+        }).then(() => {
+          this.currConflictId = 0;
+          if (this.conflictsAmount() > 0) {
+            this.$store.dispatch(GET_CONFLICT_DETAILS, {
+              username: this.$route.params.username,
+              alignId: this.selectedProcessingId,
+              conflictId: 0
+            }).then(() => {
+              this.isLoading.conflicts = false;              
+            });
+          } else {
+            this.isLoading.conflicts = false; 
+          }
         });
       },
       refreshProcessingPage() {
@@ -1261,6 +1525,13 @@
             });
           });
       },
+      conflictsAmount() {
+        let res = 0;
+        if (this.conflicts && this.conflicts.length > 0) {
+          this.conflicts.forEach((x) => res += x[1]);
+        }
+        return res;
+      }
     },
     mounted() {
       this.$store.dispatch(INIT_USERSPACE, {
@@ -1291,7 +1562,7 @@
     },
     computed: {
       ...mapGetters(["items", "itemsProcessing", "splitted", "processing", "docIndex", "conflictSplittedFrom",
-        "conflictSplittedTo", "conflictFlowTo", "processingMeta"
+        "conflictSplittedTo", "conflictFlowTo", "processingMeta", "conflicts", "conflictDetails", "linePositionInIndex"
       ]),
       username() {
         return this.$route.params.username;
@@ -1352,7 +1623,8 @@
       GoToDialog,
       CreateAlignmentDialog,
       RecalculateBatchDialog,
-      ConfirmDeleteDialog
+      ConfirmDeleteDialog,
+      CustomAlignmentSettingsDialog
     }
   };
 </script>
