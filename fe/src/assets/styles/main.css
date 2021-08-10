@@ -141,3 +141,37 @@
     box-shadow: 0px 2px 10px rgba(50,50,50,0.5) !important;
     cursor: pointer;
 }
+
+.vis-card-img {
+    cursor: pointer;
+    background: #00000022;
+    transition: ease-in-out 0.1s all;
+}
+
+.vis-card-img:hover {
+    background: #cfefd7 !important;
+}
+
+.refresh-vis-icon {
+    cursor: pointer;
+    opacity: 0;
+    transition: ease-in-out 0.1s opacity;
+}
+
+.vis-card:hover > div > .v-card__title > .refresh-vis-icon {
+    opacity: 1;
+}
+
+.relative {
+    position:relative;
+}
+
+.abs-right {
+    position: absolute !important;
+    right: 0;
+    top: 0;
+}
+
+.pointer {
+    cursor: pointer;
+}
