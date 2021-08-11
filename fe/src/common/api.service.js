@@ -234,6 +234,7 @@ export const ItemsService = {
     );
   },
   findLinePosition(params) {
+    console.log(params)
     return ApiService.get(
       "items",
       `${params.username}/edit/find/${params.langCodeFrom}/${params.langCodeTo}/${params.alignId}/${params.langCode}/${params.lineId}`

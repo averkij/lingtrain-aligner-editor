@@ -718,6 +718,7 @@
           resolve: false
         },
         triggerCollapseEditItem: false,
+        triggerExpandEditItem: false,
         triggerClearCandidates: false,
         userAlignInProgress: false,
         satisfactionEmojis: ['😍', '😄', '😁', '😊', '🙂', '😐', '🙁', '☹️', '😢', '😭'],
@@ -769,7 +770,7 @@
     },
     methods: {
       getImgUrl(batch_id) {
-        return `${API_URL}/static/img/${this.username}/${this.processingMeta.meta.align_guid}.best_${batch_id}.png?rnd=${Math.random()}`;
+        return `${API_URL}/static/img/${this.username}/${this.processingMeta.meta.align_guid}.best_${batch_id}.png?rnd=${this.cacheKey}`;
       },
       applyCustomAlignmentSettings(settings) {
         this.customAlignmentSettings = settings;
@@ -923,6 +924,7 @@
               langCodeFrom: this.langCodeFrom,
               langCodeTo: this.langCodeTo
             }).then(() => {
+              this.cacheKey = Math.random();
               this.selectFirstProcessingDocument();
             });
           });
@@ -1459,6 +1461,9 @@
       collapseEditItems() {
         this.triggerCollapseEditItem = !this.triggerCollapseEditItem;
       },
+      expandEditItems() {
+        this.triggerExpandEditItem = !this.triggerExpandEditItem;
+      },
       fetchAll() {
         this.$store.dispatch(FETCH_ITEMS, {
           username: this.$route.params.username,
@@ -1481,6 +1486,7 @@
               0] ==
             1)
           if (in_progress_items.length > 0) {
+            this.cacheKey = Math.random();
             let item_index = this.itemsProcessing[this.langCodeFrom].indexOf(in_progress_items[0])
             this.currentlyProcessingId = this.itemsProcessing[this.langCodeFrom][item_index].guid
             this.userAlignInProgress = true;
