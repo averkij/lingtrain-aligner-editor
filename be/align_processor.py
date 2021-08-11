@@ -38,7 +38,7 @@ class AlignmentProcessor:
         self.embed_batch_size = embed_batch_size
         self.normalize_embeddings = normalize_embeddings
         self.operation = operation
-        self.plot_info = plot_info,
+        self.plot_info = plot_info
         self.plot_regression = plot_regression
 
 
