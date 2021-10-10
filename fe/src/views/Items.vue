@@ -231,7 +231,7 @@
                       </v-card-title>
                     </div>
                     <div class="white lighten-3 pa-3">
-                      <v-slider v-model="alignShift" min="-500" max="500" step="20" thumb-label>
+                      <v-slider v-model="alignShift" min="-500" max="500" step="10" thumb-label>
                       </v-slider>
                     </div>
                   </v-card>
