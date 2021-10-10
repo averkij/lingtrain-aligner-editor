@@ -200,7 +200,7 @@ class AlignmentProcessor:
             print("resolving conflicts strategy 2. batch_id:", batch_id)
 
             min_chain_length = 2
-            max_conflicts_len = 25
+            max_conflicts_len = 24
 
             conflicts, _ = resolver.get_all_conflicts(
                 self.db_path, min_chain_length=min_chain_length, max_conflicts_len=max_conflicts_len, batch_id=batch_id)

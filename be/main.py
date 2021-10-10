@@ -149,10 +149,10 @@ def create_alignment(username):
     file_from, lang_from = misc.get_fileinfo(username, id_from)
     file_to, lang_to = misc.get_fileinfo(username, id_to)
 
-    raw_from = os.path.join(
-        con.UPLOAD_FOLDER, username, con.RAW_FOLDER, lang_from, file_from)
-    raw_to = os.path.join(
-        con.UPLOAD_FOLDER, username, con.RAW_FOLDER, lang_to, file_to)
+    splitted_from = os.path.join(
+        con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_from, file_from)
+    splitted_to = os.path.join(
+        con.UPLOAD_FOLDER, username, con.SPLITTED_FOLDER, lang_to, file_to)
     proxy_to = os.path.join(con.UPLOAD_FOLDER, username,
                             con.PROXY_FOLDER, lang_to, file_to)
     proxy_from = os.path.join(
@@ -165,23 +165,8 @@ def create_alignment(username):
 
     misc.check_folder(db_folder)
 
-    with open(raw_from, "r", encoding="utf8") as input_from:
-        lines_from = splitter.split_by_sentences(
-            input_from.readlines(), lang_from)
-    with open(raw_to, "r", encoding="utf8") as input_to:
-        lines_to = splitter.split_by_sentences(
-            input_to.readlines(), lang_to)
-
-    lines_proxy_from, lines_proxy_to = [], []
-    if os.path.isfile(proxy_from):
-        with open(proxy_from, "r", encoding="utf8") as input_proxy_from:
-            lines_proxy_from = input_proxy_from.readlines()
-    if os.path.isfile(proxy_to):
-        with open(proxy_to, "r", encoding="utf8") as input_proxy_to:
-            lines_proxy_to = input_proxy_to.readlines()
-
-    aligner.fill_db(db_path, lang_from, lang_to, lines_from, lines_to,
-                    lines_proxy_from, lines_proxy_to)
+    aligner.fill_db_from_files(db_path, lang_from, lang_to, splitted_from, splitted_to,
+                    proxy_from, proxy_to)
 
     len_from, _ = misc.get_texts_length(db_path)
 
@@ -261,6 +246,7 @@ def update_visualization(username):
 
 @app.route("/items/<username>/edit/find/<lang_from>/<lang_to>/<aling_id>/<lang>/<int:line_id>", methods=["GET"])
 def get_line_id_position(username, lang_from, lang_to, aling_id, lang, line_id):
+    """Get line position in index"""
     db_folder = os.path.join(con.UPLOAD_FOLDER, username,
                              con.DB_FOLDER, lang_from, lang_to)
     db_path = os.path.join(db_folder, f'{aling_id}.db')
